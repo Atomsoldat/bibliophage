@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package bibliophage;
+
+// Service definition - the API endpoints
+service LoadingService {
+  // RPC method: takes LoadRequest, returns LoadResponse
+  rpc LoadPDF(LoadRequest) returns (LoadResponse);
+}
+
+// Request message - what the client sends
+message LoadRequest {
+  string pdf_path = 1;           // Filesystem path to the PDF
+  string name = 2;                // Human-readable name (e.g., "Monster Manual")
+  RpgSystem system = 3;           // Which RPG system
+  PublicationType pub_type = 4;   // Type of publication
+  int32 page_count = 5;           // Number of pages (optional, can be 0)
+
+  // Chunking parameters
+  int32 chunk_size = 6;           // Size of text chunks (default: 600)
+  int32 chunk_overlap = 7;        // Overlap between chunks (default: 50)
+}
+
+// Response message - what the server sends back
+message LoadResponse {
+  bool success = 1;               // Did it work?
+  string message = 2;             // Human-readable status/error message
+  int32 chunks_created = 3;       // How many chunks were stored
+  string document_id = 4;         // Unique ID for this ingested document
+}
+
+// Enum for RPG systems
+enum RpgSystem {
+  RPG_SYSTEM_UNSPECIFIED = 0;   // Default/unknown (proto3 requires 0)
+  DND_35 = 1;                    // D&D 3.5 Edition
+  PATHFINDER_1E = 2;             // Pathfinder 1st Edition
+  PATHFINDER_2E = 3;             // Pathfinder 2nd Edition
+}
+
+// Enum for publication types
+enum PublicationType {
+  PUBLICATION_TYPE_UNSPECIFIED = 0;  // Default/unknown
+  CORE_RULEBOOK = 1;             // Core rules (PHB, DMG, etc.)
+  BESTIARY = 2;                  // Monster books
+  SUPPLEMENT = 3;                // Additional rules/options
+  ADVENTURE = 4;                 // Adventure modules/paths
+  SETTING = 5;                   // Campaign setting books
+}
