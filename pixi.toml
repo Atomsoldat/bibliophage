@@ -17,6 +17,7 @@ langchain-postgres = ">=0.0.15,<0.0.16"
 langchain-huggingface = ">=0.3.1,<0.4"
 grpcio = ">=1.73.1,<2"
 grpcio-tools = ">=1.73.1,<2"
+grpcio-reflection = ">=1.45.0,<2"
 
 [pypi-dependencies]
 langchain-community = ">=0.3.29, <0.4"

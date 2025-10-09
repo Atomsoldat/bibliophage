@@ -57,6 +57,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.2.1-py313h86d8783_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/greenlet-3.2.4-py313h7033f15_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/grpcio-1.73.1-py313h32f65e6_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/grpcio-reflection-1.45.0-pyhd8ed1ab_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/grpcio-tools-1.73.1-py313hc720efd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/h11-0.16.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/h2-4.3.0-pyhcf101f3_0.conda
@@ -938,6 +939,19 @@ packages:
   - pkg:pypi/grpcio?source=hash-mapping
   size: 894207
   timestamp: 1751746916084
+- conda: https://conda.anaconda.org/conda-forge/noarch/grpcio-reflection-1.45.0-pyhd8ed1ab_0.tar.bz2
+  sha256: 18f50ec37bf65a9d248ff6e01e6032ac55de83398fc18e94399094edab18fcb3
+  md5: a6e7538aa322eee9e6b9a289d90094f9
+  depends:
+  - grpcio >=1.45.0
+  - protobuf >=3.12.0
+  - python >=3.6
+  license: Apache-2.0
+  license_family: APACHE
+  purls:
+  - pkg:pypi/grpcio-reflection?source=hash-mapping
+  size: 16369
+  timestamp: 1648649956072
 - conda: https://conda.anaconda.org/conda-forge/linux-64/grpcio-tools-1.73.1-py313hc720efd_0.conda
   sha256: 856c992da00a42284b7bc9a3ff3ef45dea1600b0a07a79af559accc24a9c17a0
   md5: fa59bc63e683457eeda051ae6cc7f241
