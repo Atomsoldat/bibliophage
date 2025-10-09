@@ -2,6 +2,9 @@
 .pixi/*
 !.pixi/config.toml
 
+# python stuff
+__pycache__
+
 # temporary workspace
 werkbank
 notes
