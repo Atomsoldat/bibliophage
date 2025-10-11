@@ -38,13 +38,12 @@ message LoadRequest {
 }
 ```
 
-Query our grpc service with out query
+Query our grpc service with our query
 ```
 grpcurl -plaintext -d '{
-    "pdf_path": "pdfs/pf1e/bestiary_bonus.pdf",
-    "name": "Bestiary Bonus",
-    "system": "PATHFINDER_1E",
-    "pub_type": "BESTIARY"
+    "pdf_origin_path": "pdfs/pf1e/bestiary_bonus.pdf",
+    "pdf_name": "Bestiary Bonus",
+    "pdf_system": "PATHFINDER_1E",
+    "pdf_type": "BESTIARY"
 }' localhost:50051 bibliophage.LoadingService/LoadPDF
-
 ```

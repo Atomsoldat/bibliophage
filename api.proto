@@ -10,15 +10,15 @@ service LoadingService {
 
 // Request message - what the client sends
 message LoadRequest {
-  string pdf_path = 1;           // Filesystem path to the PDF
-  string name = 2;                // Human-readable name (e.g., "Monster Manual")
-  RpgSystem system = 3;           // Which RPG system
-  PublicationType pub_type = 4;   // Type of publication
-  int32 page_count = 5;           // Number of pages (optional, can be 0)
+  string pdf_origin_path = 1;           // Filesystem path to the PDF
+  string pdf_name = 2;                // Human-readable name (e.g., "Monster Manual")
+  RpgSystem pdf_system = 3;           // Which RPG system
+  PublicationType pdf_type = 4;   // Type of publication
+  int32 pdf_page_count = 5;           // Number of pages (optional, can be 0)
 
   // Chunking parameters
-  int32 chunk_size = 6;           // Size of text chunks (default: 600)
-  int32 chunk_overlap = 7;        // Overlap between chunks (default: 50)
+  optional int32 chunk_size = 6;           // Size of text chunks (default: 600)
+  optional int32 chunk_overlap = 7;        // Overlap between chunks (default: 50)
 }
 
 // Response message - what the server sends back

@@ -32,22 +32,22 @@ ADVENTURE: PublicationType
 SETTING: PublicationType
 
 class LoadRequest(_message.Message):
-    __slots__ = ("pdf_path", "name", "system", "pub_type", "page_count", "chunk_size", "chunk_overlap")
-    PDF_PATH_FIELD_NUMBER: _ClassVar[int]
-    NAME_FIELD_NUMBER: _ClassVar[int]
-    SYSTEM_FIELD_NUMBER: _ClassVar[int]
-    PUB_TYPE_FIELD_NUMBER: _ClassVar[int]
-    PAGE_COUNT_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("pdf_origin_path", "pdf_name", "pdf_system", "pdf_type", "pdf_page_count", "chunk_size", "chunk_overlap")
+    PDF_ORIGIN_PATH_FIELD_NUMBER: _ClassVar[int]
+    PDF_NAME_FIELD_NUMBER: _ClassVar[int]
+    PDF_SYSTEM_FIELD_NUMBER: _ClassVar[int]
+    PDF_TYPE_FIELD_NUMBER: _ClassVar[int]
+    PDF_PAGE_COUNT_FIELD_NUMBER: _ClassVar[int]
     CHUNK_SIZE_FIELD_NUMBER: _ClassVar[int]
     CHUNK_OVERLAP_FIELD_NUMBER: _ClassVar[int]
-    pdf_path: str
-    name: str
-    system: RpgSystem
-    pub_type: PublicationType
-    page_count: int
+    pdf_origin_path: str
+    pdf_name: str
+    pdf_system: RpgSystem
+    pdf_type: PublicationType
+    pdf_page_count: int
     chunk_size: int
     chunk_overlap: int
-    def __init__(self, pdf_path: _Optional[str] = ..., name: _Optional[str] = ..., system: _Optional[_Union[RpgSystem, str]] = ..., pub_type: _Optional[_Union[PublicationType, str]] = ..., page_count: _Optional[int] = ..., chunk_size: _Optional[int] = ..., chunk_overlap: _Optional[int] = ...) -> None: ...
+    def __init__(self, pdf_origin_path: _Optional[str] = ..., pdf_name: _Optional[str] = ..., pdf_system: _Optional[_Union[RpgSystem, str]] = ..., pdf_type: _Optional[_Union[PublicationType, str]] = ..., pdf_page_count: _Optional[int] = ..., chunk_size: _Optional[int] = ..., chunk_overlap: _Optional[int] = ...) -> None: ...
 
 class LoadResponse(_message.Message):
     __slots__ = ("success", "message", "chunks_created", "document_id")
