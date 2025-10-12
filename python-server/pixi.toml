@@ -6,8 +6,19 @@ platforms = ["linux-64"]
 version = "0.1.0"
 
 [tasks]
-wrapper = { cmd = [
-  "./runscript.sh",
+# Run the gRPC server
+server = { cmd = [
+  "./server-runscript.sh",
+]}
+
+# Generate Python gRPC code from proto file
+generate-proto = { cmd = [
+  "python", "-m", "grpc_tools.protoc",
+  "-I../grpc-api",
+  "--python_out=.",
+  "--pyi_out=.",
+  "--grpc_python_out=.",
+  "../grpc-api/grpc_generated/api.proto",
 ]}
 
 

@@ -12,4 +12,4 @@ export PG_CONNECTION_STRING="postgresql+psycopg://${PG_USER}:${PG_PASSWORD}@${PG
 
 # if we run these using a shebang, we end up with the
 # OS python env, so that's no good
-python ./server.py
+python server.py
