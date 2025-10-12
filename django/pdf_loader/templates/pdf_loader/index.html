@@ -1,0 +1,155 @@
+{% extends 'pdf_loader/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <form method="post" enctype="multipart/form-data" id="uploadForm">
+            {% csrf_token %}
+
+            <!-- Server Configuration Card -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-server"></i> Server Configuration
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                {{ form.server_address.label_tag }}
+                                {{ form.server_address }}
+                                {% if form.server_address.errors %}
+                                    <div class="text-danger">{{ form.server_address.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.server_port.label_tag }}
+                                {{ form.server_port }}
+                                {% if form.server_port.errors %}
+                                    <div class="text-danger">{{ form.server_port.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PDF File Card -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-file-earmark-pdf"></i> PDF File
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        {{ form.pdf_file.label_tag }}
+                        {{ form.pdf_file }}
+                        {% if form.pdf_file.errors %}
+                            <div class="text-danger">{{ form.pdf_file.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">Select a PDF file to upload (max 50MB)</div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.pdf_name.label_tag }}
+                        {{ form.pdf_name }}
+                        {% if form.pdf_name.errors %}
+                            <div class="text-danger">{{ form.pdf_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metadata Card -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-tags"></i> Metadata
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.rpg_system.label_tag }}
+                                {{ form.rpg_system }}
+                                {% if form.rpg_system.errors %}
+                                    <div class="text-danger">{{ form.rpg_system.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.publication_type.label_tag }}
+                                {{ form.publication_type }}
+                                {% if form.publication_type.errors %}
+                                    <div class="text-danger">{{ form.publication_type.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chunking Parameters Card -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-sliders"></i> Chunking Parameters
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.chunk_size.label_tag }}
+                                {{ form.chunk_size }}
+                                <div class="form-text">{{ form.chunk_size.help_text }}</div>
+                                {% if form.chunk_size.errors %}
+                                    <div class="text-danger">{{ form.chunk_size.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.chunk_overlap.label_tag }}
+                                {{ form.chunk_overlap }}
+                                <div class="form-text">{{ form.chunk_overlap.help_text }}</div>
+                                {% if form.chunk_overlap.errors %}
+                                    <div class="text-danger">{{ form.chunk_overlap.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid gap-2 mb-4">
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                    <i class="bi bi-upload"></i> Load PDF
+                </button>
+            </div>
+
+            <!-- Output Area -->
+            {% if output_text %}
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-terminal"></i> Output
+                </div>
+                <div class="card-body">
+                    <div class="output-area">{{ output_text }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show loading state on form submit
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+    });
+</script>
+{% endblock %}

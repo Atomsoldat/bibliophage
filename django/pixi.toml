@@ -1,0 +1,36 @@
+[project]
+name = "bibliophage-django-ui"
+version = "0.1.0"
+description = "Django web UI for Bibliophage PDF ingestion"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+
+[dependencies]
+python = "3.13.*"
+django = ">=5.0.0"
+grpcio = ">=1.60.0"
+grpcio-tools = ">=1.60.0"
+protobuf = ">=4.25.0"
+
+[tasks]
+# generate Python gRPC code from proto file
+# protoc looks at the source proto's directory structure to determine imports
+# since api.proto is in grpc-api/grpc_generated/, it will generate proper package imports
+# with the generated python code in a subdirectory called 'grpc_generated'
+generate-proto = { cmd = [
+  "python", "-m", "grpc_tools.protoc",
+  "-I../grpc-api",
+  "--python_out=.",
+  "--pyi_out=.",
+  "--grpc_python_out=.",
+  "../grpc-api/grpc_generated/api.proto",
+]}
+
+# Run Django development server
+run = { cmd = ["python", "manage.py", "runserver"] }
+
+# Run migrations
+migrate = { cmd = ["python", "manage.py", "migrate"] }
+
+# Setup: generate proto files, migrate, and run
+setup-and-run = { depends-on = ["generate-proto", "migrate", "run"] }
