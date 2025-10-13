@@ -104,6 +104,10 @@ class GrpcClient:
             self.channel = None
             self.stub = None
 
+# The Context manager uses these functions to handle the object
+# when it is instantiated and when it is no longer needed
+# kind of like constructors and destructors, but not, because python
+# https://book.pythontips.com/en/latest/context_managers.html
     def __enter__(self):
         """Context manager entry"""
         self.connect()
