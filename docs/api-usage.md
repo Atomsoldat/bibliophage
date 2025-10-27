@@ -1,6 +1,6 @@
 ## Talking to the API With grpcurl
 
-If we correctly implement reflection, we can use `grpcurl` to talk to our API:
+If we correctly implement reflection, we can use `grpcurl` to talk to our API (these commands assume the data-server is running locally):
 
 List available services
 ```
@@ -18,16 +18,16 @@ Describe methods, that a given service offers (this gives us the function signat
 grpcurl -plaintext localhost:50051 describe bibliophage.LoadingService
 bibliophage.LoadingService is a service:
 service LoadingService {
-  rpc LoadPDF ( .bibliophage.LoadRequest ) returns ( .bibliophage.LoadResponse );
+  rpc LoadPDF ( .bibliophage.PdfLoadRequest ) returns ( .bibliophage.PdfLoadResponse );
 }
 ```
 
 
-We can then figure out what a `LoadRequest` looks like, so we can construct our query:
+We can then figure out what a `PdfLoadRequest` looks like, so we can construct our query:
 ```bash
-grpcurl -plaintext localhost:50051 describe bibliophage.LoadRequest
-bibliophage.LoadRequest is a message:
-message LoadRequest {
+grpcurl -plaintext localhost:50051 describe bibliophage.PdfLoadRequest
+bibliophage.PdfLoadRequest is a message:
+message PdfLoadRequest {
   string pdf_path = 1;
   string name = 2;
   .bibliophage.RpgSystem system = 3;
