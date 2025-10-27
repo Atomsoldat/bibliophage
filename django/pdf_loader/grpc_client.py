@@ -76,7 +76,7 @@ class GrpcClient:
             self.connect()
 
         # Build the protobuf request
-        request = api_pb2.LoadRequest(
+        request = api_pb2.PdfLoadRequest(
             pdf_origin_path=pdf_path,
             pdf_name=pdf_name,
             pdf_system=self.RPG_SYSTEM_MAP.get(rpg_system, api_pb2.RpgSystem.DND_35),

@@ -2,18 +2,21 @@ syntax = "proto3";
 
 package bibliophage;
 
-// Service definition - the API endpoints
+// Service definitions - the API endpoints
+// RPC method: takes Request, returns Response
 service LoadingService {
-  // RPC method: takes LoadRequest, returns LoadResponse
-  rpc LoadPDF(LoadRequest) returns (LoadResponse);
+  rpc LoadPDF(PdfLoadRequest) returns (PdfLoadResponse);
+}
+service DocumentService {
+  rpc StoreDocument (DocumentStoreRequest) returns (DocumentStoreResponse);
 }
 
-// Request message - what the client sends
-message LoadRequest {
-  string pdf_origin_path = 1;           // Filesystem path to the PDF
+// Request messages - what the client sends
+message PdfLoadRequest {
+  string pdf_origin_path = 1;         // Filesystem path to the PDF
   string pdf_name = 2;                // Human-readable name (e.g., "Monster Manual")
   RpgSystem pdf_system = 3;           // Which RPG system
-  PublicationType pdf_type = 4;   // Type of publication
+  PublicationType pdf_type = 4;       // Type of publication
   int32 pdf_page_count = 5;           // Number of pages (optional, can be 0)
 
   // Chunking parameters
@@ -21,23 +24,35 @@ message LoadRequest {
   optional int32 chunk_overlap = 7;        // Overlap between chunks (default: 50)
 }
 
-// Response message - what the server sends back
-message LoadResponse {
+message DocumentStoreRequest {
+  string document_name = 1;         // Human-readable name (e.g., "Monster Manual")
+  string content = 2;               // raw text content of the document
+  DocumentType document_type = 4;   // Type of document
+}
+
+// Response messages - what the server sends back
+message PdfLoadResponse {
   bool success = 1;               // Did it work?
   string message = 2;             // Human-readable status/error message
   int32 chunks_created = 3;       // How many chunks were stored
   string document_id = 4;         // Unique ID for this ingested document
 }
 
-// Enum for RPG systems
+message DocumentStoreResponse {
+  bool success = 1;               // Did it work?
+  string message = 2;             // Human-readable status/error message
+}
+
+
+// enums for strict classification of data, 
+// rather than freeform JSON/strings 
 enum RpgSystem {
-  RPG_SYSTEM_UNSPECIFIED = 0;   // Default/unknown (proto3 requires 0)
+  RPG_SYSTEM_UNSPECIFIED = 0;     // Default/unknown (proto3 requires 0)
   DND_35 = 1;                    // D&D 3.5 Edition
   PATHFINDER_1E = 2;             // Pathfinder 1st Edition
   PATHFINDER_2E = 3;             // Pathfinder 2nd Edition
 }
 
-// Enum for publication types
 enum PublicationType {
   PUBLICATION_TYPE_UNSPECIFIED = 0;  // Default/unknown
   CORE_RULEBOOK = 1;             // Core rules (PHB, DMG, etc.)
@@ -45,4 +60,13 @@ enum PublicationType {
   SUPPLEMENT = 3;                // Additional rules/options
   ADVENTURE = 4;                 // Adventure modules/paths
   SETTING = 5;                   // Campaign setting books
+}
+
+enum DocumentType {
+  DOCUMENT_TYPE_UNSPECIFIED = 0;    // Default/unknown
+  NOTE = 1;                         // Least specific, unspecified documents will be turned into this
+  LORE_FRAGMENT = 2;                // Has some authoritative information
+  CHARACTER = 3;                    // PCs, NPCs, historical figures, ...
+  LOCATION = 4;                     // Places
+  OBJECT = 5;                       // Posessions, Items, Objects, ...
 }

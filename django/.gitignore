@@ -42,6 +42,3 @@ ENV/
 *.swp
 *.swo
 *~
-
-# Generated protobuf files
-grpc_generated

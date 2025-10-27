@@ -7,9 +7,9 @@ platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 
 [dependencies]
 python = "3.13.*"
-django = ">=5.0.0"
-grpcio = ">=1.60.0"
-grpcio-tools = ">=1.60.0"
+django = "5.0.*"
+grpcio = "==1.74.0"
+grpcio-tools = "==1.74.0"
 protobuf = ">=4.25.0"
 
 [tasks]
