@@ -3,8 +3,8 @@ import grpc
 from concurrent import futures
 # reflection is used by clients to figure out what API endpoints there are
 from grpc_reflection.v1alpha import reflection
-import api_pb2
-import api_pb2_grpc
+from grpc_generated import api_pb2
+from grpc_generated import api_pb2_grpc
 import os
 import sys
 import logging
@@ -19,7 +19,7 @@ class LoadingServiceServicer(api_pb2_grpc.LoadingServiceServicer):
 
         logging.info(f"Received LoadPdf request for file: {request.pdf_name}")
         
-        # request will be the LoadRequest from the client
+        # request will be the PdfLoadRequest from the client
         # we should access the fields in the request and do stuff with it
         # like setting metadata
 
@@ -53,8 +53,8 @@ class LoadingServiceServicer(api_pb2_grpc.LoadingServiceServicer):
         # Store Chunks in Vector DB
         pgvector.add_documents(chunks)
 
-        # when that's done, we return a LoadResponse
-        return api_pb2.LoadResponse(
+        # when that's done, we return a PdfLoadResponse
+        return api_pb2.PdfLoadResponse(
             success=True,
             message=f"PDF {request.pdf_name} loaded successfully",
             chunks_created=len(chunks),
