@@ -9,8 +9,12 @@ const router = createRouter({
 			component: Home
 		},
 		{
-			path: '/about',
+			path: '/pdf-upload',
 			component: () => import('../views/PdfUpload.vue')
+		},
+		{
+			path: '/settings',
+			component: () => import('../views/Settings.vue')
 		},
 	],
 })

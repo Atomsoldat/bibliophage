@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Icon } from '@iconify/vue'
 
 // Form state
 const serverAddress = ref('localhost')
@@ -11,14 +12,13 @@ const chunkSize = ref(600)
 const chunkOverlap = ref(50)
 const pdfFile = ref<File | null>(null)
 const loading = ref(false)
-const output = ref('')
+const output = ref<string[]>([])
 
-// File input handler
-function handleFileChange(event: Event) {
+// File upload handler
+function onFileSelect(event: Event) {
   const target = event.target as HTMLInputElement
   if (target.files && target.files.length > 0) {
     pdfFile.value = target.files[0]
-    // Auto-fill PDF name from filename if empty
     if (!pdfName.value) {
       pdfName.value = target.files[0].name.replace('.pdf', '')
     }
@@ -28,195 +28,174 @@ function handleFileChange(event: Event) {
 // Form submission handler
 async function handleSubmit() {
   if (!pdfFile.value) {
-    alert('Please select a PDF file')
     return
   }
 
   loading.value = true
-  output.value = `Connecting to server at ${serverAddress.value}:${serverPort.value}...\n`
-  output.value += `File: ${pdfFile.value.name}\n`
-  output.value += `PDF Name: ${pdfName.value}\n`
-  output.value += `System: ${rpgSystem.value}\n`
-  output.value += `Type: ${publicationType.value}\n`
-  output.value += `\n[Connect-RPC integration pending - server connection will be added next]\n`
+  output.value = []
+
+  output.value.push(`Connecting to server at ${serverAddress.value}:${serverPort.value}...`)
+  output.value.push(`File: ${pdfFile.value.name}`)
+  output.value.push(`PDF Name: ${pdfName.value}`)
+  output.value.push(`System: ${rpgSystem.value}`)
+  output.value.push(`Type: ${publicationType.value}`)
+  output.value.push('')
+  output.value.push('[Connect-RPC integration pending]')
 
   // TODO: Add actual Connect-RPC call here
   setTimeout(() => {
     loading.value = false
-    output.value += '\nReady for Connect-RPC integration!'
+    output.value.push('')
+    output.value.push('Ready for Connect-RPC integration!')
   }, 1000)
 }
 </script>
 
 <template>
-  <div id="app">
+  <div class="max-w-7xl mx-auto">
+    <h1 class="text-4xl font-bold mb-8">PDF Upload</h1>
 
-    <!-- Main Content -->
-    <main class="container-fluid">
-      <form @submit.prevent="handleSubmit">
+    <form @submit.prevent="handleSubmit">
+      <!-- Card Grid Layout -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
 
-        <!-- Card Grid Layout -->
-        <div class="card-grid">
-
-          <!-- Server Configuration -->
-          <div class="card">
-            <div class="card-header">
-              <i class="bi bi-server"></i> Server Configuration
-            </div>
-            <div class="card-body">
-              <div class="mb-3">
-                <label class="form-label">Server Address</label>
-                <input v-model="serverAddress" type="text" class="form-control" placeholder="localhost">
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Server Port</label>
-                <input v-model.number="serverPort" type="number" class="form-control" placeholder="50051" min="1" max="65535">
-              </div>
-            </div>
-          </div>
-
-          <!-- PDF File -->
-          <div class="card">
-            <div class="card-header">
-              <i class="bi bi-file-earmark-pdf"></i> PDF File
-            </div>
-            <div class="card-body">
-              <div class="mb-3">
-                <label class="form-label">PDF File</label>
-                <input type="file" class="form-control" accept=".pdf" @change="handleFileChange">
-                <div class="form-text">Select a PDF file to upload (max 50MB)</div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">PDF Name</label>
-                <input v-model="pdfName" type="text" class="form-control" placeholder="e.g., Monster Manual, Core Rulebook">
-              </div>
-            </div>
-          </div>
-
-          <!-- Metadata -->
-          <div class="card">
-            <div class="card-header">
-              <i class="bi bi-tags"></i> Metadata
-            </div>
-            <div class="card-body">
-              <div class="mb-3">
-                <label class="form-label">RPG System</label>
-                <select v-model="rpgSystem" class="form-select">
-                  <option value="DND_35">D&D 3.5</option>
-                  <option value="PATHFINDER_1E">Pathfinder 1e</option>
-                  <option value="PATHFINDER_2E">Pathfinder 2e</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Publication Type</label>
-                <select v-model="publicationType" class="form-select">
-                  <option value="CORE_RULEBOOK">Core Rulebook</option>
-                  <option value="BESTIARY">Bestiary</option>
-                  <option value="SUPPLEMENT">Supplement</option>
-                  <option value="ADVENTURE">Adventure</option>
-                  <option value="SETTING">Setting</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Chunking Parameters -->
-          <div class="card">
-            <div class="card-header">
-              <i class="bi bi-sliders"></i> Chunking Parameters
-            </div>
-            <div class="card-body">
-              <div class="mb-3">
-                <label class="form-label">Chunk Size</label>
-                <input v-model.number="chunkSize" type="number" class="form-control" min="100" max="2000">
-                <div class="form-text">100-2000</div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Chunk Overlap</label>
-                <input v-model.number="chunkOverlap" type="number" class="form-control" min="0" max="500">
-                <div class="form-text">0-500</div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Submit Button -->
-        <div class="submit-section">
-          <button type="submit" class="btn btn-primary btn-lg" :disabled="loading">
-            <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
-            <i v-else class="bi bi-upload"></i>
-            {{ loading ? 'Loading...' : 'Load PDF' }}
-          </button>
-        </div>
-
-        <!-- Output Area -->
-        <div v-if="output" class="card output-card">
-          <div class="card-header">
-            <i class="bi bi-terminal"></i> Output
-          </div>
+        <!-- Server Configuration -->
+        <div class="card bg-base-100 shadow-xl">
           <div class="card-body">
-            <div class="output-area">{{ output }}</div>
+            <h2 class="card-title text-lg">
+              <Icon icon="heroicons:server" class="text-xl" />
+              Server Configuration
+            </h2>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Server Address</span>
+              </label>
+              <input type="text" v-model="serverAddress" class="input input-bordered" />
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Server Port</span>
+              </label>
+              <input type="number" v-model="serverPort" :min="1" :max="65535" class="input input-bordered" />
+            </div>
           </div>
         </div>
 
-      </form>
-    </main>
+        <!-- PDF File -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-lg">
+              <Icon icon="heroicons:document" class="text-xl" />
+              PDF File
+            </h2>
 
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Select PDF</span>
+              </label>
+              <input type="file" accept=".pdf" @change="onFileSelect" class="file-input file-input-bordered" />
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">PDF Name</span>
+              </label>
+              <input type="text" v-model="pdfName" class="input input-bordered" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-lg">
+              <Icon icon="heroicons:tag" class="text-xl" />
+              Metadata
+            </h2>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">RPG System</span>
+              </label>
+              <select v-model="rpgSystem" class="select select-bordered">
+                <option value="DND_35">D&D 3.5</option>
+                <option value="PATHFINDER_1E">Pathfinder 1e</option>
+                <option value="PATHFINDER_2E">Pathfinder 2e</option>
+              </select>
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Publication Type</span>
+              </label>
+              <select v-model="publicationType" class="select select-bordered">
+                <option value="CORE_RULEBOOK">Core Rulebook</option>
+                <option value="BESTIARY">Bestiary</option>
+                <option value="SUPPLEMENT">Supplement</option>
+                <option value="ADVENTURE">Adventure</option>
+                <option value="SETTING">Setting</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chunking Parameters -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-lg">
+              <Icon icon="heroicons:adjustments-horizontal" class="text-xl" />
+              Chunking Parameters
+            </h2>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Chunk Size (100-2000)</span>
+              </label>
+              <input type="number" v-model="chunkSize" :min="100" :max="2000" class="input input-bordered" />
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Chunk Overlap (0-500)</span>
+              </label>
+              <input type="number" v-model="chunkOverlap" :min="0" :max="500" class="input input-bordered" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Submit Button -->
+      <div class="max-w-2xl mx-auto mb-6">
+        <button
+          type="submit"
+          class="btn btn-accent btn-lg w-full gap-2"
+          :disabled="!pdfFile || loading"
+        >
+          <Icon v-if="!loading" icon="heroicons:arrow-up-tray" class="text-xl" />
+          <span v-if="loading" class="loading loading-spinner"></span>
+          {{ !pdfFile ? 'Select a PDF first' : 'Load PDF' }}
+        </button>
+        <p v-if="!pdfFile" class="text-center text-sm mt-2 opacity-70">
+          Please select a PDF file to upload
+        </p>
+      </div>
+
+      <!-- Output Terminal -->
+      <div v-if="output.length > 0" class="card bg-base-100 shadow-xl max-w-5xl mx-auto">
+        <div class="card-body">
+          <h2 class="card-title">
+            <Icon icon="heroicons:command-line" class="text-xl" />
+            Output
+          </h2>
+          <div class="bg-base-200 rounded-lg p-4 font-mono text-sm">
+            <pre v-for="(line, index) in output" :key="index" class="mb-1">{{ line }}</pre>
+          </div>
+        </div>
+      </div>
+
+    </form>
   </div>
 </template>
-
-<style lang="scss" scoped>
-// Card grid layout - automatically responsive without media queries
-.card-grid {
-  display: grid;
-  // Auto-fit: automatically wraps cards when they don't fit
-  // minmax(320px, 1fr): cards are at least 320px, grow equally to fill space
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-  // Equal height rows - all cards in a row have same height
-  grid-auto-rows: 1fr;
-
-  .card {
-    display: flex;
-    flex-direction: column;
-
-    .card-body {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-    }
-  }
-}
-
-// Submit button section
-.submit-section {
-  max-width: 600px;
-  margin: 0 auto 2rem auto;
-
-  button {
-    width: 100%;
-  }
-}
-
-// Output display area
-.output-card {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.output-area {
-  background-color: var(--dark-bg);
-  color: var(--primary);
-  font-family: 'Courier New', monospace;
-  padding: 1rem;
-  border-radius: 4px;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  min-height: 100px;
-  border: 1px solid var(--dark-alt);
-  line-height: 1.5;
-}
-</style>
