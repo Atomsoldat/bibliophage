@@ -1,0 +1,42 @@
+{
+  "name": "vue-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.10.0",
+    "@connectrpc/connect": "^2.1.0",
+    "@connectrpc/connect-web": "^2.1.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.4",
+    "@mui/material": "^7.3.4",
+    "@popperjs/core": "^2.11.8",
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
+    "lucide-vue-next": "^0.548.0",
+    "vue": "^3.5.22",
+    "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "^1.59.0",
+    "@bufbuild/protoc-gen-es": "^2.10.0",
+    "@iconify/vue": "^5.0.0",
+    "@types/node": "^24.6.0",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.8.1",
+    "sass-embedded": "^1.93.2",
+    "typescript": "~5.9.3",
+    "vite": "npm:rolldown-vite@7.1.14",
+    "vue-tsc": "^3.1.0"
+  },
+  "overrides": {
+    "vite": "npm:rolldown-vite@7.1.14"
+  },
+  "packageManager": "yarn@4.10.3"
+}
