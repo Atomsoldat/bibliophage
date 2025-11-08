@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Icon } from '@iconify/vue'
 
+// TODO: We need to derive most of this from environment variables
 // Form state
 const serverAddress = ref('localhost')
 const serverPort = ref(50051)
