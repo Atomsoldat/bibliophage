@@ -15,8 +15,7 @@ const pdfFile = ref<File | null>(null)
 const loading = ref(false)
 const output = ref<string[]>([])
 
-// File upload handler
-function onFileSelect(event: Event) {
+function handleFileSelect(event: Event) {
   const target = event.target as HTMLInputElement
   if (target.files && target.files.length > 0) {
     pdfFile.value = target.files[0]
@@ -26,8 +25,7 @@ function onFileSelect(event: Event) {
   }
 }
 
-// Form submission handler
-async function handleSubmit() {
+async function handleFormSubmit() {
   if (!pdfFile.value) {
     return
   }
@@ -56,7 +54,16 @@ async function handleSubmit() {
   <div class="max-w-7xl mx-auto">
     <h1 class="text-4xl font-bold mb-8">PDF Upload</h1>
 
-    <form @submit.prevent="handleSubmit">
+    <!-- .prevent is an event modifier -->
+    <!-- see https://vuejs.org/guide/essentials/event-handling.html#event-modifiers -->
+    <!-- it's a short form for event.preventDefault() -->
+    <!-- see https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault -->
+    <!-- preventDefault() prevents the default behaviour of an event -->
+    <!-- that is because we are handling the response to the event ourselves with our event handler -->
+    <!-- normally the submit event on a form would try to make a POST request-->
+    <!-- with the entered values to a specified URL and reload the page-->
+    <!-- see https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/submit_event-->
+    <form @submit.prevent="handleFormSubmit">
       <!-- Card Grid Layout -->
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
 
@@ -96,7 +103,10 @@ async function handleSubmit() {
               <label class="label">
                 <span class="label-text font-semibold">Select PDF</span>
               </label>
-              <input type="file" accept=".pdf" @change="onFileSelect" class="file-input file-input-bordered" />
+              <!-- the @change="ABC" means, that our Vue code executes the handler ABC on change events-->>
+              <!-- see https://vuejs.org/guide/essentials/event-handling.html -->
+              <!-- handlers can also be inline functions -->
+              <input type="file" accept=".pdf" @change="handleFileSelect" class="file-input file-input-bordered" />
             </div>
 
             <div class="form-control">
