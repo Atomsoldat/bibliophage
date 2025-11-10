@@ -4,6 +4,13 @@ import { Icon } from '@iconify/vue'
 
 // TODO: We need to derive most of this from environment variables
 // Form state
+// ref() is a Vue function that returns an object with a single property .value
+// basically a pointer. But the neat thing is that Vue tracks the value of this 
+// object and does stuff in reaction to it changing (they call that "reactive")
+// https://vuejs.org/api/reactivity-core.html#ref
+// using the const keyword instead of var is us saying "we will always be storing the same
+// pointer here, and no other", technically, var could work too, but then someone could reassign the ref
+// and not just the ref's .value property
 const serverAddress = ref('localhost')
 const serverPort = ref(50051)
 const pdfName = ref('')
@@ -11,17 +18,25 @@ const rpgSystem = ref('PATHFINDER_1E')
 const publicationType = ref('BESTIARY')
 const chunkSize = ref(600)
 const chunkOverlap = ref(50)
+// a ref to either a File or null, which we initialise to null
 const pdfFile = ref<File | null>(null)
 const loading = ref(false)
 const output = ref<string[]>([])
 
+// if someone used our file input element to select a file
+// - store that file object (which gives access to data AND metadata of that file) in  pdfFile.value
+// https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement
 function handleFileSelect(event: Event) {
   const target = event.target as HTMLInputElement
   if (target.files && target.files.length > 0) {
-    pdfFile.value = target.files[0]
-    if (!pdfName.value) {
-      pdfName.value = target.files[0].name.replace('.pdf', '')
-    }
+    // in case the first file in the files property is undefined due to whatever reason, set the value to null
+    // ?? works like || execpt that it returns the right side  if the left side is null or undefined 
+    pdfFile.value = target.files[0] ?? null
+    // a?.b means `a` might be undefined or null, but if it isn't, we would like to access `b` 
+    // if b then happens do be undefined, `??` returns a string saying that instead
+    const fileName = target.files[0]?.name ?? 'undefined'
+    // regex replace all case variations of `.pdf` with an empty string
+    pdfName.value = fileName.replace(/\.[pP][dD][fF]/, '')
   }
 }
 
