@@ -2,6 +2,12 @@
 import { ref } from 'vue'
 import { Icon } from '@iconify/vue'
 
+//api stuff
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import { LoadingService } from "../api/api_connect.ts";
+import type { PdfLoadRequest } from "../api/api_pb.ts";
+
 // TODO: We need to derive most of this from environment variables
 // Form state
 // ref() is a Vue function that returns an object with a single property .value
@@ -20,8 +26,15 @@ const chunkSize = ref(600)
 const chunkOverlap = ref(50)
 // a ref to either a File or null, which we initialise to null
 const pdfFile = ref<File | null>(null)
+// if we are loading, we display a cute little animation
 const loading = ref(false)
 const output = ref<string[]>([])
+
+// see https://connectrpc.com/docs/node/using-clients/#connect
+const transport = createConnectTransport({
+  baseUrl: `${serverAddress.value}:${serverPort.value}`,
+});
+const client = createClient(LoadingService, transport);
 
 // if someone used our file input element to select a file
 // - store that file object (which gives access to data AND metadata of that file) in  pdfFile.value
@@ -40,11 +53,18 @@ function handleFileSelect(event: Event) {
   }
 }
 
+// async functions return a promise which other stuff
+// can await, or use then(), finally() and other funny  Promise related functions on
+// we don't do that though 
 async function handleFormSubmit() {
+  // returning settles the promise
+  // if we do not explicitly return a value, we return `undefined`
+  // in that case, the Promise is still considered settled
   if (!pdfFile.value) {
     return
   }
 
+  // show cute loading animation
   loading.value = true
   output.value = []
 
@@ -54,15 +74,33 @@ async function handleFormSubmit() {
   output.value.push(`System: ${rpgSystem.value}`)
   output.value.push(`Type: ${publicationType.value}`)
   output.value.push('')
-  output.value.push('[Connect-RPC integration pending]')
+  
 
-  // TODO: Add actual Connect-RPC call here
-  setTimeout(() => {
-    loading.value = false
-    output.value.push('')
-    output.value.push('Ready for Connect-RPC integration!')
-  }, 1000)
+  try {
+    // Prepare the RPC request
+    const request: PdfLoadRequest = {
+      pdfName: pdfName.value,
+      // TODO: we will probably have to rework the whole RPG system idea, because  hardcoding them into the API seems silly
+      pdfSystem: rpgSystem.value,
+      publicationType: publicationType.value,
+      // TODO: the api (and also the python server) currently does not handle files, and only uses their absolute path
+      fileData: new Uint8Array(await pdfFile.value.arrayBuffer()),
+    };
+
+    // Make the Connect-RPC call (async)
+    const response = await client.loadPDF(request);
+
+    output.value.push("Upload successful!");
+    output.value.push(JSON.stringify(response, null, 2));
+  } catch (error) {
+    // TODO: check if we are correctly handling timeouts
+    output.value.push(`Error during upload: ${(error as Error).message}`);
+  } finally {
+    loading.value = false;
+    output.value.push("");
+  }
 }
+
 </script>
 
 <template>
@@ -210,6 +248,7 @@ async function handleFormSubmit() {
       </div>
 
       <!-- Output Terminal -->
+      <!--If something is in our list of output strings, display it here -->>
       <div v-if="output.length > 0" class="card bg-base-100 shadow-xl max-w-5xl mx-auto">
         <div class="card-body">
           <h2 class="card-title">

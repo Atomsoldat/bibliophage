@@ -4,6 +4,7 @@ package bibliophage;
 
 // Service definitions - the API endpoints
 // RPC method: takes Request, returns Response
+// TODO: We should decide whether we want to use PDF or Pdf
 service LoadingService {
   rpc LoadPDF(PdfLoadRequest) returns (PdfLoadResponse);
 }
