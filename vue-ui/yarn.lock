@@ -89,6 +89,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@connectrpc/connect-web@npm:^1.7.0":
+  version: 1.7.0
+  resolution: "@connectrpc/connect-web@npm:1.7.0"
+  peerDependencies:
+    "@bufbuild/protobuf": ^1.10.0
+    "@connectrpc/connect": 1.7.0
+  checksum: 10c0/3ad4279209a587df7cec1ea0b905058069a73ba23cd271750fac2b3a9e20ee3fd6451fcf27d9920f4f4bb28d8f99dfc6a59a6f8d27c431720cf9134669395b1b
+  languageName: node
+  linkType: hard
+
 "@connectrpc/connect@npm:^1.7.0":
   version: 1.7.0
   resolution: "@connectrpc/connect@npm:1.7.0"
@@ -3178,6 +3188,7 @@ __metadata:
     "@bufbuild/protobuf": "npm:^1.10.1"
     "@bufbuild/protoc-gen-es": "npm:^1.10.1"
     "@connectrpc/connect": "npm:^1.7.0"
+    "@connectrpc/connect-web": "npm:^1.7.0"
     "@connectrpc/protoc-gen-connect-es": "npm:^1.7.0"
     "@iconify/vue": "npm:^5.0.0"
     "@types/node": "npm:^24.10.0"
