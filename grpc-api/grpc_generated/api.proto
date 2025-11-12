@@ -4,7 +4,6 @@ package bibliophage;
 
 // Service definitions - the API endpoints
 // RPC method: takes Request, returns Response
-// TODO: We should decide whether we want to use PDF or Pdf
 service LoadingService {
   rpc LoadPDF(PdfLoadRequest) returns (PdfLoadResponse);
 }
@@ -16,13 +15,16 @@ service DocumentService {
 message PdfLoadRequest {
   string pdf_origin_path = 1; // Filesystem path to the PDF
   string pdf_name = 2; // Human-readable name (e.g., "Monster Manual")
-  RpgSystem pdf_system = 3; // Which RPG system
-  PublicationType pdf_type = 4; // Type of publication
+  string pdf_system = 3; // Which RPG system
+  string pdf_type = 4; // Type of publication
   int32 pdf_page_count = 5; // Number of pages (optional, can be 0)
 
   // Chunking parameters
   optional int32 chunk_size = 6; // Size of text chunks (default: 600)
   optional int32 chunk_overlap = 7; // Overlap between chunks (default: 50)
+
+  // PDF file data
+  bytes file_data = 8;
 }
 
 message DocumentStoreRequest {
@@ -46,22 +48,6 @@ message DocumentStoreResponse {
 
 // enums for strict classification of data,
 // rather than freeform JSON/strings
-enum RpgSystem {
-  RPG_SYSTEM_UNSPECIFIED = 0; // Default/unknown (proto3 requires 0)
-  DND_35 = 1; // D&D 3.5 Edition
-  PATHFINDER_1E = 2; // Pathfinder 1st Edition
-  PATHFINDER_2E = 3; // Pathfinder 2nd Edition
-}
-
-enum PublicationType {
-  PUBLICATION_TYPE_UNSPECIFIED = 0; // Default/unknown
-  CORE_RULEBOOK = 1; // Core rules (PHB, DMG, etc.)
-  BESTIARY = 2; // Monster books
-  SUPPLEMENT = 3; // Additional rules/options
-  ADVENTURE = 4; // Adventure modules/paths
-  SETTING = 5; // Campaign setting books
-}
-
 enum DocumentType {
   DOCUMENT_TYPE_UNSPECIFIED = 0; // Default/unknown
   NOTE = 1; // Least specific, unspecified documents will be turned into this

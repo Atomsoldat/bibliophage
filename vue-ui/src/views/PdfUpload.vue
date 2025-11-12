@@ -6,7 +6,7 @@ import { Icon } from '@iconify/vue'
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { LoadingService } from "../api/api_connect.ts";
-import type { PdfLoadRequest } from "../api/api_pb.ts";
+import { PdfLoadRequest } from "../api/api_pb.ts";
 
 // TODO: We need to derive most of this from environment variables
 // Form state
@@ -78,14 +78,19 @@ async function handleFormSubmit() {
 
   try {
     // Prepare the RPC request
-    const request: PdfLoadRequest = {
-      pdfName: pdfName.value,
-      // TODO: we will probably have to rework the whole RPG system idea, because  hardcoding them into the API seems silly
-      pdfSystem: rpgSystem.value,
-      publicationType: publicationType.value,
-      // TODO: the api (and also the python server) currently does not handle files, and only uses their absolute path
-      fileData: new Uint8Array(await pdfFile.value.arrayBuffer()),
-    };
+    const request = new PdfLoadRequest();
+    request.pdfName = pdfName.value;
+    request.pdfSystem = rpgSystem.value;
+    request.pdfOriginPath = 'dummy';
+    request.pdfType = 'dummy';
+    request.pdfPageCount = 9001;
+    // TODO: this seems to not work at the moment, throws "failed to fetch" error
+    // we probably want to do something like this instead: 
+    // https://stackoverflow.com/questions/34969446/grpc-image-upload/34982660#34982660
+    request.fileData = new Uint8Array(await pdfFile.value.arrayBuffer());
+    // (set chunkSize and chunkOverlap as needed)
+    // TODO: the api (and also the python server) currently does not handle files, and only uses their absolute path
+
 
     // Make the Connect-RPC call (async)
     const response = await client.loadPDF(request);
@@ -231,21 +236,18 @@ async function handleFormSubmit() {
 
       </div>
 
-      <!-- Submit Button -->
-      <div class="max-w-2xl mx-auto mb-6">
-        <button
-          type="submit"
-          class="btn btn-accent btn-lg w-full gap-2"
-          :disabled="!pdfFile || loading"
-        >
-          <Icon v-if="!loading" icon="heroicons:arrow-up-tray" class="text-xl" />
-          <span v-if="loading" class="loading loading-spinner"></span>
-          {{ !pdfFile ? 'Select a PDF first' : 'Load PDF' }}
-        </button>
-        <p v-if="!pdfFile" class="text-center text-sm mt-2 opacity-70">
-          Please select a PDF file to upload
-        </p>
-      </div>
+      <button
+        type="submit"
+        class="btn btn-accent btn-lg w-full gap-2"
+        :disabled="!pdfFile || loading"
+      >
+        <Icon v-if="!loading" icon="heroicons:arrow-up-tray" class="text-xl" />
+        <span v-if="loading" class="loading loading-spinner"></span>
+        {{ !pdfFile ? 'Select a PDF first' : 'Load PDF' }}
+      </button>
+      <p v-if="!pdfFile" class="text-center text-sm mt-2 opacity-70">
+        Please select a PDF file to upload
+      </p>
 
       <!-- Output Terminal -->
       <!--If something is in our list of output strings, display it here -->>

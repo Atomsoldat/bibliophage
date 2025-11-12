@@ -10,102 +10,6 @@ import { Message, proto3 } from "@bufbuild/protobuf";
  * enums for strict classification of data,
  * rather than freeform JSON/strings
  *
- * @generated from enum bibliophage.RpgSystem
- */
-export enum RpgSystem {
-  /**
-   * Default/unknown (proto3 requires 0)
-   *
-   * @generated from enum value: RPG_SYSTEM_UNSPECIFIED = 0;
-   */
-  RPG_SYSTEM_UNSPECIFIED = 0,
-
-  /**
-   * D&D 3.5 Edition
-   *
-   * @generated from enum value: DND_35 = 1;
-   */
-  DND_35 = 1,
-
-  /**
-   * Pathfinder 1st Edition
-   *
-   * @generated from enum value: PATHFINDER_1E = 2;
-   */
-  PATHFINDER_1E = 2,
-
-  /**
-   * Pathfinder 2nd Edition
-   *
-   * @generated from enum value: PATHFINDER_2E = 3;
-   */
-  PATHFINDER_2E = 3,
-}
-// Retrieve enum metadata with: proto3.getEnumType(RpgSystem)
-proto3.util.setEnumType(RpgSystem, "bibliophage.RpgSystem", [
-  { no: 0, name: "RPG_SYSTEM_UNSPECIFIED" },
-  { no: 1, name: "DND_35" },
-  { no: 2, name: "PATHFINDER_1E" },
-  { no: 3, name: "PATHFINDER_2E" },
-]);
-
-/**
- * @generated from enum bibliophage.PublicationType
- */
-export enum PublicationType {
-  /**
-   * Default/unknown
-   *
-   * @generated from enum value: PUBLICATION_TYPE_UNSPECIFIED = 0;
-   */
-  PUBLICATION_TYPE_UNSPECIFIED = 0,
-
-  /**
-   * Core rules (PHB, DMG, etc.)
-   *
-   * @generated from enum value: CORE_RULEBOOK = 1;
-   */
-  CORE_RULEBOOK = 1,
-
-  /**
-   * Monster books
-   *
-   * @generated from enum value: BESTIARY = 2;
-   */
-  BESTIARY = 2,
-
-  /**
-   * Additional rules/options
-   *
-   * @generated from enum value: SUPPLEMENT = 3;
-   */
-  SUPPLEMENT = 3,
-
-  /**
-   * Adventure modules/paths
-   *
-   * @generated from enum value: ADVENTURE = 4;
-   */
-  ADVENTURE = 4,
-
-  /**
-   * Campaign setting books
-   *
-   * @generated from enum value: SETTING = 5;
-   */
-  SETTING = 5,
-}
-// Retrieve enum metadata with: proto3.getEnumType(PublicationType)
-proto3.util.setEnumType(PublicationType, "bibliophage.PublicationType", [
-  { no: 0, name: "PUBLICATION_TYPE_UNSPECIFIED" },
-  { no: 1, name: "CORE_RULEBOOK" },
-  { no: 2, name: "BESTIARY" },
-  { no: 3, name: "SUPPLEMENT" },
-  { no: 4, name: "ADVENTURE" },
-  { no: 5, name: "SETTING" },
-]);
-
-/**
  * @generated from enum bibliophage.DocumentType
  */
 export enum DocumentType {
@@ -184,16 +88,16 @@ export class PdfLoadRequest extends Message<PdfLoadRequest> {
   /**
    * Which RPG system
    *
-   * @generated from field: bibliophage.RpgSystem pdf_system = 3;
+   * @generated from field: string pdf_system = 3;
    */
-  pdfSystem = RpgSystem.RPG_SYSTEM_UNSPECIFIED;
+  pdfSystem = "";
 
   /**
    * Type of publication
    *
-   * @generated from field: bibliophage.PublicationType pdf_type = 4;
+   * @generated from field: string pdf_type = 4;
    */
-  pdfType = PublicationType.PUBLICATION_TYPE_UNSPECIFIED;
+  pdfType = "";
 
   /**
    * Number of pages (optional, can be 0)
@@ -218,6 +122,13 @@ export class PdfLoadRequest extends Message<PdfLoadRequest> {
    */
   chunkOverlap?: number;
 
+  /**
+   * PDF file data
+   *
+   * @generated from field: bytes file_data = 8;
+   */
+  fileData = new Uint8Array(0);
+
   constructor(data?: PartialMessage<PdfLoadRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -228,11 +139,12 @@ export class PdfLoadRequest extends Message<PdfLoadRequest> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "pdf_origin_path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "pdf_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "pdf_system", kind: "enum", T: proto3.getEnumType(RpgSystem) },
-    { no: 4, name: "pdf_type", kind: "enum", T: proto3.getEnumType(PublicationType) },
+    { no: 3, name: "pdf_system", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "pdf_type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "pdf_page_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 6, name: "chunk_size", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
     { no: 7, name: "chunk_overlap", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
+    { no: 8, name: "file_data", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PdfLoadRequest {
