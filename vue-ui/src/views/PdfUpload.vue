@@ -32,7 +32,7 @@ const output = ref<string[]>([])
 
 // see https://connectrpc.com/docs/node/using-clients/#connect
 const transport = createConnectTransport({
-  baseUrl: `${serverAddress.value}:${serverPort.value}`,
+  baseUrl: `http://${serverAddress.value}:${serverPort.value}`,
 });
 const client = createClient(LoadingService, transport);
 
@@ -84,15 +84,16 @@ async function handleFormSubmit() {
     request.pdfOriginPath = 'dummy';
     request.pdfType = 'dummy';
     request.pdfPageCount = 9001;
-    // TODO: this seems to not work at the moment, throws "failed to fetch" error
-    // we probably want to do something like this instead: 
-    // https://stackoverflow.com/questions/34969446/grpc-image-upload/34982660#34982660
+    output.value.push("Loading PDF...");
     request.fileData = new Uint8Array(await pdfFile.value.arrayBuffer());
     // (set chunkSize and chunkOverlap as needed)
-    // TODO: the api (and also the python server) currently does not handle files, and only uses their absolute path
 
 
     // Make the Connect-RPC call (async)
+    output.value.push("Sending Request...");
+    // TODO: the api (and also the python server) currently does not handle files, and only uses their absolute path
+    // we probably want to do something like this instead:
+    // https://stackoverflow.com/questions/34969446/grpc-image-upload/34982660#34982660
     const response = await client.loadPDF(request);
 
     output.value.push("Upload successful!");
