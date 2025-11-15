@@ -23,6 +23,7 @@
     "@iconify/vue": "^5.0.0",
     "@types/node": "^24.10.0",
     "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/devtools": "^8.0.3",
     "@vue/tsconfig": "^0.8.1",
     "autoprefixer": "^10.4.21",
     "daisyui": "^5.3.10",
@@ -33,6 +34,7 @@
     "tailwindcss": "^3",
     "typescript": "^5.9.3",
     "vite": "npm:rolldown-vite@7.1.14",
+    "vite-plugin-vue-devtools": "^8.0.3",
     "vue-tsc": "^3.1.0"
   },
   "overrides": {
