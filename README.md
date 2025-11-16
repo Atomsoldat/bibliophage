@@ -29,6 +29,13 @@ yarn install
 yarn dev
 ```
 
+## Connect RPC API
+
+The components of this service communicate via the Connect RPC protocol
+
+```bash
+make api
+```
 
 ## Database
 PostgreSQL with pgvector at `vectordb.bibliophage.irminsul`, database `vectors`, user `bibliophage`.
