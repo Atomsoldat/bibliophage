@@ -12,8 +12,8 @@ dev = { cmd = [
   "server:api_server",
 ]}
 
-# Generate Python gRPC code from proto file
-generate-proto = { cmd = [
+# Generate Python Connect RPC code from proto file
+api = { cmd = [
   "python", "-m", "grpc_tools.protoc",
   "-I../grpc-api",
   # connect RPC
