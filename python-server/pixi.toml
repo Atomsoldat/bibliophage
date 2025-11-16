@@ -8,16 +8,21 @@ version = "0.1.0"
 [tasks]
 # Run the data-server
 dev = { cmd = [
-  "./server-runscript.sh",
+  "uvicorn",
+  "server:api_server",
 ]}
 
 # Generate Python gRPC code from proto file
 generate-proto = { cmd = [
   "python", "-m", "grpc_tools.protoc",
   "-I../grpc-api",
+  # connect RPC
+  "--connect-python_out=.",
+  # for grpc, which we currently don't use
+  #"--grpc_python_out=.",
+  # this generates the protobuf code
   "--python_out=.",
   "--pyi_out=.",
-  "--grpc_python_out=.",
   "../grpc-api/grpc_generated/api.proto",
 ]}
 
@@ -31,8 +36,16 @@ pypdf = ">=6.1.3,<7"
 grpcio = "==1.71.0"
 grpcio-tools = "==1.71.0"
 grpcio-reflection = "==1.71.0"
+fastapi = ">=0.121.2,<0.122"
+uvicorn = ">=0.38.0,<0.39"
 
 [pypi-dependencies]
 langchain-community = ">=0.3.31, <0.4"
 langchain = ">=0.3.27, <0.4"
 langchain-core = ">=0.3.79, <0.4"
+
+# needed during execution
+connect-python = ">=0.5.0, <0.6"
+# needed for code generation
+protoc-gen-connect-python = ">=0.5.0, <0.6"
+

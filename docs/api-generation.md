@@ -40,6 +40,9 @@ for service_name in api_pb2.DESCRIPTOR.services_by_name:
 
 **tl;dr** all the funny bits in the generated Python files originate from `api.proto`. That's also where we can see what name our services have, if we want to register them for the reflection service (so that `grpcurl` can figure out how our API works). Reflection is some funny voodoo that a client can do with a server to figure out what API endpoints that server has, without needing to previously be made aware of them.
 
+### Connect Protocol Code Generation
+
+- https://github.com/connectrpc/connect-python
 
 
 ## How This all Kind of Sort of Works for Typescript
