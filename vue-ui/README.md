@@ -1,5 +1,17 @@
-# Vue 3 + TypeScript + Vite
+## Web UI for Bibliophage
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+This web application serves as the frontend for our ML related Python services. It is written in Vue.js and Typescript, and uses DaisyUI (which is based on Tailwind CSS) for styling. The communication between the frontend and backend works via Connect RPC.
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+
+
+## Recent NodeJS breakage
+
+Looks like the NodeJS people decided to introduce a change that ends up breaking our vite dev server.
+- https://github.com/nodejs/node/issues/60704
+- https://bbs.archlinux.org/viewtopic.php?id=310171
+
+For now  we work around this by passing the following node option to our vite invocation
+
+```
+NODE_OPTIONS="--no-experimental-webstorage"
+```
