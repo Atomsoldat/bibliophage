@@ -8,8 +8,7 @@ version = "0.1.0"
 [tasks.dev]
 # Run the data-server
 cmd = [
-  "uvicorn",
-  "server:api_server",
+  "./server-runscript.sh"
 ]
 
 [tasks.gen_proto]

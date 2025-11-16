@@ -2,10 +2,6 @@ import os
 import sys
 import logging
 
-from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_postgres.vectorstores import PGVector
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

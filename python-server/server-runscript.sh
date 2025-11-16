@@ -10,6 +10,4 @@ PG_PASSWORD=$(kubectl -n bibliophage get secret db-standard-user -o jsonpath='{.
 #export PG_CONNECTION_STRING="postgresql://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DB_NAME}"
 export PG_CONNECTION_STRING="postgresql+psycopg://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DB_NAME}"
 
-# if we run these using a shebang, we end up with the
-# OS python env, so that's no good
-python server.py
+uvicorn  server:api_server
