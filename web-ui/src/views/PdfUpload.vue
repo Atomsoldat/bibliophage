@@ -5,8 +5,8 @@ import { Icon } from '@iconify/vue'
 //api stuff
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
-import { LoadingService } from "../api/api_connect.ts";
-import { PdfLoadRequest } from "../api/api_pb.ts";
+import { LoadingService } from "../bibliophage/v1alpha1/pdf_connect.ts";
+import { PdfLoadRequest } from "../bibliophage/v1alpha1/pdf_pb.ts";
 
 // TODO: We need to derive most of this from environment variables
 // Form state

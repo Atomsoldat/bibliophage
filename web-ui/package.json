@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "NODE_OPTIONS=--no-experimental-webstorage vite",
-    "api": "protoc --proto_path=../grpc-api/grpc_generated --es_out src/api --es_opt target=ts --connect-es_out src/api --connect-es_opt target=ts ../grpc-api/grpc_generated/api.proto",
+    "api": "protoc --proto_path=../api --es_out ./src --es_opt target=ts --connect-es_out ./src --connect-es_opt target=ts ../api/bibliophage/v1alpha1/*",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "knip": "knip"

@@ -1,5 +1,5 @@
-from grpc_generated.api_connect import LoadingService
-import grpc_generated.api_pb2 as api
+from bibliophage.v1alpha1.pdf_connect import LoadingService
+import bibliophage.v1alpha1.pdf_pb2 as api
 
 # this class implements the interface that our generated connect RPC code defines
 # it does that by having all the methods of the interface class

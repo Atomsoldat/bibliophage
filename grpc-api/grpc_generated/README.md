@@ -1,1 +1,0 @@
-We put this file into a subdirectory here so that the python tooling for protobuf correctly determines the `import ...` statements in the generated Python code

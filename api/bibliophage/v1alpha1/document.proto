@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package bibliophage;
+
+// Service definitions - the API endpoints
+// RPC method: takes Request, returns Response
+service DocumentService {
+  rpc StoreDocument(DocumentStoreRequest) returns (DocumentStoreResponse);
+}
+
+message DocumentStoreRequest {
+  string document_name = 1; // Human-readable name (e.g., "Monster Manual")
+  string content = 2; // raw text content of the document
+  DocumentType document_type = 4; // Type of document
+}
+
+message DocumentStoreResponse {
+  bool success = 1; // Did it work?
+  string message = 2; // Human-readable status/error message
+}
+
+// enums for strict classification of data,
+// rather than freeform JSON/strings
+enum DocumentType {
+  DOCUMENT_TYPE_UNSPECIFIED = 0; // Default/unknown
+  NOTE = 1; // Least specific, unspecified documents will be turned into this
+  LORE_FRAGMENT = 2; // Has some authoritative information
+  CHARACTER = 3; // PCs, NPCs, historical figures, ...
+  LOCATION = 4; // Places
+  OBJECT = 5; // Posessions, Items, Objects, ...
+}

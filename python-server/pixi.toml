@@ -5,27 +5,33 @@ name = "bilbiophage-data-server"
 platforms = ["linux-64"]
 version = "0.1.0"
 
-[tasks]
+[tasks.dev]
 # Run the data-server
-dev = { cmd = [
+cmd = [
   "uvicorn",
   "server:api_server",
-]}
+]
 
-# Generate Python Connect RPC code from proto file
-api = { cmd = [
+[tasks.gen_proto]
+cmd = [
   "python", "-m", "grpc_tools.protoc",
-  "-I../grpc-api",
-  # connect RPC
-  "--connect-python_out=.",
-  # for grpc, which we currently don't use
-  #"--grpc_python_out=.",
-  # this generates the protobuf code
-  "--python_out=.",
-  "--pyi_out=.",
-  "../grpc-api/grpc_generated/api.proto",
-]}
+  "--proto_path=../api",
+  "--connect-python_out=./",
+  "--python_out=./",
+  "--pyi_out=./",
+  "../api/bibliophage/v1alpha1/*.proto"
+]
+description = "Generate protobuf code"
 
+[tasks.touch_inits]
+cmd = [
+  "touch", "bibliophage/__init__.py",
+  "touch", "bibliophage/v1alpha1/__init__.py"
+]
+description = "Create __init__.py files"
+
+[tasks.api]
+depends-on = ["gen_proto", "touch_inits"]
 
 [dependencies]
 python = ">=3.13.9,<3.14"

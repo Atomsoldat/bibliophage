@@ -8,7 +8,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_postgres.vectorstores import PGVector
 
 from fastapi import FastAPI
-from grpc_generated.api_connect import LoadingServiceASGIApplication
+from bibliophage.v1alpha1.pdf_connect import LoadingServiceASGIApplication
 from loading_service_implementation import LoadingServiceImplementation
 
 
