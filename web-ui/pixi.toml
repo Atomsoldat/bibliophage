@@ -1,4 +1,4 @@
-[project]
+[workspace]
 name = "bibliophage-django-ui"
 version = "0.1.0"
 description = "Django web UI for Bibliophage PDF ingestion"
@@ -9,8 +9,8 @@ platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 python = "3.13.*"
 django = "5.0.*"
 
-grpcio = "==1.71.0"
-grpcio-tools = "==1.71.0"
+grpcio = ">=1.71.0,<2"
+grpcio-tools = ">=1.71.0,<2"
 
 [tasks]
 # generate Python gRPC code from proto file

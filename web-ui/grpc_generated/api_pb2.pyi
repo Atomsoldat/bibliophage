@@ -5,22 +5,6 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
-class RpgSystem(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
-    RPG_SYSTEM_UNSPECIFIED: _ClassVar[RpgSystem]
-    DND_35: _ClassVar[RpgSystem]
-    PATHFINDER_1E: _ClassVar[RpgSystem]
-    PATHFINDER_2E: _ClassVar[RpgSystem]
-
-class PublicationType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
-    PUBLICATION_TYPE_UNSPECIFIED: _ClassVar[PublicationType]
-    CORE_RULEBOOK: _ClassVar[PublicationType]
-    BESTIARY: _ClassVar[PublicationType]
-    SUPPLEMENT: _ClassVar[PublicationType]
-    ADVENTURE: _ClassVar[PublicationType]
-    SETTING: _ClassVar[PublicationType]
-
 class DocumentType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
     DOCUMENT_TYPE_UNSPECIFIED: _ClassVar[DocumentType]
@@ -29,16 +13,6 @@ class DocumentType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     CHARACTER: _ClassVar[DocumentType]
     LOCATION: _ClassVar[DocumentType]
     OBJECT: _ClassVar[DocumentType]
-RPG_SYSTEM_UNSPECIFIED: RpgSystem
-DND_35: RpgSystem
-PATHFINDER_1E: RpgSystem
-PATHFINDER_2E: RpgSystem
-PUBLICATION_TYPE_UNSPECIFIED: PublicationType
-CORE_RULEBOOK: PublicationType
-BESTIARY: PublicationType
-SUPPLEMENT: PublicationType
-ADVENTURE: PublicationType
-SETTING: PublicationType
 DOCUMENT_TYPE_UNSPECIFIED: DocumentType
 NOTE: DocumentType
 LORE_FRAGMENT: DocumentType
@@ -47,7 +21,7 @@ LOCATION: DocumentType
 OBJECT: DocumentType
 
 class PdfLoadRequest(_message.Message):
-    __slots__ = ("pdf_origin_path", "pdf_name", "pdf_system", "pdf_type", "pdf_page_count", "chunk_size", "chunk_overlap")
+    __slots__ = ("pdf_origin_path", "pdf_name", "pdf_system", "pdf_type", "pdf_page_count", "chunk_size", "chunk_overlap", "file_data")
     PDF_ORIGIN_PATH_FIELD_NUMBER: _ClassVar[int]
     PDF_NAME_FIELD_NUMBER: _ClassVar[int]
     PDF_SYSTEM_FIELD_NUMBER: _ClassVar[int]
@@ -55,14 +29,16 @@ class PdfLoadRequest(_message.Message):
     PDF_PAGE_COUNT_FIELD_NUMBER: _ClassVar[int]
     CHUNK_SIZE_FIELD_NUMBER: _ClassVar[int]
     CHUNK_OVERLAP_FIELD_NUMBER: _ClassVar[int]
+    FILE_DATA_FIELD_NUMBER: _ClassVar[int]
     pdf_origin_path: str
     pdf_name: str
-    pdf_system: RpgSystem
-    pdf_type: PublicationType
+    pdf_system: str
+    pdf_type: str
     pdf_page_count: int
     chunk_size: int
     chunk_overlap: int
-    def __init__(self, pdf_origin_path: _Optional[str] = ..., pdf_name: _Optional[str] = ..., pdf_system: _Optional[_Union[RpgSystem, str]] = ..., pdf_type: _Optional[_Union[PublicationType, str]] = ..., pdf_page_count: _Optional[int] = ..., chunk_size: _Optional[int] = ..., chunk_overlap: _Optional[int] = ...) -> None: ...
+    file_data: bytes
+    def __init__(self, pdf_origin_path: _Optional[str] = ..., pdf_name: _Optional[str] = ..., pdf_system: _Optional[str] = ..., pdf_type: _Optional[str] = ..., pdf_page_count: _Optional[int] = ..., chunk_size: _Optional[int] = ..., chunk_overlap: _Optional[int] = ..., file_data: _Optional[bytes] = ...) -> None: ...
 
 class DocumentStoreRequest(_message.Message):
     __slots__ = ("document_name", "content", "document_type")

@@ -5,7 +5,7 @@ import warnings
 
 from grpc_generated import api_pb2 as grpc__generated_dot_api__pb2
 
-GRPC_GENERATED_VERSION = '1.71.0'
+GRPC_GENERATED_VERSION = '1.74.1'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
