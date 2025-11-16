@@ -1,1 +1,0 @@
-# PDF Loader Django app
