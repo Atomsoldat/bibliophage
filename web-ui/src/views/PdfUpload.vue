@@ -18,7 +18,7 @@ import { PdfLoadRequest } from "../bibliophage/v1alpha1/pdf_pb.ts";
 // pointer here, and no other", technically, var could work too, but then someone could reassign the ref
 // and not just the ref's .value property
 const serverAddress = ref('localhost')
-const serverPort = ref(50051)
+const serverPort = ref(8000)
 const pdfName = ref('')
 const rpgSystem = ref('PATHFINDER_1E')
 const publicationType = ref('BESTIARY')
