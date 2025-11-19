@@ -10,4 +10,8 @@ PG_PASSWORD=$(kubectl -n bibliophage get secret db-standard-user -o jsonpath='{.
 #export PG_CONNECTION_STRING="postgresql://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DB_NAME}"
 export PG_CONNECTION_STRING="postgresql+psycopg://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DB_NAME}"
 
-uvicorn  server:api_server
+# https://uvicorn.dev/settings/#configuration-methods
+# -- reload enables hot reloading
+uvicorn \
+    --reload \
+    server:api_server
