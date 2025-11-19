@@ -11,6 +11,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_postgres.vectorstores import PGVector
 
+logger = logging.getLogger(__name__)
 
 
 # this class implements the interface that our generated connect RPC code defines
@@ -35,7 +36,7 @@ class LoadingServiceImplementation:
     async def load_p_d_f(self, request: api.PdfLoadRequest, ctx):
 
         # TODO: actually do stuff with the request
-        logging.info(f"Received LoadPdf request for file: {request.pdf_name}")
+        logger.info(f"Received LoadPdf request for file: {request.pdf_name}")
 
         # request will be the PdfLoadRequest from the client
         # we should access the fields in the request and do stuff with it
@@ -44,20 +45,24 @@ class LoadingServiceImplementation:
         pdf_bytes = request.file_data
         
         # store transmitted data in a temporary file
+        # `with` will always run the cleanup functions of the file object we create
+        # https://docs.python.org/3/reference/compound_stmts.html#index-18
         with NamedTemporaryFile(delete=True, suffix=".pdf") as tmp:
             tmp.write(pdf_bytes)
             tmp.flush()
+            logger.info(f'Temporary file information:\n {os.stat(tmp.name)}')
 
-        # https://python.langchain.com/api_reference/community/document_loaders/langchain_community.document_loaders.pdf.PyPDFLoader.html
 
-        # access path on disk and try to  load
-        #loader = PyPDFLoader(request.pdf_origin_path)
-        # use transferred data in request
-        loader = PyPDFLoader(tmp.name)
+            # https://python.langchain.com/api_reference/community/document_loaders/langchain_community.document_loaders.pdf.PyPDFLoader.html
+
+            # access path on disk and try to  load
+            #loader = PyPDFLoader(request.pdf_origin_path)
+            # use transferred data in request
+            loader = PyPDFLoader(tmp.name)
 
         # as far as i know, this loads individual pages
         documents = loader.load()
-        logging.info(f'PDF "documents" loaded: {len(documents)}')
+        logger.info(f'PDF "documents" loaded: {len(documents)}')
 
         chunk_size = request.chunk_size if request.HasField('chunk_size') else 600
         chunk_overlap = request.chunk_overlap if request.HasField('chunk_overlap') else 50

@@ -10,6 +10,15 @@ from bibliophage.v1alpha1.pdf_connect import LoadingServiceASGIApplication
 from loading_service_implementation import LoadingServiceImplementation
 
 
+def configure_logging():
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(levelname)s: %(asctime)s %(name)s  %(message)s',
+        stream=sys.stdout,
+    )
+
+configure_logging()
+
 
 # this is the core of our API application,
 # https://fastapi.tiangolo.com/reference/fastapi/
