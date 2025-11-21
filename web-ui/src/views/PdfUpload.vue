@@ -110,8 +110,9 @@ async function handleFormSubmit() {
 </script>
 
 <template>
-  <!-- Tis is the top level div, we just use that to apply common styling via classes here-->>
-  <!-- mx-auto automatically centers stuff -->
+  <!-- Tis is the top level div, we just use that to apply common styling via classes here-->
+  <!-- m... classes deal with margins (above, below, left and right)-->
+  <!-- mx-auto automatically centers stuff horizontally -->
   <!-- https://v3.tailwindcss.com/docs/margin -->
   <!-- the  max-w-... classes define the max-widht of an element-->
   <!-- 7xl is equivalent to 80rem which is  equivalent to 1280px normally-->
@@ -120,6 +121,7 @@ async function handleFormSubmit() {
   <!-- is this what web developers think about all day? gosh...-->
   <!-- https://v3.tailwindcss.com/docs/max-width  -->
   <div class="max-w-max mx-auto">
+    <!-- mb for spacing underneath heading-->
     <h1 class="text-4xl font-bold mb-8">PDF Upload</h1>
 
     <!-- .prevent is an event modifier -->
@@ -128,12 +130,22 @@ async function handleFormSubmit() {
     <!-- see https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault -->
     <!-- preventDefault() prevents the default behaviour of an event -->
     <!-- that is because we are handling the response to the event ourselves with our event handler -->
+    
+    <!-- all our stuff lives inside the form element  -->
     <!-- normally the submit event on a form would try to make a POST request-->
     <!-- with the entered values to a specified URL and reload the page-->
     <!-- see https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/submit_event-->
     <form @submit.prevent="handleFormSubmit">
+
       <!-- Card Grid Layout -->
+      <!-- default 1 column, with more depending on screen size-->>
+      <!-- gap-... for neat gaps and mb-... for spacing underneath--->
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
+        
+        <!-- The actual cards in here use daisy-ui classes-->
+        <!-- https://daisyui.com/components/card/-->
+        <!-- https://daisyui.com/docs/colors/-->
+
 
         <!-- Server Configuration -->
         <div class="card bg-base-100 shadow-xl">
@@ -246,6 +258,7 @@ async function handleFormSubmit() {
 
       </div>
 
+      <!-- Submit Button-->
       <button
         type="submit"
         class="btn btn-accent btn-lg w-full gap-2"
