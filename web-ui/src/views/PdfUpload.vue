@@ -110,7 +110,16 @@ async function handleFormSubmit() {
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto">
+  <!-- Tis is the top level div, we just use that to apply common styling via classes here-->>
+  <!-- mx-auto automatically centers stuff -->
+  <!-- https://v3.tailwindcss.com/docs/margin -->
+  <!-- the  max-w-... classes define the max-widht of an element-->
+  <!-- 7xl is equivalent to 80rem which is  equivalent to 1280px normally-->
+  <!-- the actual size depends on the root element's font size-->
+  <!-- that way we adapt to the user's font settings -->
+  <!-- is this what web developers think about all day? gosh...-->
+  <!-- https://v3.tailwindcss.com/docs/max-width  -->
+  <div class="max-w-max mx-auto">
     <h1 class="text-4xl font-bold mb-8">PDF Upload</h1>
 
     <!-- .prevent is an event modifier -->
