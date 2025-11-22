@@ -110,7 +110,7 @@ async function handleFormSubmit() {
 </script>
 
 <template>
-  <!-- Tis is the top level div, we just use that to apply common styling via classes here-->
+  <!-- This is the top level div, we just use that to apply common styling via classes here-->
   <!-- m... classes deal with margins (above, below, left and right)-->
   <!-- mx-auto automatically centers stuff horizontally -->
   <!-- https://v3.tailwindcss.com/docs/margin -->
@@ -153,7 +153,9 @@ async function handleFormSubmit() {
 
 
         <!-- Server Configuration -->
-        <div class="card bg-base-100 shadow-xl">
+        <!-- TODO: this should be read from environment vars-->
+        <!-- transport is only instantiated once and the values are unlikely to change-->
+        <div class="card bg-base-200 shadow-xl">
           <div class="card-body">
             <h2 class="card-title text-lg">
               <Icon icon="heroicons:server" class="text-xl" />
@@ -178,7 +180,7 @@ async function handleFormSubmit() {
         </div>
 
         <!-- PDF File -->
-        <div class="card bg-base-100 shadow-xl">
+        <div class="card bg-base-200 shadow-xl">
           <div class="card-body">
             <h2 class="card-title text-lg">
               <Icon icon="heroicons:document" class="text-xl" />
@@ -205,7 +207,7 @@ async function handleFormSubmit() {
         </div>
 
         <!-- Metadata -->
-        <div class="card bg-base-100 shadow-xl">
+        <div class="card bg-base-200 shadow-xl">
           <div class="card-body">
             <h2 class="card-title text-lg">
               <Icon icon="heroicons:tag" class="text-xl" />
@@ -239,7 +241,7 @@ async function handleFormSubmit() {
         </div>
 
         <!-- Chunking Parameters -->
-        <div class="card bg-base-100 shadow-xl">
+        <div class="card bg-base-200 shadow-xl">
           <div class="card-body">
             <h2 class="card-title text-lg">
               <Icon icon="heroicons:adjustments-horizontal" class="text-xl" />
