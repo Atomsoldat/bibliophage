@@ -53,6 +53,19 @@ function handleFileSelect(event: Event) {
   }
 }
 
+function buildPdfLoadRequest(fileData: Uint8Array<ArrayBuffer>): PdfLoadRequest {
+  const req = new PdfLoadRequest();
+  req.pdfName = pdfName.value;
+  req.pdfSystem = rpgSystem.value;
+  req.pdfOriginPath = "dummy";
+  req.pdfType = "dummy";
+  req.pdfPageCount = 9001;
+  req.fileData = fileData;
+
+  // TODO: add chunkSize / chunkOverlap when supported by API
+  return req;
+}
+
 // async functions return a promise which other stuff
 // can await, or use then(), finally() and other funny  Promise related functions on
 // we don't do that though 
@@ -74,26 +87,14 @@ async function handleFormSubmit() {
   output.value.push(`System: ${rpgSystem.value}`)
   output.value.push(`Type: ${publicationType.value}`)
   output.value.push('')
-  
 
   try {
-    // Prepare the RPC request
-    const request = new PdfLoadRequest();
-    request.pdfName = pdfName.value;
-    request.pdfSystem = rpgSystem.value;
-    request.pdfOriginPath = 'dummy';
-    request.pdfType = 'dummy';
-    request.pdfPageCount = 9001;
+    const fileData = new Uint8Array(await pdfFile.value.arrayBuffer());
+    const request = buildPdfLoadRequest(fileData);
     output.value.push("Loading PDF...");
-    request.fileData = new Uint8Array(await pdfFile.value.arrayBuffer());
-    // (set chunkSize and chunkOverlap as needed)
-
 
     // Make the Connect-RPC call (async)
     output.value.push("Sending Request...");
-    // TODO: the api (and also the python server) currently does not handle files, and only uses their absolute path
-    // we probably want to do something like this instead:
-    // https://stackoverflow.com/questions/34969446/grpc-image-upload/34982660#34982660
     const response = await client.loadPDF(request);
 
     output.value.push("Upload successful!");
