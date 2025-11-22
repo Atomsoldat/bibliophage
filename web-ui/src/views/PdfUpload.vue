@@ -138,13 +138,18 @@ async function handleFormSubmit() {
     <form @submit.prevent="handleFormSubmit">
 
       <!-- Card Grid Layout -->
-      <!-- default 1 column, with more depending on screen size-->>
-      <!-- gap-... for neat gaps and mb-... for spacing underneath--->
+      <!-- default 1 column, with more depending on screen size -->>
+      <!-- gap-... for neat gaps and mb-... for spacing underneath -->
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
         
-        <!-- The actual cards in here use daisy-ui classes-->
-        <!-- https://daisyui.com/components/card/-->
-        <!-- https://daisyui.com/docs/colors/-->
+        <!-- The actual cards in here use daisy-ui classes -->
+        <!-- https://daisyui.com/components/card/ -->
+        <!-- https://daisyui.com/docs/colors/ -->
+        
+        <!-- for the shadows https://tailwindcss.com/docs/box-shadow -->
+        <!-- for input elements https://daisyui.com/components/input -->
+        <!-- font weights https://tailwindcss.com/docs/font-weight -->
+        <!-- the font used needs to support them, otherwise they have no effect -->
 
 
         <!-- Server Configuration -->
@@ -159,6 +164,7 @@ async function handleFormSubmit() {
               <label class="label">
                 <span class="label-text font-semibold">Server Address</span>
               </label>
+              <!-- v-model references the vue ref variables we define in our <script> section-->
               <input type="text" v-model="serverAddress" class="input input-bordered" />
             </div>
 
@@ -166,7 +172,7 @@ async function handleFormSubmit() {
               <label class="label">
                 <span class="label-text font-semibold">Server Port</span>
               </label>
-              <input type="number" v-model="serverPort" :min="1" :max="65535" class="input input-bordered" />
+              <input type="number" v-model="serverPort" :min="1" :max="65535" class="input input-bordered"/>
             </div>
           </div>
         </div>
@@ -183,7 +189,7 @@ async function handleFormSubmit() {
               <label class="label">
                 <span class="label-text font-semibold">Select PDF</span>
               </label>
-              <!-- the @change="ABC" means, that our Vue code executes the handler ABC on change events-->>
+              <!-- the @change="ABC" means, that our Vue code executes the handler ABC on change events-->
               <!-- see https://vuejs.org/guide/essentials/event-handling.html -->
               <!-- handlers can also be inline functions -->
               <input type="file" accept=".pdf" @change="handleFileSelect" class="file-input file-input-bordered" />
