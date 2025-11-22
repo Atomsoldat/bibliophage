@@ -13,6 +13,12 @@
 			</button>
 		</router-link>
 
+		<router-link to="/journal">
+			<button class="btn btn-ghost btn-square">
+				<Icon icon="heroicons:pencil-square" class="text-xl" />
+			</button>
+		</router-link>
+
 		<div class="flex-1"></div>
 
 		<!-- Settings at bottom -->

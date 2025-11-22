@@ -13,6 +13,10 @@ const router = createRouter({
 			component: () => import('../views/PdfUpload.vue')
 		},
 		{
+			path: '/journal',
+			component: () => import('../views/Journal.vue')
+		},
+		{
 			path: '/settings',
 			component: () => import('../views/Settings.vue')
 		},
