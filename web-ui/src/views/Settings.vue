@@ -2,13 +2,7 @@
   <div class="max-w-3xl mx-auto">
     <h1 class="text-4xl font-bold mb-8">Settings</h1>
 
-    <div class="card bg-base-200 shadow-xl">
-      <div class="card-body">
-        <h2 class="card-title">
-          <Icon icon="heroicons:paint-brush" class="text-xl" />
-          Appearance
-        </h2>
-
+    <BaseCard title="Appearance" icon="heroicons:paint-brush">
         <div class="flex justify-between items-center py-4">
           <div>
             <label for="darkModeToggle" class="font-semibold">Dark Mode</label>
@@ -22,14 +16,17 @@
             @change="toggleDarkMode"
           />
         </div>
-      </div>
-    </div>
+
+    </BaseCard>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Icon } from '@iconify/vue'
+
+import BaseCard from '../components/BaseCard.vue';
+
 
 const darkMode = ref(true)
 

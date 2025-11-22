@@ -1,3 +1,8 @@
+<script setup lang="ts">
+// import stuff from our  component library
+import Sidebar from './components/Sidebar.vue'
+</script>
+
 <template>
 	<div class="min-h-screen">
 		<Sidebar />
@@ -7,6 +12,3 @@
 	</div>
 </template>
 
-<script setup>
-import Sidebar from './components/Sidebar.vue'
-</script>

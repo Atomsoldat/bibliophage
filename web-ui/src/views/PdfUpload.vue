@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import { Icon } from '@iconify/vue'
 
+import BaseCard from '../components/BaseCard.vue';
+
 //api stuff
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
@@ -139,7 +141,7 @@ async function handleFormSubmit() {
     <form @submit.prevent="handleFormSubmit">
 
       <!-- Card Grid Layout -->
-      <!-- default 1 column, with more depending on screen size -->>
+      <!-- default 1 column, with more depending on screen size -->
       <!-- gap-... for neat gaps and mb-... for spacing underneath -->
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
         
@@ -156,13 +158,8 @@ async function handleFormSubmit() {
         <!-- Server Configuration -->
         <!-- TODO: this should be read from environment vars-->
         <!-- transport is only instantiated once and the values are unlikely to change-->
-        <div class="card bg-base-200 shadow-xl">
-          <div class="card-body">
-            <h2 class="card-title text-lg">
-              <Icon icon="heroicons:server" class="text-xl" />
-              Server Configuration
-            </h2>
-
+        <BaseCard title="Server Configuration" icon="heroicons:server">
+        <!-- rest of the form inputs -->
             <div class="form-control">
               <label class="label">
                 <span class="label-text font-semibold">Server Address</span>
@@ -177,17 +174,10 @@ async function handleFormSubmit() {
               </label>
               <input type="number" v-model="serverPort" :min="1" :max="65535" class="input input-bordered"/>
             </div>
-          </div>
-        </div>
+        </BaseCard>
 
         <!-- PDF File -->
-        <div class="card bg-base-200 shadow-xl">
-          <div class="card-body">
-            <h2 class="card-title text-lg">
-              <Icon icon="heroicons:document" class="text-xl" />
-              PDF File
-            </h2>
-
+        <BaseCard title="PDF File" icon="heroicons:document">
             <div class="form-control">
               <label class="label">
                 <span class="label-text font-semibold">Select PDF</span>
@@ -204,16 +194,10 @@ async function handleFormSubmit() {
               </label>
               <input type="text" v-model="pdfName" class="input input-bordered" />
             </div>
-          </div>
-        </div>
+        </BaseCard>
 
         <!-- Metadata -->
-        <div class="card bg-base-200 shadow-xl">
-          <div class="card-body">
-            <h2 class="card-title text-lg">
-              <Icon icon="heroicons:tag" class="text-xl" />
-              Metadata
-            </h2>
+        <BaseCard title="Metadata" icon="heroicons:tag">
 
             <div class="form-control">
               <label class="label">
@@ -238,17 +222,10 @@ async function handleFormSubmit() {
                 <option value="SETTING">Setting</option>
               </select>
             </div>
-          </div>
-        </div>
+        </BaseCard>
 
         <!-- Chunking Parameters -->
-        <div class="card bg-base-200 shadow-xl">
-          <div class="card-body">
-            <h2 class="card-title text-lg">
-              <Icon icon="heroicons:adjustments-horizontal" class="text-xl" />
-              Chunking Parameters
-            </h2>
-
+        <BaseCard title="Chunking Parameters" icon="heroicons:adjustments-horizontal">
             <div class="form-control">
               <label class="label">
                 <span class="label-text font-semibold">Chunk Size (100-2000)</span>
@@ -262,8 +239,7 @@ async function handleFormSubmit() {
               </label>
               <input type="number" v-model="chunkOverlap" :min="0" :max="500" class="input input-bordered" />
             </div>
-          </div>
-        </div>
+        </BaseCard>
 
       </div>
 
@@ -282,7 +258,7 @@ async function handleFormSubmit() {
       </p>
 
       <!-- Output Terminal -->
-      <!--If something is in our list of output strings, display it here -->>
+      <!--If something is in our list of output strings, display it here -->
       <div v-if="output.length > 0" class="card bg-base-100 shadow-xl max-w-5xl mx-auto">
         <div class="card-body">
           <h2 class="card-title">
