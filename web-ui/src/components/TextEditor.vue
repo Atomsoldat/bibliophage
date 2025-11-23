@@ -41,6 +41,10 @@ const linkUrl = ref('')
 const showLinkInput = ref(false)
 
 // Track active states for buttons
+// computed() means, that the value of these variables is computed
+// based on the function body provided whenever any of the dependencies
+// in the body change
+// https://vuejs.org/guide/essentials/computed.html#computed-properties
 const activeMarks = computed(() => {
   if (!editor) return {}
   return {
@@ -71,6 +75,8 @@ const currentHeading = computed(() => {
   return null
 })
 
+// we use chain() to call multiple commands with one invocation
+// https://tiptap.dev/docs/editor/api/editor#chain
 const setHeading = (level: Level) => {
   editor.value?.chain().focus().toggleHeading({ level }).run()
 }
@@ -97,6 +103,7 @@ const removeLink = () => {
 }
 
 // Image handling
+// TODO: we want to have proper image upload in the future
 const addImage = () => {
   const url = prompt('Enter image URL:')
   if (url) {
