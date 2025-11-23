@@ -5,31 +5,38 @@ import { Editor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from '@tiptap/markdown'
 import Image from '@tiptap/extension-image'
+// we only import this for type checking
+// will not be bundled in final JS
 import type { Level } from '@tiptap/extension-heading'
 
-const props = defineProps({
-  modelValue: {
-    type: String,
-    default: '',
-  },
-  placeholder: {
-    type: String,
-    default: 'Start typing...',
-  },
+// in earlier versions of vue, you had to use defineProps()
+// https://vuejs.org/api/sfc-script-setup.html#defineprops-defineemits
+// and define emits and invoke onUpdate functions to pass values
+// between parent and child; but thats not needed anymore
+// see stuff below
+
+// we can set up multiple variables by invoking defineModel() multiple times
+// https://vuejs.org/api/sfc-script-setup.html#definemodel
+// walliþ nu, gaþankōz"
+// double consontant represented by single laguz
+const defaultContent = defineModel('defaultContent', { type: String, default: "<p>ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ<p>"})
+  
+  
+// until we have instantiated the editor, it might be null
+const editor = ref<Editor | null>(null)
+
+// when this component is mounted (basically when someone wants to see it)
+// we instantiate the editor
+// this is how the Tiptap people do it in their examples and source code
+// https://github.com/ueberdosis/tiptap
+onMounted(() => {
+  editor.value = new Editor({
+    extensions: [StarterKit, Markdown, Image],
+    content: defaultContent.value,
+  })
 })
 
-const emit = defineEmits(['update:modelValue'])
 
-const editor = new Editor({
-    extensions: [StarterKit, Markdown, Image],
-    content: props.modelValue,
-    onUpdate: () => {
-      emit('update:modelValue', editor.getHTML())
-    },
-  })
-
-
-const editorInstance = computed(() => editor)
 const linkUrl = ref('')
 const showLinkInput = ref(false)
 
@@ -37,21 +44,21 @@ const showLinkInput = ref(false)
 const activeMarks = computed(() => {
   if (!editor) return {}
   return {
-    bold: editor.isActive('bold'),
-    italic: editor.isActive('italic'),
-    underline: editor.isActive('underline'),
-    code: editor.isActive('code'),
-    strike: editor.isActive('strike'),
+    bold: editor.value?.isActive('bold'),
+    italic: editor.value?.isActive('italic'),
+    underline: editor.value?.isActive('underline'),
+    code: editor.value?.isActive('code'),
+    strike: editor.value?.isActive('strike'),
   }
 })
 
 const activeBlocks = computed(() => {
   if (!editor) return {}
   return {
-    bulletList: editor.isActive('bulletList'),
-    orderedList: editor.isActive('orderedList'),
-    blockquote: editor.isActive('blockquote'),
-    codeBlock: editor.isActive('codeBlock'),
+    bulletList: editor.value?.isActive('bulletList'),
+    orderedList: editor.value?.isActive('orderedList'),
+    blockquote: editor.value?.isActive('blockquote'),
+    codeBlock: editor.value?.isActive('codeBlock'),
   }
 })
 
@@ -59,33 +66,33 @@ const activeBlocks = computed(() => {
 const currentHeading = computed(() => {
   if (!editor) return null
   for (let level = 1; level <= 6; level++) {
-    if (editor.isActive('heading', { level })) return level
+    if (editor.value?.isActive('heading', { level })) return level
   }
   return null
 })
 
 const setHeading = (level: Level) => {
-  editor?.chain().focus().toggleHeading({ level }).run()
+  editor.value?.chain().focus().toggleHeading({ level }).run()
 }
 
 // Link handling
 const openLinkDialog = () => {
-  const previousUrl = editor?.getAttributes('link').href
+  const previousUrl = editor.value?.getAttributes('link').href
   linkUrl.value = previousUrl || ''
   showLinkInput.value = true
 }
 
 const setLink = () => {
   if (linkUrl.value === '') {
-    editor?.chain().focus().extendMarkRange('link').unsetLink().run()
+    editor.value?.chain().focus().extendMarkRange('link').unsetLink().run()
   } else {
-    editor?.chain().focus().extendMarkRange('link').setLink({ href: linkUrl.value }).run()
+    editor.value?.chain().focus().extendMarkRange('link').setLink({ href: linkUrl.value }).run()
   }
   showLinkInput.value = false
 }
 
 const removeLink = () => {
-  editor?.chain().focus().unsetLink().run()
+  editor.value?.chain().focus().unsetLink().run()
   showLinkInput.value = false
 }
 
@@ -93,40 +100,13 @@ const removeLink = () => {
 const addImage = () => {
   const url = prompt('Enter image URL:')
   if (url) {
-    editor?.chain().focus().setImage({ src: url }).run()
+    editor.value?.chain().focus().setImage({ src: url }).run()
   }
 }
 
-// The initialisation at the beginning of the file should
-// hopefully obviate the need for this
-// Initialize editor
-//onMounted(() => {
-//  editor = new Editor({
-//    extensions: [StarterKit, Markdown, Image],
-//    content: props.modelValue,
-//    onUpdate: () => {
-//      if (editor)
-//      emit('update:modelValue', editor.getHTML())
-//    },
-//  })
-//})
-
-// Watch for external changes to modelValue
-watch(
-  () => props.modelValue,
-  (newValue) => {
-    if (!editor) return
-    const isSame = editor.getHTML() === newValue
-    if (isSame) return
-    editor.commands.setContent(newValue)
-  }
-)
-
 // Cleanup
 onBeforeUnmount(() => {
-  if (editor) {
-    editor.destroy()
-  }
+  editor.value?.destroy()
 })
 </script>
 
@@ -313,9 +293,9 @@ onBeforeUnmount(() => {
     
     <!-- Editor -->
     <div class="border border-t-0 border-base-300 rounded-b-lg overflow-hidden">
-      <editor-content
-        v-if="editorInstance"
-        v-bind:editor="editorInstance"
+      <EditorContent
+        v-if="editor"
+        v-bind:editor="(editor as Editor)"
         class="ProseMirror prose max-w-none focus:outline-none p-4 min-h-96 bg-base-100"
       />
     </div>
