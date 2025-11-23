@@ -71,6 +71,7 @@ function buildPdfLoadRequest(fileData: Uint8Array<ArrayBuffer>): PdfLoadRequest 
 // async functions return a promise which other stuff
 // can await, or use then(), finally() and other funny  Promise related functions on
 // we don't do that though 
+// TODO: It would be splendid, if we could have some kind of progress indicator
 async function handleFormSubmit() {
   // returning settles the promise
   // if we do not explicitly return a value, we return `undefined`
