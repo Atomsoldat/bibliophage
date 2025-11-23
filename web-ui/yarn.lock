@@ -2586,6 +2586,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/markdown@npm:^3.11.0":
+  version: 3.11.0
+  resolution: "@tiptap/markdown@npm:3.11.0"
+  dependencies:
+    marked: "npm:^15.0.12"
+  peerDependencies:
+    "@tiptap/core": ^3.11.0
+    "@tiptap/pm": ^3.11.0
+  checksum: 10c0/275bdd1e8d85208eb9e30dc529d9a87c3e9e51ab30350d0a465c8912c87e2f3381f2af81e28fe64bcb3d78d00122878082aafa3cc24f559e16461c2989e496b9
+  languageName: node
+  linkType: hard
+
 "@tiptap/pm@npm:^3.11.0":
   version: 3.11.0
   resolution: "@tiptap/pm@npm:3.11.0"
@@ -5079,6 +5091,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"marked@npm:^15.0.12":
+  version: 15.0.12
+  resolution: "marked@npm:15.0.12"
+  bin:
+    marked: bin/marked.js
+  checksum: 10c0/e09da211544b787ecfb25fed07af206060bf7cd6d9de6cb123f15c496a57f83b7aabea93340aaa94dae9c94e097ae129377cad6310abc16009590972e85f4212
+  languageName: node
+  linkType: hard
+
 "matcher@npm:^3.0.0":
   version: 3.0.0
   resolution: "matcher@npm:3.0.0"
@@ -7277,15 +7298,21 @@ __metadata:
     "@tailwindcss/vite": "npm:^4.1.17"
     "@tiptap/cli": "npm:^3.3.9"
     "@tiptap/core": "npm:^3.11.0"
+    "@tiptap/extension-document": "npm:^3.11.0"
+    "@tiptap/extension-heading": "npm:^3.11.0"
     "@tiptap/extension-highlight": "npm:^3.11.0"
     "@tiptap/extension-horizontal-rule": "npm:^3.11.0"
     "@tiptap/extension-image": "npm:^3.11.0"
+    "@tiptap/extension-link": "npm:^3.11.0"
     "@tiptap/extension-list": "npm:^3.11.0"
+    "@tiptap/extension-paragraph": "npm:^3.11.0"
     "@tiptap/extension-subscript": "npm:^3.11.0"
     "@tiptap/extension-superscript": "npm:^3.11.0"
+    "@tiptap/extension-text": "npm:^3.11.0"
     "@tiptap/extension-text-align": "npm:^3.11.0"
     "@tiptap/extension-typography": "npm:^3.11.0"
     "@tiptap/extensions": "npm:^3.11.0"
+    "@tiptap/markdown": "npm:^3.11.0"
     "@tiptap/pm": "npm:^3.11.0"
     "@tiptap/react": "npm:^3.11.0"
     "@tiptap/starter-kit": "npm:^3.11.0"
