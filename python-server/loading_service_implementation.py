@@ -36,6 +36,7 @@ class LoadingServiceImplementation:
     )
 
 
+    # TODO: figure out why we can use ctx without a type  here, also we should probably prevent that
     async def load_p_d_f(self, request: api.PdfLoadRequest, ctx):
         try:
             # TODO: actually do stuff with the request

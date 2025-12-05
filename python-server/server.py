@@ -9,6 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from bibliophage.v1alpha1.pdf_connect import LoadingServiceASGIApplication
 from loading_service_implementation import LoadingServiceImplementation
 
+from bibliophage.v1alpha1.document_connect import DocumentServiceASGIApplication
+from document_service_implementation import DocumentServiceImplementation
+
 
 def configure_logging():
     logging.basicConfig(
@@ -27,6 +30,9 @@ configure_logging()
 # import `api_server` and execute `uvicorn.run(api_server)`
 # where uvicorn will look for this object depends on the python path but we are keeping
 # it simple for now and run everything from the same directory
+#TODO: We can make  all kinds of configurations for this API, e.g. 
+# for interactive API documentation
+# https://fastapi.tiangolo.com/reference/fastapi/#fastapi.FastAPI--example
 api_server = FastAPI()
 
 # CORS, so Vue can call the server
@@ -48,17 +54,27 @@ api_server.add_middleware(
 
 # instantiate each of our Service Implementations of the Service Interfaces generated for us
 loading_service = LoadingServiceImplementation()
+document_service = DocumentServiceImplementation()
 
 
 
 # toss our instantiated implementation into the generated wrapper so we don't need to think about
 # how all the communication works
 loading_service_endpoint = LoadingServiceASGIApplication(service=loading_service)
+document_service_endpoint = DocumentServiceASGIApplication(service=document_service)
 
 
 # Apply CORS directly to the mounted app
 loading_service_endpoint_cors = CORSMiddleware(
     app=loading_service_endpoint,
+    allow_origins=["*"],            
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+document_service_endpoint_cors = CORSMiddleware(
+    app=document_service_endpoint,
     allow_origins=["*"],            
     allow_credentials=True,
     allow_methods=["*"],
@@ -78,5 +94,11 @@ loading_service_endpoint_cors = CORSMiddleware(
 api_server.mount(
     loading_service_endpoint.path,
     loading_service_endpoint_cors,
+)
+
+# TODO: is mounting multiple services  done using multiple invocations of mount?
+api_server.mount(
+    document_service_endpoint.path,
+    document_service_endpoint_cors,
 )
 
