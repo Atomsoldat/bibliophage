@@ -4,6 +4,11 @@ import { ref } from 'vue'
 import TextEditor from '../components/TextEditor.vue';
 import BaseCard from '../components/BaseCard.vue';
 
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import { DocumentService } from "../bibliophage/v1alpha1/document_connect.ts";
+import { DocumentStoreRequest } from "../bibliophage/v1alpha1/document_pb.ts"
+
 // technically this is not necessary, because the editor just initialises itself with this
 // string, but apparently we  can end up  with desynchronised variables if we don't override the value
 // of a property with a default value in the child
@@ -13,7 +18,56 @@ import BaseCard from '../components/BaseCard.vue';
 // so that is probably how we would do that
 const editorDefaultContent = ref('<p>ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ<p>')
 
-    
+
+const documentName = ref('i-should-change-for-each-document')
+
+// TODO: we want to put this somewhere global, so we don't have to set this in each view
+const serverAddress = ref('localhost')
+const serverPort = ref(8000)
+
+// see https://connectrpc.com/docs/node/using-clients/#connect
+const transport = createConnectTransport({
+  baseUrl: `http://${serverAddress.value}:${serverPort.value}`,
+});
+const client = createClient(DocumentService, transport);
+
+
+function buildDocumentStoreRequest(stringData: string): DocumentStoreRequest {
+  const req = new DocumentStoreRequest();
+  req.documentName = documentName.value;
+  req.content = stringData;
+
+  return req;
+}
+
+// not part of the API... yet
+//function buildDocumentUpdateRequest(id: Int, stringData: string): DocumentUpdateRequest {
+//  const req = new DocumentUpdateRequest();
+//  req.documentName = documentName.value;
+//  req.id = 999;
+//  req.content = stringData;
+//
+//  return req;
+//}
+
+// if the document is new, send a DocumentStoreRequest
+// TODO: sed some kind of output / user feedback during this
+async function handleDocumentSave() {
+  try {
+    const request = buildDocumentStoreRequest("I am an example string");
+
+    // TODO: do something with the response
+    //const response = await client.loadPDF(request);
+    await client.storeDocument(request);
+
+  } catch (error) {
+  } finally {
+    // stuff
+  }
+}
+
+// TODO: if we are editing an existing doc, send a DocumentUpdateRequest
+//async function handleDocumentSave() {... }
 
 </script>
 
@@ -39,8 +93,11 @@ const editorDefaultContent = ref('<p>ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟ�
       <!-- multiple v-model:variable pairs can be passed-->
       <!-- TODO: make the tile of the editor reflect the Name of the Document being edited -->
       <!-- TODO: Save / Cancel Button-->
-      <BaseCard title="Dynamic Title" icon="heroicons:document-text"
+      <BaseCard v-bind:title="documentName" icon="heroicons:document-text"
       class="col-span-1 md:col-span-2 xl:col-span-3">
+
+      <form @submit.prevent="handleDocumentSave">
+
         <text-editor v-model:defaultContent="editorDefaultContent"/>
 
         <div class="flex center-safe justify-between">
@@ -56,6 +113,7 @@ const editorDefaultContent = ref('<p>ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟ�
             <p>Abort</p>
           </button>
         </div>
+      </form>
       </BaseCard>
     </div>
   </div>
