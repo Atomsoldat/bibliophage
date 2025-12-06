@@ -23,10 +23,12 @@ class LoadingServiceImplementation:
     # PG_CONNECTION_STRING - "postgresql+psycopg://user:pass@localhost:5432/db"
     # Define environment variable names
     env_var_connection_string_name = "PG_CONNECTION_STRING"
-    
+
     # Retrieve environment variables
     if env_var_connection_string_name not in os.environ:
-        logging.error(f"{env_var_connection_string_name} environment variable is not set.")
+        logging.error(
+            f"{env_var_connection_string_name} environment variable is not set."
+        )
         sys.exit(1)
 
     # Initialise vector database connection
@@ -34,7 +36,6 @@ class LoadingServiceImplementation:
         connection=os.getenv(env_var_connection_string_name),
         embeddings=HuggingFaceEmbeddings(model_name="BAAI/bge-large-en-v1.5"),
     )
-
 
     # TODO: figure out why we can use ctx without a type  here, also we should probably prevent that
     async def load_p_d_f(self, request: api.PdfLoadRequest, ctx):
@@ -47,7 +48,7 @@ class LoadingServiceImplementation:
             # like setting metadata
 
             pdf_bytes = request.file_data
-            
+
             # store transmitted data in a temporary file
             # `with` will always run the cleanup functions of the file object we create
             # https://docs.python.org/3/reference/compound_stmts.html#index-18
@@ -55,13 +56,12 @@ class LoadingServiceImplementation:
             with NamedTemporaryFile(delete=True, suffix=".pdf") as tmp:
                 tmp.write(pdf_bytes)
                 tmp.flush()
-                logger.info(f'Temporary file name: {tmp.name}')
-
+                logger.info(f"Temporary file name: {tmp.name}")
 
                 # https://python.langchain.com/api_reference/community/document_loaders/langchain_community.document_loaders.pdf.PyPDFLoader.html
 
                 # access path on disk and try to  load
-                #loader = PyPDFLoader(request.pdf_origin_path)
+                # loader = PyPDFLoader(request.pdf_origin_path)
                 # use transferred data in request
                 loader = PyPDFLoader(tmp.name)
                 documents = loader.load()
@@ -69,8 +69,10 @@ class LoadingServiceImplementation:
             # as far as i know, this loads individual pages
             logger.info(f'PDF "documents" loaded: {len(documents)}')
 
-            chunk_size = request.chunk_size if request.HasField('chunk_size') else 600
-            chunk_overlap = request.chunk_overlap if request.HasField('chunk_overlap') else 50
+            chunk_size = request.chunk_size if request.HasField("chunk_size") else 600
+            chunk_overlap = (
+                request.chunk_overlap if request.HasField("chunk_overlap") else 50
+            )
             # https://python.langchain.com/api_reference/text_splitters/character/langchain_text_splitters.character.RecursiveCharacterTextSplitter.html
             text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=chunk_size, chunk_overlap=chunk_overlap
@@ -89,7 +91,7 @@ class LoadingServiceImplementation:
                 chunk.metadata.update({"page_count": len(documents)})
                 chunk.metadata.update({"chunk_count": len(chunks)})
                 # TODO: uuid/md5sum
-            
+
             # Store Chunks in Vector DB
             self.pgvector.add_documents(chunks)
 

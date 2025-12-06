@@ -16,9 +16,10 @@ from document_service_implementation import DocumentServiceImplementation
 def configure_logging():
     logging.basicConfig(
         level=logging.INFO,
-        format='%(levelname)s: %(asctime)s %(name)s  %(message)s',
+        format="%(levelname)s: %(asctime)s %(name)s  %(message)s",
         stream=sys.stdout,
     )
+
 
 configure_logging()
 
@@ -30,7 +31,7 @@ configure_logging()
 # import `api_server` and execute `uvicorn.run(api_server)`
 # where uvicorn will look for this object depends on the python path but we are keeping
 # it simple for now and run everything from the same directory
-#TODO: We can make  all kinds of configurations for this API, e.g. 
+# TODO: We can make  all kinds of configurations for this API, e.g.
 # for interactive API documentation
 # https://fastapi.tiangolo.com/reference/fastapi/#fastapi.FastAPI--example
 api_server = FastAPI()
@@ -57,7 +58,6 @@ loading_service = LoadingServiceImplementation()
 document_service = DocumentServiceImplementation()
 
 
-
 # toss our instantiated implementation into the generated wrapper so we don't need to think about
 # how all the communication works
 loading_service_endpoint = LoadingServiceASGIApplication(service=loading_service)
@@ -67,7 +67,7 @@ document_service_endpoint = DocumentServiceASGIApplication(service=document_serv
 # Apply CORS directly to the mounted app
 loading_service_endpoint_cors = CORSMiddleware(
     app=loading_service_endpoint,
-    allow_origins=["*"],            
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -75,13 +75,13 @@ loading_service_endpoint_cors = CORSMiddleware(
 
 document_service_endpoint_cors = CORSMiddleware(
     app=document_service_endpoint,
-    allow_origins=["*"],            
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ASGI (Asynchronous Server Gateway Interface) is a python concept for 
+# ASGI (Asynchronous Server Gateway Interface) is a python concept for
 # how web applications can talk to web servers
 # https://asgi.readthedocs.io/en/latest/
 # in this case, Connect RPC uses it as a standard for talking to Connect Servers
@@ -101,4 +101,3 @@ api_server.mount(
     document_service_endpoint.path,
     document_service_endpoint_cors,
 )
-
