@@ -1,0 +1,50 @@
+# .tiltignore - tells Tilt which files to ignore when watching for changes
+# This improves performance by reducing unnecessary file watching
+
+# Version control
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.pixi/
+
+# Node/Yarn
+node_modules/
+.yarn/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vite/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation and notes (won't affect running services)
+docs/
+notes/
+ideas/
+*.md
+README*
+
+# Other
+pdfs/
+werkbank/
+.aider*/
