@@ -34,10 +34,10 @@ const transport = createConnectTransport({
 const client = createClient(DocumentService, transport);
 
 
-function buildDocumentStoreRequest(stringData: string): DocumentStoreRequest {
+function buildDocumentStoreRequest(documentName: string, documentContent: string): DocumentStoreRequest {
   const req = new DocumentStoreRequest();
-  req.documentName = documentName.value;
-  req.content = stringData;
+  req.documentName = documentName;
+  req.content = documentContent;
 
   return req;
 }
@@ -57,7 +57,7 @@ function buildDocumentStoreRequest(stringData: string): DocumentStoreRequest {
 async function handleDocumentSave() {
   try {
     // TODO: if we are editing an existing doc, send a DocumentUpdateRequest
-    const request = buildDocumentStoreRequest("I am an example string");
+    const request = buildDocumentStoreRequest(documentName.value, editorContent.value);
 
     // TODO: do something with the response
     //const response = await client.loadPDF(request);
