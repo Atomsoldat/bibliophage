@@ -89,10 +89,22 @@ class DocumentServiceImplementation:
         logger.info("Received SearchDocumentsRequest")
 
         # TODO: Implement actual document search
+        # When implementing, create DocumentListItem instances with snippets:
+        # snippet = full_content[:200] + "..." if len(full_content) > 200 else full_content
+        # list_item = api.DocumentListItem(
+        #     id=doc.id,
+        #     name=doc.name,
+        #     content_snippet=snippet,
+        #     type=doc.type,
+        #     created_at=doc.created_at,
+        #     updated_at=doc.updated_at,
+        #     tags=doc.tags,
+        #     character_count=doc.character_count
+        # )
         return api.SearchDocumentsResponse(
             success=False,
             message="Search not yet implemented",
-            documents=[],
+            documents=[],  # This will be a list of DocumentListItem, not Document
             total_count=0,
             page_number=request.page_number,
             has_more=False,

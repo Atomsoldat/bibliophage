@@ -17,6 +17,7 @@ service PdfService {
 // ============================================================================
 
 // Pdf represents a PDF document in the system
+// Does not actually contain the raw data, only metadata
 message Pdf {
   // Unique identifier for this PDF (assigned by the system)
   string id = 1;
@@ -49,6 +50,45 @@ message Pdf {
   int32 chunk_count = 10;
 
   // Structured tags for organization (name + multiple values)
+  repeated Tag tags = 11;
+}
+
+// PdfListItem represents a PDF in list/search results
+// Contains metadata only - never includes the actual PDF file data
+// Structurally identical to Pdf, but semantically distinct for search responses
+// This separation ensures future changes to search results don't affect other operations
+message PdfListItem {
+  // Unique identifier for this PDF
+  string id = 1;
+
+  // Human-readable name
+  string name = 2;
+
+  // Which RPG system this belongs to
+  string system = 3;
+
+  // Type of publication
+  string type = 4;
+
+  // Number of pages in the PDF
+  int32 page_count = 5;
+
+  // Original filesystem path (where it was loaded from)
+  string origin_path = 6;
+
+  // When this PDF was first loaded into the system
+  google.protobuf.Timestamp created_at = 7;
+
+  // When this PDF was last updated
+  google.protobuf.Timestamp updated_at = 8;
+
+  // File size in bytes
+  int64 file_size = 9;
+
+  // Number of chunks this PDF was split into
+  int32 chunk_count = 10;
+
+  // Structured tags for organization
   repeated Tag tags = 11;
 }
 
@@ -120,8 +160,9 @@ message SearchPdfsResponse {
   // Human-readable status/error message
   string message = 2;
 
-  // Array of matching PDFs
-  repeated Pdf pdfs = 3;
+  // Array of matching PDF metadata (never includes file_data)
+  // To retrieve full PDF content, use GetPdf RPC with the PDF ID
+  repeated PdfListItem pdfs = 3;
 
   // Total number of results (for pagination)
   int32 total_count = 4;

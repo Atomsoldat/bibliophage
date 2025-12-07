@@ -128,10 +128,24 @@ class LoadingServiceImplementation:
         logger.info("Received SearchPdfsRequest")
 
         # TODO: Implement actual PDF search
+        # When implementing, create PdfListItem instances from Pdf metadata:
+        # list_item = api.PdfListItem(
+        #     id=pdf.id,
+        #     name=pdf.name,
+        #     system=pdf.system,
+        #     type=pdf.type,
+        #     page_count=pdf.page_count,
+        #     origin_path=pdf.origin_path,
+        #     created_at=pdf.created_at,
+        #     updated_at=pdf.updated_at,
+        #     file_size=pdf.file_size,
+        #     chunk_count=pdf.chunk_count,
+        #     tags=pdf.tags
+        # )
         return api.SearchPdfsResponse(
             success=False,
             message="Search not yet implemented",
-            pdfs=[],
+            pdfs=[],  # This will be a list of PdfListItem, not Pdf
             total_count=0,
             page_number=request.page_size if request.page_number else 0,
             has_more=False,

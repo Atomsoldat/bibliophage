@@ -19,6 +19,11 @@ service DocumentService {
 // ============================================================================
 
 // Document represents a text document in the system
+// this type actually contains the raw data it represents
+// which is different from  how we handle PDFs
+// the rationale here is that text documents are probably
+// not as large as full blown PDFs, and then we do not have
+// to worry about keeping server and client synchronised
 message Document {
   // Unique identifier for this document (assigned by the system)
   string id = 1;
@@ -42,6 +47,37 @@ message Document {
   repeated Tag tags = 7;
 
   // Character count (for display purposes)
+  int32 character_count = 8;
+}
+
+// DocumentListItem represents a document in list/search results
+// Contains metadata and a content snippet, but not the full content
+// This enforces bandwidth efficiency - clients cannot request full content in searches
+message DocumentListItem {
+  // Unique identifier for this document
+  string id = 1;
+
+  // Human-readable name
+  string name = 2;
+
+  // Short excerpt from the content (max ~200 characters)
+  // May be empty if the document has no content
+  // Use GetDocument RPC to retrieve full content
+  string content_snippet = 3;
+
+  // Type of document
+  DocumentType type = 4;
+
+  // When this document was created
+  google.protobuf.Timestamp created_at = 5;
+
+  // When this document was last updated
+  google.protobuf.Timestamp updated_at = 6;
+
+  // Structured tags for organization
+  repeated Tag tags = 7;
+
+  // Character count of full document (not the snippet)
   int32 character_count = 8;
 }
 
@@ -147,8 +183,9 @@ message SearchDocumentsResponse {
   // Human-readable status/error message
   string message = 2;
 
-  // Array of matching documents
-  repeated Document documents = 3;
+  // Array of matching document summaries (with snippets, not full content)
+  // To retrieve full content, use GetDocument RPC with the document ID
+  repeated DocumentListItem documents = 3;
 
   // Total number of results (for pagination)
   int32 total_count = 4;

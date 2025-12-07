@@ -33,6 +33,32 @@ class Pdf(_message.Message):
     tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
     def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., system: _Optional[str] = ..., type: _Optional[str] = ..., page_count: _Optional[int] = ..., origin_path: _Optional[str] = ..., created_at: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., file_size: _Optional[int] = ..., chunk_count: _Optional[int] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ...) -> None: ...
 
+class PdfListItem(_message.Message):
+    __slots__ = ("id", "name", "system", "type", "page_count", "origin_path", "created_at", "updated_at", "file_size", "chunk_count", "tags")
+    ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    SYSTEM_FIELD_NUMBER: _ClassVar[int]
+    TYPE_FIELD_NUMBER: _ClassVar[int]
+    PAGE_COUNT_FIELD_NUMBER: _ClassVar[int]
+    ORIGIN_PATH_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
+    FILE_SIZE_FIELD_NUMBER: _ClassVar[int]
+    CHUNK_COUNT_FIELD_NUMBER: _ClassVar[int]
+    TAGS_FIELD_NUMBER: _ClassVar[int]
+    id: str
+    name: str
+    system: str
+    type: str
+    page_count: int
+    origin_path: str
+    created_at: _timestamp_pb2.Timestamp
+    updated_at: _timestamp_pb2.Timestamp
+    file_size: int
+    chunk_count: int
+    tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., system: _Optional[str] = ..., type: _Optional[str] = ..., page_count: _Optional[int] = ..., origin_path: _Optional[str] = ..., created_at: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., file_size: _Optional[int] = ..., chunk_count: _Optional[int] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ...) -> None: ...
+
 class LoadPdfRequest(_message.Message):
     __slots__ = ("pdf", "file_data", "chunking_config")
     PDF_FIELD_NUMBER: _ClassVar[int]
@@ -89,11 +115,11 @@ class SearchPdfsResponse(_message.Message):
     HAS_MORE_FIELD_NUMBER: _ClassVar[int]
     success: bool
     message: str
-    pdfs: _containers.RepeatedCompositeFieldContainer[Pdf]
+    pdfs: _containers.RepeatedCompositeFieldContainer[PdfListItem]
     total_count: int
     page_number: int
     has_more: bool
-    def __init__(self, success: bool = ..., message: _Optional[str] = ..., pdfs: _Optional[_Iterable[_Union[Pdf, _Mapping]]] = ..., total_count: _Optional[int] = ..., page_number: _Optional[int] = ..., has_more: bool = ...) -> None: ...
+    def __init__(self, success: bool = ..., message: _Optional[str] = ..., pdfs: _Optional[_Iterable[_Union[PdfListItem, _Mapping]]] = ..., total_count: _Optional[int] = ..., page_number: _Optional[int] = ..., has_more: bool = ...) -> None: ...
 
 class GetPdfRequest(_message.Message):
     __slots__ = ("id",)
