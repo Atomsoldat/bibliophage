@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { Icon } from '@iconify/vue'
 import { Editor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
@@ -110,6 +110,15 @@ const addImage = () => {
     editor.value?.chain().focus().setImage({ src: url }).run()
   }
 }
+
+// Expose methods that parent components can call
+defineExpose({
+  // Reset editor content to a specific value (or back to default)
+  resetContent(passedContent?: string) {
+    const newContent = passedContent ?? defaultContent.value
+    editor.value?.commands.setContent(newContent)
+  }
+})
 
 // Cleanup
 onBeforeUnmount(() => {

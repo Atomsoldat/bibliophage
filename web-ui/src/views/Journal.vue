@@ -1,8 +1,7 @@
 i<script setup lang="ts">
 import { ref } from 'vue'
 
-import TextEditor from '../components/TextEditor.vue';
-import BaseCard from '../components/BaseCard.vue';
+import TextEditorCard from '../components/TextEditorCard.vue';
 
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
@@ -17,7 +16,10 @@ import { DocumentStoreRequest } from "../bibliophage/v1alpha1/document_pb.ts"
 // besides, we will probably want to pass some string into an editor, e.g.  when editing an existing note
 // so that is probably how we would do that
 const editorDefaultContent = ref('<p>ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ<p>')
+const editorContent = ref('Verschwindibus')
 
+// Template ref to access the TextEditorCard component instance
+const editorCardRef = ref<InstanceType<typeof TextEditorCard> | null>(null)
 
 const documentName = ref('i-should-change-for-each-document')
 
@@ -54,6 +56,7 @@ function buildDocumentStoreRequest(stringData: string): DocumentStoreRequest {
 // TODO: sed some kind of output / user feedback during this
 async function handleDocumentSave() {
   try {
+    // TODO: if we are editing an existing doc, send a DocumentUpdateRequest
     const request = buildDocumentStoreRequest("I am an example string");
 
     // TODO: do something with the response
@@ -61,13 +64,23 @@ async function handleDocumentSave() {
     await client.storeDocument(request);
 
   } catch (error) {
+    // this should also do stuff
   } finally {
     // stuff
   }
 }
 
-// TODO: if we are editing an existing doc, send a DocumentUpdateRequest
-//async function handleDocumentSave() {... }
+async function handleDocumentAbort() {
+  try {
+    // Reset the editor to the default content
+    editorCardRef.value?.resetEditor(editorDefaultContent.value)
+  } catch (error) {
+    // what could happen here, that we would  want to catch?
+  } finally {
+    // stuff
+  }
+}
+
 
 </script>
 
@@ -81,7 +94,7 @@ async function handleDocumentSave() {
     <!-- Drag and Drop Notes to establish hierarchies? Or is that too easy to mess up? Maybe have a button for that-->
 
 
-    
+
     <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
       <!-- v-model basically means -->
       <!--"The child component gets passed this variable-->
@@ -91,30 +104,14 @@ async function handleDocumentSave() {
       <!-- https://vuejs.org/api/sfc-script-setup.html#definemodel-->
       <!-- directly putting an HTML string in here was annoying, hence variable -->
       <!-- multiple v-model:variable pairs can be passed-->
-      <!-- TODO: make the tile of the editor reflect the Name of the Document being edited -->
-      <!-- TODO: Save / Cancel Button-->
-      <BaseCard v-bind:title="documentName" icon="heroicons:document-text"
-      class="col-span-1 md:col-span-2 xl:col-span-3">
-
-      <form @submit.prevent="handleDocumentSave">
-
-        <text-editor v-model:defaultContent="editorDefaultContent"/>
-
-        <div class="flex center-safe justify-between">
-          <!--TODO: make these buttons do something-->
-          <button
-            type="submit"
-            class="btn btn-primary btn-lg w-fit gap-2 justify-items-start">
-            <p>Save</p>
-          </button>
-          <button
-            type="reset"
-            class="btn btn-error btn-lg w-fit gap-2 justify-items-end">
-            <p>Abort</p>
-          </button>
-        </div>
-      </form>
-      </BaseCard>
+      <TextEditorCard
+        ref="editorCardRef"
+        v-model:content="editorContent"
+        :title="documentName"
+        icon="heroicons:document-text"
+        @save="handleDocumentSave"
+        @abort="handleDocumentAbort"
+      />
     </div>
   </div>
 </template>
