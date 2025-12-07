@@ -5,8 +5,6 @@ import traceback
 import uuid
 from datetime import datetime, timezone
 
-import os
-import sys
 from tempfile import NamedTemporaryFile
 
 from langchain_community.document_loaders import PyPDFLoader
@@ -15,28 +13,33 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_postgres.vectorstores import PGVector
 from google.protobuf import timestamp_pb2
 
+from config import get_settings
+
 logger = logging.getLogger(__name__)
 
 
 # this class implements the interface that our generated connect RPC code defines
 # it does that by having all the methods of the interface class
 class LoadingServiceImplementation:
-    # PG_CONNECTION_STRING - "postgresql+psycopg://user:pass@localhost:5432/db"
-    # Define environment variable names
-    env_var_connection_string_name = "PG_CONNECTION_STRING"
+    def __init__(self):
+        """Initialize the loading service with configuration from environment variables."""
+        settings = get_settings()
 
-    # Retrieve environment variables
-    if env_var_connection_string_name not in os.environ:
-        logging.error(
-            f"{env_var_connection_string_name} environment variable is not set."
+        # Initialise vector database connection
+        # collection_name creates a separate table for our embeddings
+        # pre_delete_collection=False means we keep existing data
+        self.pgvector = PGVector(
+            connection=str(settings.database.vector_db_url),
+            embeddings=HuggingFaceEmbeddings(model_name=settings.embedding.embedding_model_name),
+            # we could store our embeddings in separate tables per use case
+            # that would make searching across all information more complex
+            # until we can figure  out a use case for that, i think we should
+            # skip it
+            #collection_name="pdf_chunks",
+            
+            # whether the collection should be recreated each time
+            pre_delete_collection=False,
         )
-        sys.exit(1)
-
-    # Initialise vector database connection
-    pgvector = PGVector(
-        connection=os.getenv(env_var_connection_string_name),
-        embeddings=HuggingFaceEmbeddings(model_name="BAAI/bge-large-en-v1.5"),
-    )
 
     # TODO: figure out why we can use ctx without a type  here, also we should probably prevent that
     async def load_pdf(self, request: api.LoadPdfRequest, ctx):

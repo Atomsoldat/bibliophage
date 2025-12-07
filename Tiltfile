@@ -20,6 +20,12 @@ local_resource(
     resource_deps=['postgres-pgvector', 'postgres-documentdb', 'ferretdb'],
     serve_env={
         'PYTHONUNBUFFERED': '1',  # Ensure logs appear immediately
+        # Database connections (12-factor: config from environment)
+        'VECTOR_DB_URL': 'postgresql+psycopg://pgvector:pgvector_dev@localhost:5432/pgvector',
+        'DOC_DB_URL': 'mongodb://localhost:27017/',
+        # Optional: override defaults
+        # 'EMBEDDING_MODEL_NAME': 'BAAI/bge-large-en-v1.5',
+        # 'LOG_LEVEL': 'INFO',
     },
     # do these make sense?
     #links=[
