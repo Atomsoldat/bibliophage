@@ -5,8 +5,8 @@ import TextEditorCard from '../components/TextEditorCard.vue';
 
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
-import { DocumentService } from "../bibliophage/v1alpha1/document_connect.ts";
-import { DocumentStoreRequest } from "../bibliophage/v1alpha1/document_pb.ts"
+import { DocumentService } from "../bibliophage/v1alpha2/document_connect.ts";
+import { StoreDocumentRequest, Document, DocumentType } from "../bibliophage/v1alpha2/document_pb.ts"
 
 // technically this is not necessary, because the editor just initialises itself with this
 // string, but apparently we  can end up  with desynchronised variables if we don't override the value
@@ -34,10 +34,19 @@ const transport = createConnectTransport({
 const client = createClient(DocumentService, transport);
 
 
-function buildDocumentStoreRequest(documentName: string, documentContent: string): DocumentStoreRequest {
-  const req = new DocumentStoreRequest();
-  req.documentName = documentName;
-  req.content = documentContent;
+function buildDocumentStoreRequest(documentName: string, documentContent: string): StoreDocumentRequest {
+  // Create the document object
+  const document = new Document({
+    name: documentName,
+    content: documentContent,
+    type: DocumentType.NOTE, // Default to NOTE type
+    tags: [], // Empty tags for now
+  });
+
+  // Create the request with the document
+  const req = new StoreDocumentRequest({
+    document: document,
+  });
 
   return req;
 }

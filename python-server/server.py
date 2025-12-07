@@ -6,10 +6,10 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from bibliophage.v1alpha1.pdf_connect import LoadingServiceASGIApplication
+from bibliophage.v1alpha2.pdf_connect import PdfServiceASGIApplication
 from loading_service_implementation import LoadingServiceImplementation
 
-from bibliophage.v1alpha1.document_connect import DocumentServiceASGIApplication
+from bibliophage.v1alpha2.document_connect import DocumentServiceASGIApplication
 from document_service_implementation import DocumentServiceImplementation
 
 
@@ -54,19 +54,19 @@ api_server.add_middleware(
 
 
 # instantiate each of our Service Implementations of the Service Interfaces generated for us
-loading_service = LoadingServiceImplementation()
+pdf_service = LoadingServiceImplementation()
 document_service = DocumentServiceImplementation()
 
 
 # toss our instantiated implementation into the generated wrapper so we don't need to think about
 # how all the communication works
-loading_service_endpoint = LoadingServiceASGIApplication(service=loading_service)
+pdf_service_endpoint = PdfServiceASGIApplication(service=pdf_service)
 document_service_endpoint = DocumentServiceASGIApplication(service=document_service)
 
 
 # Apply CORS directly to the mounted app
-loading_service_endpoint_cors = CORSMiddleware(
-    app=loading_service_endpoint,
+pdf_service_endpoint_cors = CORSMiddleware(
+    app=pdf_service_endpoint,
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
@@ -92,8 +92,8 @@ document_service_endpoint_cors = CORSMiddleware(
 
 # mount the ConnectRPC wrapped application
 api_server.mount(
-    loading_service_endpoint.path,
-    loading_service_endpoint_cors,
+    pdf_service_endpoint.path,
+    pdf_service_endpoint_cors,
 )
 
 # TODO: is mounting multiple services  done using multiple invocations of mount?

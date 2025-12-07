@@ -4,7 +4,7 @@ import TextEditor from './TextEditor.vue'
 import BaseCard from './BaseCard.vue'
 
 // Props for card configuration
-const props = defineProps<{
+defineProps<{
   title: string
   icon?: string
 }>()
