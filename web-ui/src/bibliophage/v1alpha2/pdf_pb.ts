@@ -9,6 +9,7 @@ import { SortOrder, Tag, TagFilter } from "./common_pb.js";
 
 /**
  * Pdf represents a PDF document in the system
+ * Does not actually contain the raw data, only metadata
  *
  * @generated from message bibliophage.v1alpha2.Pdf
  */
@@ -125,6 +126,130 @@ export class Pdf extends Message<Pdf> {
 
   static equals(a: Pdf | PlainMessage<Pdf> | undefined, b: Pdf | PlainMessage<Pdf> | undefined): boolean {
     return proto3.util.equals(Pdf, a, b);
+  }
+}
+
+/**
+ * PdfListItem represents a PDF in list/search results
+ * Contains metadata only - never includes the actual PDF file data
+ * Structurally identical to Pdf, but semantically distinct for search responses
+ * This separation ensures future changes to search results don't affect other operations
+ *
+ * @generated from message bibliophage.v1alpha2.PdfListItem
+ */
+export class PdfListItem extends Message<PdfListItem> {
+  /**
+   * Unique identifier for this PDF
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * Human-readable name
+   *
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * Which RPG system this belongs to
+   *
+   * @generated from field: string system = 3;
+   */
+  system = "";
+
+  /**
+   * Type of publication
+   *
+   * @generated from field: string type = 4;
+   */
+  type = "";
+
+  /**
+   * Number of pages in the PDF
+   *
+   * @generated from field: int32 page_count = 5;
+   */
+  pageCount = 0;
+
+  /**
+   * Original filesystem path (where it was loaded from)
+   *
+   * @generated from field: string origin_path = 6;
+   */
+  originPath = "";
+
+  /**
+   * When this PDF was first loaded into the system
+   *
+   * @generated from field: google.protobuf.Timestamp created_at = 7;
+   */
+  createdAt?: Timestamp;
+
+  /**
+   * When this PDF was last updated
+   *
+   * @generated from field: google.protobuf.Timestamp updated_at = 8;
+   */
+  updatedAt?: Timestamp;
+
+  /**
+   * File size in bytes
+   *
+   * @generated from field: int64 file_size = 9;
+   */
+  fileSize = protoInt64.zero;
+
+  /**
+   * Number of chunks this PDF was split into
+   *
+   * @generated from field: int32 chunk_count = 10;
+   */
+  chunkCount = 0;
+
+  /**
+   * Structured tags for organization
+   *
+   * @generated from field: repeated bibliophage.v1alpha2.Tag tags = 11;
+   */
+  tags: Tag[] = [];
+
+  constructor(data?: PartialMessage<PdfListItem>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha2.PdfListItem";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "system", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "page_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 6, name: "origin_path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "created_at", kind: "message", T: Timestamp },
+    { no: 8, name: "updated_at", kind: "message", T: Timestamp },
+    { no: 9, name: "file_size", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 10, name: "chunk_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 11, name: "tags", kind: "message", T: Tag, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PdfListItem {
+    return new PdfListItem().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): PdfListItem {
+    return new PdfListItem().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): PdfListItem {
+    return new PdfListItem().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: PdfListItem | PlainMessage<PdfListItem> | undefined, b: PdfListItem | PlainMessage<PdfListItem> | undefined): boolean {
+    return proto3.util.equals(PdfListItem, a, b);
   }
 }
 
@@ -404,11 +529,12 @@ export class SearchPdfsResponse extends Message<SearchPdfsResponse> {
   message = "";
 
   /**
-   * Array of matching PDFs
+   * Array of matching PDF metadata (never includes file_data)
+   * To retrieve full PDF content, use GetPdf RPC with the PDF ID
    *
-   * @generated from field: repeated bibliophage.v1alpha2.Pdf pdfs = 3;
+   * @generated from field: repeated bibliophage.v1alpha2.PdfListItem pdfs = 3;
    */
-  pdfs: Pdf[] = [];
+  pdfs: PdfListItem[] = [];
 
   /**
    * Total number of results (for pagination)
@@ -441,7 +567,7 @@ export class SearchPdfsResponse extends Message<SearchPdfsResponse> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "pdfs", kind: "message", T: Pdf, repeated: true },
+    { no: 3, name: "pdfs", kind: "message", T: PdfListItem, repeated: true },
     { no: 4, name: "total_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 5, name: "page_number", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 6, name: "has_more", kind: "scalar", T: 8 /* ScalarType.BOOL */ },

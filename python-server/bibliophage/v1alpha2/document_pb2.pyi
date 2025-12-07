@@ -47,6 +47,26 @@ class Document(_message.Message):
     character_count: int
     def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., content: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., created_at: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ...) -> None: ...
 
+class DocumentListItem(_message.Message):
+    __slots__ = ("id", "name", "content_snippet", "type", "created_at", "updated_at", "tags", "character_count")
+    ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    CONTENT_SNIPPET_FIELD_NUMBER: _ClassVar[int]
+    TYPE_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_FIELD_NUMBER: _ClassVar[int]
+    UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
+    TAGS_FIELD_NUMBER: _ClassVar[int]
+    CHARACTER_COUNT_FIELD_NUMBER: _ClassVar[int]
+    id: str
+    name: str
+    content_snippet: str
+    type: DocumentType
+    created_at: _timestamp_pb2.Timestamp
+    updated_at: _timestamp_pb2.Timestamp
+    tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
+    character_count: int
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., content_snippet: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., created_at: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ...) -> None: ...
+
 class StoreDocumentRequest(_message.Message):
     __slots__ = ("document",)
     DOCUMENT_FIELD_NUMBER: _ClassVar[int]
@@ -123,11 +143,11 @@ class SearchDocumentsResponse(_message.Message):
     HAS_MORE_FIELD_NUMBER: _ClassVar[int]
     success: bool
     message: str
-    documents: _containers.RepeatedCompositeFieldContainer[Document]
+    documents: _containers.RepeatedCompositeFieldContainer[DocumentListItem]
     total_count: int
     page_number: int
     has_more: bool
-    def __init__(self, success: bool = ..., message: _Optional[str] = ..., documents: _Optional[_Iterable[_Union[Document, _Mapping]]] = ..., total_count: _Optional[int] = ..., page_number: _Optional[int] = ..., has_more: bool = ...) -> None: ...
+    def __init__(self, success: bool = ..., message: _Optional[str] = ..., documents: _Optional[_Iterable[_Union[DocumentListItem, _Mapping]]] = ..., total_count: _Optional[int] = ..., page_number: _Optional[int] = ..., has_more: bool = ...) -> None: ...
 
 class DeleteDocumentRequest(_message.Message):
     __slots__ = ("id",)

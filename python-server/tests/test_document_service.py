@@ -147,7 +147,11 @@ async def test_get_document_not_implemented(document_service):
 
 @pytest.mark.asyncio
 async def test_search_documents_not_implemented(document_service):
-    """Test that search_documents returns empty results."""
+    """Test that search_documents returns empty results.
+
+    Note: response.documents will be a list of DocumentListItem (not Document)
+    when this is fully implemented.
+    """
     request = api.SearchDocumentsRequest(
         name_query="test",
         page_size=10,

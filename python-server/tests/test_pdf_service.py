@@ -84,12 +84,15 @@ def test_search_pdfs_request_structure():
 
 
 def test_search_pdfs_response_structure():
-    """Test that SearchPdfsResponse can be constructed properly."""
-    pdf1 = api.Pdf()
+    """Test that SearchPdfsResponse can be constructed properly.
+
+    Note: This now uses PdfListItem instead of Pdf for the pdfs field.
+    """
+    pdf1 = api.PdfListItem()
     pdf1.id = "pdf-1"
     pdf1.name = "PDF 1"
 
-    pdf2 = api.Pdf()
+    pdf2 = api.PdfListItem()
     pdf2.id = "pdf-2"
     pdf2.name = "PDF 2"
 

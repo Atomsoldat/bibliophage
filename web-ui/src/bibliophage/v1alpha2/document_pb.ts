@@ -83,6 +83,11 @@ proto3.util.setEnumType(DocumentType, "bibliophage.v1alpha2.DocumentType", [
 
 /**
  * Document represents a text document in the system
+ * this type actually contains the raw data it represents
+ * which is different from  how we handle PDFs
+ * the rationale here is that text documents are probably
+ * not as large as full blown PDFs, and then we do not have
+ * to worry about keeping server and client synchronised
  *
  * @generated from message bibliophage.v1alpha2.Document
  */
@@ -175,6 +180,107 @@ export class Document extends Message<Document> {
 
   static equals(a: Document | PlainMessage<Document> | undefined, b: Document | PlainMessage<Document> | undefined): boolean {
     return proto3.util.equals(Document, a, b);
+  }
+}
+
+/**
+ * DocumentListItem represents a document in list/search results
+ * Contains metadata and a content snippet, but not the full content
+ * This enforces bandwidth efficiency - clients cannot request full content in searches
+ *
+ * @generated from message bibliophage.v1alpha2.DocumentListItem
+ */
+export class DocumentListItem extends Message<DocumentListItem> {
+  /**
+   * Unique identifier for this document
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * Human-readable name
+   *
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * Short excerpt from the content (max ~200 characters)
+   * May be empty if the document has no content
+   * Use GetDocument RPC to retrieve full content
+   *
+   * @generated from field: string content_snippet = 3;
+   */
+  contentSnippet = "";
+
+  /**
+   * Type of document
+   *
+   * @generated from field: bibliophage.v1alpha2.DocumentType type = 4;
+   */
+  type = DocumentType.DOCUMENT_TYPE_UNSPECIFIED;
+
+  /**
+   * When this document was created
+   *
+   * @generated from field: google.protobuf.Timestamp created_at = 5;
+   */
+  createdAt?: Timestamp;
+
+  /**
+   * When this document was last updated
+   *
+   * @generated from field: google.protobuf.Timestamp updated_at = 6;
+   */
+  updatedAt?: Timestamp;
+
+  /**
+   * Structured tags for organization
+   *
+   * @generated from field: repeated bibliophage.v1alpha2.Tag tags = 7;
+   */
+  tags: Tag[] = [];
+
+  /**
+   * Character count of full document (not the snippet)
+   *
+   * @generated from field: int32 character_count = 8;
+   */
+  characterCount = 0;
+
+  constructor(data?: PartialMessage<DocumentListItem>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha2.DocumentListItem";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "content_snippet", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "type", kind: "enum", T: proto3.getEnumType(DocumentType) },
+    { no: 5, name: "created_at", kind: "message", T: Timestamp },
+    { no: 6, name: "updated_at", kind: "message", T: Timestamp },
+    { no: 7, name: "tags", kind: "message", T: Tag, repeated: true },
+    { no: 8, name: "character_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DocumentListItem {
+    return new DocumentListItem().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DocumentListItem {
+    return new DocumentListItem().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DocumentListItem {
+    return new DocumentListItem().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DocumentListItem | PlainMessage<DocumentListItem> | undefined, b: DocumentListItem | PlainMessage<DocumentListItem> | undefined): boolean {
+    return proto3.util.equals(DocumentListItem, a, b);
   }
 }
 
@@ -586,11 +692,12 @@ export class SearchDocumentsResponse extends Message<SearchDocumentsResponse> {
   message = "";
 
   /**
-   * Array of matching documents
+   * Array of matching document summaries (with snippets, not full content)
+   * To retrieve full content, use GetDocument RPC with the document ID
    *
-   * @generated from field: repeated bibliophage.v1alpha2.Document documents = 3;
+   * @generated from field: repeated bibliophage.v1alpha2.DocumentListItem documents = 3;
    */
-  documents: Document[] = [];
+  documents: DocumentListItem[] = [];
 
   /**
    * Total number of results (for pagination)
@@ -623,7 +730,7 @@ export class SearchDocumentsResponse extends Message<SearchDocumentsResponse> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "documents", kind: "message", T: Document, repeated: true },
+    { no: 3, name: "documents", kind: "message", T: DocumentListItem, repeated: true },
     { no: 4, name: "total_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 5, name: "page_number", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 6, name: "has_more", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
