@@ -1,9 +1,9 @@
-from bibliophage.v1alpha1.pdf_connect import LoadingService
-import bibliophage.v1alpha1.pdf_pb2 as api
+import bibliophage.v1alpha2.pdf_pb2 as api
 
 import logging
 import traceback
-import inspect
+import uuid
+from datetime import datetime, timezone
 
 import os
 import sys
@@ -13,6 +13,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_postgres.vectorstores import PGVector
+from google.protobuf import timestamp_pb2
 
 logger = logging.getLogger(__name__)
 
@@ -38,12 +39,12 @@ class LoadingServiceImplementation:
     )
 
     # TODO: figure out why we can use ctx without a type  here, also we should probably prevent that
-    async def load_p_d_f(self, request: api.PdfLoadRequest, ctx):
+    async def load_pdf(self, request: api.LoadPdfRequest, ctx):
         try:
             # TODO: actually do stuff with the request
-            logger.info(f"Received LoadPdf request for file: {request.pdf_name}")
+            logger.info(f"Received LoadPdf request for file: {request.pdf.name}")
 
-            # request will be the PdfLoadRequest from the client
+            # request will be the LoadPdfRequest from the client
             # we should access the fields in the request and do stuff with it
             # like setting metadata
 
@@ -61,7 +62,7 @@ class LoadingServiceImplementation:
                 # https://python.langchain.com/api_reference/community/document_loaders/langchain_community.document_loaders.pdf.PyPDFLoader.html
 
                 # access path on disk and try to  load
-                # loader = PyPDFLoader(request.pdf_origin_path)
+                # loader = PyPDFLoader(request.pdf.origin_path)
                 # use transferred data in request
                 loader = PyPDFLoader(tmp.name)
                 documents = loader.load()
@@ -69,10 +70,9 @@ class LoadingServiceImplementation:
             # as far as i know, this loads individual pages
             logger.info(f'PDF "documents" loaded: {len(documents)}')
 
-            chunk_size = request.chunk_size if request.HasField("chunk_size") else 600
-            chunk_overlap = (
-                request.chunk_overlap if request.HasField("chunk_overlap") else 50
-            )
+            chunk_size = request.chunking_config.chunk_size if request.HasField("chunking_config") and request.chunking_config.chunk_size > 0 else 600
+            chunk_overlap = request.chunking_config.chunk_overlap if request.HasField("chunking_config") and request.chunking_config.chunk_overlap > 0 else 50
+
             # https://python.langchain.com/api_reference/text_splitters/character/langchain_text_splitters.character.RecursiveCharacterTextSplitter.html
             text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=chunk_size, chunk_overlap=chunk_overlap
@@ -84,10 +84,10 @@ class LoadingServiceImplementation:
             # TODO: we probably just want to have a separate, regular table containing the origin information and
             # then we can reference that table
             for chunk in chunks:
-                chunk.metadata.update({"source": request.pdf_origin_path})
-                chunk.metadata.update({"origin_path": request.pdf_origin_path})
-                chunk.metadata.update({"system": request.pdf_system})
-                chunk.metadata.update({"type": request.pdf_type})
+                chunk.metadata.update({"source": request.pdf.origin_path})
+                chunk.metadata.update({"origin_path": request.pdf.origin_path})
+                chunk.metadata.update({"system": request.pdf.system})
+                chunk.metadata.update({"type": request.pdf.type})
                 chunk.metadata.update({"page_count": len(documents)})
                 chunk.metadata.update({"chunk_count": len(chunks)})
                 # TODO: uuid/md5sum
@@ -95,14 +95,55 @@ class LoadingServiceImplementation:
             # Store Chunks in Vector DB
             self.pgvector.add_documents(chunks)
 
-            # when that's done, we return a PdfLoadResponse
-            return api.PdfLoadResponse(
+            # Create response with stored PDF metadata
+            stored_pdf = api.Pdf()
+            stored_pdf.CopyFrom(request.pdf)
+            stored_pdf.id = str(uuid.uuid4())
+            stored_pdf.page_count = len(documents)
+            stored_pdf.chunk_count = len(chunks)
+            stored_pdf.file_size = len(pdf_bytes)
+
+            # Set timestamps
+            now = timestamp_pb2.Timestamp()
+            now.FromDatetime(datetime.now(timezone.utc))
+            stored_pdf.created_at.CopyFrom(now)
+            stored_pdf.updated_at.CopyFrom(now)
+
+            # when that's done, we return a LoadPdfResponse
+            return api.LoadPdfResponse(
                 success=True,
-                message=f"PDF {request.pdf_name} loaded successfully",
-                chunks_created=len(chunks),
+                message=f"PDF {request.pdf.name} loaded successfully",
+                # Returning the pdf here makes no sense to me
+                pdf=stored_pdf,
                 # TODO: uuid/md5sum
                 # document_id="some-uuid"
             )
         except Exception as e:
             logger.error(f"Exception: {e}\n{traceback.format_exc()}")
             raise
+
+    async def search_pdfs(
+        self, request: api.SearchPdfsRequest, ctx
+    ) -> api.SearchPdfsResponse:
+        logger.info("Received SearchPdfsRequest")
+
+        # TODO: Implement actual PDF search
+        return api.SearchPdfsResponse(
+            success=False,
+            message="Search not yet implemented",
+            pdfs=[],
+            total_count=0,
+            page_number=request.page_size if request.page_number else 0,
+            has_more=False,
+        )
+
+    async def get_pdf(
+        self, request: api.GetPdfRequest, ctx
+    ) -> api.GetPdfResponse:
+        logger.info(f"Received GetPdfRequest for ID: {request.id}")
+
+        # TODO: Implement actual PDF retrieval
+        return api.GetPdfResponse(
+            success=False,
+            message="PDF retrieval not yet implemented",
+        )

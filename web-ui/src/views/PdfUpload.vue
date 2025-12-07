@@ -7,8 +7,8 @@ import BaseCard from '../components/BaseCard.vue';
 //api stuff
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
-import { LoadingService } from "../bibliophage/v1alpha1/pdf_connect.ts";
-import { PdfLoadRequest } from "../bibliophage/v1alpha1/pdf_pb.ts";
+import { PdfService } from "../bibliophage/v1alpha2/pdf_connect.ts";
+import { LoadPdfRequest, Pdf, ChunkingConfig } from "../bibliophage/v1alpha2/pdf_pb.ts";
 
 // TODO: We need to derive most of this from environment variables
 // Form state
@@ -36,7 +36,7 @@ const output = ref<string[]>([])
 const transport = createConnectTransport({
   baseUrl: `http://${serverAddress.value}:${serverPort.value}`,
 });
-const client = createClient(LoadingService, transport);
+const client = createClient(PdfService, transport);
 
 // if someone used our file input element to select a file
 // - store that file object (which gives access to data AND metadata of that file) in  pdfFile.value
@@ -55,16 +55,29 @@ function handleFileSelect(event: Event) {
   }
 }
 
-function buildPdfLoadRequest(fileData: Uint8Array<ArrayBuffer>): PdfLoadRequest {
-  const req = new PdfLoadRequest();
-  req.pdfName = pdfName.value;
-  req.pdfSystem = rpgSystem.value;
-  req.pdfOriginPath = "dummy";
-  req.pdfType = "dummy";
-  req.pdfPageCount = 9001;
-  req.fileData = fileData;
+function buildPdfLoadRequest(fileData: Uint8Array<ArrayBuffer>): LoadPdfRequest {
+  // Create the PDF metadata object
+  const pdf = new Pdf({
+    name: pdfName.value,
+    system: rpgSystem.value,
+    type: publicationType.value,
+    originPath: "web-upload", // Mark as uploaded via web interface
+    tags: [], // Empty tags for now - could be extended in the future
+  });
 
-  // TODO: add chunkSize / chunkOverlap when supported by API
+  // Create chunking configuration
+  const chunkingConfig = new ChunkingConfig({
+    chunkSize: chunkSize.value,
+    chunkOverlap: chunkOverlap.value,
+  });
+
+  // Create the request
+  const req = new LoadPdfRequest({
+    pdf: pdf,
+    fileData: fileData,
+    chunkingConfig: chunkingConfig,
+  });
+
   return req;
 }
 
@@ -98,10 +111,13 @@ async function handleFormSubmit() {
 
     // Make the Connect-RPC call (async)
     output.value.push("Sending Request...");
-    const response = await client.loadPDF(request);
+    const response = await client.loadPdf(request);
 
     output.value.push("Upload successful!");
-    output.value.push(JSON.stringify(response, null, 2));
+    output.value.push(`PDF ID: ${response.pdf?.id}`);
+    output.value.push(`Pages: ${response.pdf?.pageCount}`);
+    output.value.push(`Chunks: ${response.pdf?.chunkCount}`);
+    output.value.push(`File Size: ${response.pdf?.fileSize} bytes`);
   } catch (error) {
     // TODO: check if we are correctly handling timeouts
     output.value.push(`Error during upload: ${(error as Error).message}`);
