@@ -1,0 +1,176 @@
+syntax = "proto3";
+
+package bibliophage.v1alpha2;
+
+import "google/protobuf/timestamp.proto";
+import "bibliophage/v1alpha2/common.proto";
+
+// Service definitions - the API endpoints
+service DocumentService {
+  rpc StoreDocument(StoreDocumentRequest) returns (StoreDocumentResponse);
+  rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse);
+  rpc UpdateDocument(UpdateDocumentRequest) returns (UpdateDocumentResponse);
+  rpc SearchDocuments(SearchDocumentsRequest) returns (SearchDocumentsResponse);
+  rpc DeleteDocument(DeleteDocumentRequest) returns (DeleteDocumentResponse);
+}
+
+// ============================================================================
+// Data Objects - Reusable entities that represent core domain models
+// ============================================================================
+
+// Document represents a text document in the system
+message Document {
+  // Unique identifier for this document (assigned by the system)
+  string id = 1;
+
+  // Human-readable name (e.g., "My Campaign Notes", "NPC: Elara Brightwood")
+  string name = 2;
+
+  // Raw text content of the document
+  string content = 3;
+
+  // Type of document (categorization)
+  DocumentType type = 4;
+
+  // When this document was created
+  google.protobuf.Timestamp created_at = 5;
+
+  // When this document was last updated
+  google.protobuf.Timestamp updated_at = 6;
+
+  // Structured tags for organization (name + multiple values)
+  repeated Tag tags = 7;
+
+  // Character count (for display purposes)
+  int32 character_count = 8;
+}
+
+// Enums for strict classification of data
+enum DocumentType {
+  DOCUMENT_TYPE_UNSPECIFIED = 0; // Default/unknown
+  NOTE = 1; // General notes, least specific
+  LORE_FRAGMENT = 2; // Authoritative lore/world information
+  CHARACTER = 3; // PCs, NPCs, historical figures
+  LOCATION = 4; // Places, regions, buildings
+  OBJECT = 5; // Possessions, items, artifacts
+  QUEST = 6; // Quests, missions, plot hooks
+  SESSION_LOG = 7; // Session summaries, game logs
+}
+
+// ============================================================================
+// Request/Response Messages - Operation-specific wrappers
+// ============================================================================
+
+// StoreDocumentRequest - Create a new document
+message StoreDocumentRequest {
+  // The document to store (ID will be assigned by server)
+  Document document = 1;
+}
+
+// StoreDocumentResponse - Result of storing a document
+message StoreDocumentResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // The stored document with assigned ID
+  Document document = 3;
+}
+
+// GetDocumentRequest - Retrieve a specific document by ID
+message GetDocumentRequest {
+  // The unique ID of the document to retrieve
+  string id = 1;
+}
+
+// GetDocumentResponse - Result of getting a document
+message GetDocumentResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // The requested document (null if not found)
+  optional Document document = 3;
+}
+
+// UpdateDocumentRequest - Update an existing document
+message UpdateDocumentRequest {
+  // The document to update (must include ID)
+  Document document = 1;
+}
+
+// UpdateDocumentResponse - Result of updating a document
+message UpdateDocumentResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // The updated document
+  Document document = 3;
+}
+
+// SearchDocumentsRequest - Search for documents by various criteria
+message SearchDocumentsRequest {
+  // Search by name (partial match, case-insensitive)
+  optional string name_query = 1;
+
+  // Search by content (partial match, case-insensitive)
+  optional string content_query = 2;
+
+  // Filter by type (exact match)
+  optional DocumentType type_filter = 3;
+
+  // Filter by tags (documents must match ALL specified tag filters)
+  // Example: [{"name": "genre", "value": "fantasy"}, {"name": "tone", "value": "dark"}]
+  // would match documents that have both genre=fantasy AND tone=dark
+  repeated TagFilter tag_filters = 4;
+
+  // Pagination
+  int32 page_size = 5; // Max results to return (default: 50)
+  int32 page_number = 6; // Which page of results (0-indexed)
+
+  // Sorting (UPDATED_AT_ASC/DESC can be added to common.proto if needed)
+  SortOrder sort_order = 7;
+}
+
+// SearchDocumentsResponse - Results of document search
+message SearchDocumentsResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // Array of matching documents
+  repeated Document documents = 3;
+
+  // Total number of results (for pagination)
+  int32 total_count = 4;
+
+  // Current page number
+  int32 page_number = 5;
+
+  // Whether there are more pages
+  bool has_more = 6;
+}
+
+// DeleteDocumentRequest - Delete a document by ID
+message DeleteDocumentRequest {
+  // The unique ID of the document to delete
+  string id = 1;
+}
+
+// DeleteDocumentResponse - Result of deleting a document
+message DeleteDocumentResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+}

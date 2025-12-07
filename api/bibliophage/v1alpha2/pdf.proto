@@ -1,0 +1,152 @@
+syntax = "proto3";
+
+package bibliophage.v1alpha2;
+
+import "google/protobuf/timestamp.proto";
+import "bibliophage/v1alpha2/common.proto";
+
+// Service definitions - the API endpoints
+service PdfService {
+  rpc LoadPdf(LoadPdfRequest) returns (LoadPdfResponse);
+  rpc SearchPdfs(SearchPdfsRequest) returns (SearchPdfsResponse);
+  rpc GetPdf(GetPdfRequest) returns (GetPdfResponse);
+}
+
+// ============================================================================
+// Data Objects - Reusable entities that represent core domain models
+// ============================================================================
+
+// Pdf represents a PDF document in the system
+message Pdf {
+  // Unique identifier for this PDF (assigned by the system)
+  string id = 1;
+
+  // Human-readable name (e.g., "Monster Manual", "Player's Handbook")
+  string name = 2;
+
+  // Which RPG system this belongs to (e.g., "D&D 5e", "Pathfinder 2e")
+  string system = 3;
+
+  // Type of publication (e.g., "Core Rulebook", "Adventure", "Supplement")
+  string type = 4;
+
+  // Number of pages in the PDF
+  int32 page_count = 5;
+
+  // Original filesystem path (where it was loaded from)
+  string origin_path = 6;
+
+  // When this PDF was first loaded into the system
+  google.protobuf.Timestamp created_at = 7;
+
+  // When this PDF was last updated
+  google.protobuf.Timestamp updated_at = 8;
+
+  // File size in bytes
+  int64 file_size = 9;
+
+  // Number of chunks this PDF was split into
+  int32 chunk_count = 10;
+
+  // Structured tags for organization (name + multiple values)
+  repeated Tag tags = 11;
+}
+
+// ============================================================================
+// Request/Response Messages - Operation-specific wrappers
+// ============================================================================
+
+// LoadPdfRequest - Load a PDF into the system
+message LoadPdfRequest {
+  // The PDF document metadata to load
+  Pdf pdf = 1;
+
+  // The actual PDF file data (bytes)
+  bytes file_data = 2;
+
+  // Chunking configuration (optional parameters)
+  ChunkingConfig chunking_config = 3;
+}
+
+// Configuration for text chunking
+message ChunkingConfig {
+  // Size of text chunks (default: 600)
+  int32 chunk_size = 1;
+
+  // Overlap between chunks (default: 50)
+  int32 chunk_overlap = 2;
+}
+
+// LoadPdfResponse - Result of loading a PDF
+message LoadPdfResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // The loaded PDF with assigned ID and metadata
+  Pdf pdf = 3;
+}
+
+// SearchPdfsRequest - Search for PDFs by various criteria
+message SearchPdfsRequest {
+  // Search by title (partial match, case-insensitive)
+  optional string title_query = 1;
+
+  // Filter by system (exact match)
+  optional string system_filter = 2;
+
+  // Filter by type (exact match)
+  optional string type_filter = 3;
+
+  // Filter by tags (PDFs must match ALL specified tag filters)
+  // Example: [{"name": "genre", "value": "fantasy"}, {"name": "campaign", "value": "storm-kings-thunder"}]
+  repeated TagFilter tag_filters = 4;
+
+  // Pagination
+  int32 page_size = 5; // Max results to return (default: 50)
+  int32 page_number = 6; // Which page of results (0-indexed)
+
+  // Sorting (PAGE_COUNT_ASC/DESC can be added to common.proto if needed)
+  SortOrder sort_order = 7;
+}
+
+// SearchPdfsResponse - Results of PDF search
+message SearchPdfsResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // Array of matching PDFs
+  repeated Pdf pdfs = 3;
+
+  // Total number of results (for pagination)
+  int32 total_count = 4;
+
+  // Current page number
+  int32 page_number = 5;
+
+  // Whether there are more pages
+  bool has_more = 6;
+}
+
+// GetPdfRequest - Retrieve a specific PDF by ID
+message GetPdfRequest {
+  // The unique ID of the PDF to retrieve
+  string id = 1;
+}
+
+// GetPdfResponse - Result of getting a PDF
+message GetPdfResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // The requested PDF (null if not found)
+  optional Pdf pdf = 3;
+}
