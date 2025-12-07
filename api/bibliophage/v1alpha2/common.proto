@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package bibliophage.v1alpha2;
+
+// ============================================================================
+// Common Data Objects - Shared entities used across multiple services
+// ============================================================================
+
+// Tag represents a named category with multiple values
+// Example: {"name": "genre", "values": ["adventure", "fantasy", "noire"]}
+message Tag {
+  // Name of the tag (e.g., "genre", "world", "category", "tone")
+  string name = 1;
+
+  // Values associated with this tag
+  repeated string values = 2;
+}
+
+// TagFilter represents a filter for tag-based searches
+// Matches items where tag.name == name AND any value in tag.values matches value
+message TagFilter {
+  // Name of the tag to filter on (e.g., "genre", "campaign")
+  string name = 1;
+
+  // Value to match within the tag (e.g., "fantasy", "core-rules")
+  string value = 2;
+}
+
+// SortOrder defines common sorting options
+enum SortOrder {
+  SORT_ORDER_UNSPECIFIED = 0; // Default sorting
+  NAME_ASC = 1;
+  NAME_DESC = 2;
+  CREATED_AT_ASC = 3;
+  CREATED_AT_DESC = 4;
+}

@@ -18,14 +18,16 @@ cmd = [
   "--connect-python_out=./",
   "--python_out=./",
   "--pyi_out=./",
-  "../api/bibliophage/v1alpha1/*.proto"
+  "../api/bibliophage/v1alpha2/*.proto"
 ]
 description = "Generate protobuf code"
 
 [tasks.touch_inits]
 cmd = [
-  "touch", "bibliophage/__init__.py",
-  "touch", "bibliophage/v1alpha1/__init__.py"
+  "touch",
+  "bibliophage/__init__.py",
+  "bibliophage/v1alpha1/__init__.py",
+  "bibliophage/v1alpha2/__init__.py"
 ]
 description = "Create __init__.py files"
 
