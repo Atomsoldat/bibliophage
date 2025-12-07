@@ -1,3 +1,11 @@
+# Database services via Docker Compose
+docker_compose('docker-compose.yaml')
+
+# Configure database resources
+dc_resource('postgres-pgvector', labels=['databases'])
+dc_resource('postgres-documentdb', labels=['databases'])
+dc_resource('ferretdb', labels=['databases'])
+
 local_resource(
     'backend',
     serve_cmd='cd python-server && pixi run dev',
@@ -9,8 +17,7 @@ local_resource(
     #    'python-server/bibliophage/',
     #],
     labels=['app'],
-    # if we later want to handle databases via tilt
-    # resource_deps=['postgres'],
+    resource_deps=['postgres-pgvector', 'postgres-documentdb', 'ferretdb'],
     serve_env={
         'PYTHONUNBUFFERED': '1',  # Ensure logs appear immediately
     },
@@ -42,6 +49,14 @@ local_resource(
     cmd='cd python-server && pixi run api && cd ../web-ui && yarn api',
     deps=['api/bibliophage/'],
     auto_init=False,  # Don't run automatically on startup
+    trigger_mode=TRIGGER_MODE_MANUAL,
+    labels=['tools'],
+)
+
+local_resource(
+    'nuke everything',
+    cmd='docker compose down -v',
+    auto_init=False,
     trigger_mode=TRIGGER_MODE_MANUAL,
     labels=['tools'],
 )
