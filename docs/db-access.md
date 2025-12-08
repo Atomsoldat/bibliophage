@@ -1,4 +1,17 @@
-## How to access the databases of the development environment
+## Accessing the local development container databases
+
+
+FerretDB
+```bash
+mongosh mongodb://postgres:ferretdb_dev@localhost:27017/
+```
+
+pgVector
+```bash
+psql postgresql://pgvector:pgvector_dev@localhost/pgvector
+```
+
+## How to access the databases of the kubernetes development environment
 
 
 If you want to access the PostgreSQL databases used in the development environment, here's how to do that:
