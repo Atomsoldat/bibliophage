@@ -2,8 +2,9 @@ import logging
 import uuid
 from datetime import datetime, timezone
 
-import bibliophage.v1alpha2.document_pb2 as api
 from google.protobuf import timestamp_pb2
+
+import bibliophage.v1alpha2.document_pb2 as api
 
 logger = logging.getLogger(__name__)
 
@@ -11,10 +12,10 @@ logger = logging.getLogger(__name__)
 class DocumentServiceImplementation:
     # TODO: figure out where the type of ctx is defined, we  don't use it in the loading service either
     async def store_document(
-        self, request: api.StoreDocumentRequest, ctx
+        self, request: api.StoreDocumentRequest, ctx,
     ) -> api.StoreDocumentResponse:
         logger.info(
-            f"Received StoreDocumentRequest for document: {request.document.name}"
+            f"Received StoreDocumentRequest for document: {request.document.name}",
         )
 
         # first we just pretend to do something with the request. later, we will actually store the document
@@ -42,7 +43,7 @@ class DocumentServiceImplementation:
         )
 
     async def get_document(
-        self, request: api.GetDocumentRequest, ctx
+        self, request: api.GetDocumentRequest, ctx,
     ) -> api.GetDocumentResponse:
         logger.info(f"Received GetDocumentRequest for ID: {request.id}")
 
@@ -60,7 +61,7 @@ class DocumentServiceImplementation:
     # But then what about losing the history of a document? That sounds pretty meh
     # Using git for this seems heavy...
     async def update_document(
-        self, request: api.UpdateDocumentRequest, ctx
+        self, request: api.UpdateDocumentRequest, ctx,
     ) -> api.UpdateDocumentResponse:
         logger.info(f"Received UpdateDocumentRequest for ID: {request.document.id}")
 
@@ -84,7 +85,7 @@ class DocumentServiceImplementation:
         )
 
     async def search_documents(
-        self, request: api.SearchDocumentsRequest, ctx
+        self, request: api.SearchDocumentsRequest, ctx,
     ) -> api.SearchDocumentsResponse:
         logger.info("Received SearchDocumentsRequest")
 
@@ -111,7 +112,7 @@ class DocumentServiceImplementation:
         )
 
     async def delete_document(
-        self, request: api.DeleteDocumentRequest, ctx
+        self, request: api.DeleteDocumentRequest, ctx,
     ) -> api.DeleteDocumentResponse:
         logger.info(f"Received DeleteDocumentRequest for ID: {request.id}")
 

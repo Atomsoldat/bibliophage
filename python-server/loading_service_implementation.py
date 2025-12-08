@@ -1,18 +1,16 @@
-import bibliophage.v1alpha2.pdf_pb2 as api
-
 import logging
 import traceback
 import uuid
 from datetime import datetime, timezone
-
 from tempfile import NamedTemporaryFile
 
-from langchain_community.document_loaders import PyPDFLoader
+from google.protobuf import timestamp_pb2
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import PyPDFLoader
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_postgres.vectorstores import PGVector
-from google.protobuf import timestamp_pb2
 
+import bibliophage.v1alpha2.pdf_pb2 as api
 from config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -36,7 +34,7 @@ class LoadingServiceImplementation:
             # until we can figure  out a use case for that, i think we should
             # skip it
             #collection_name="pdf_chunks",
-            
+
             # whether the collection should be recreated each time
             pre_delete_collection=False,
         )
@@ -78,7 +76,7 @@ class LoadingServiceImplementation:
 
             # https://python.langchain.com/api_reference/text_splitters/character/langchain_text_splitters.character.RecursiveCharacterTextSplitter.html
             text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=chunk_size, chunk_overlap=chunk_overlap
+                chunk_size=chunk_size, chunk_overlap=chunk_overlap,
             )
             # TODO: perhaps we can send some kind of progress indicator to the user here?
             chunks = text_splitter.split_documents(documents)
@@ -126,7 +124,7 @@ class LoadingServiceImplementation:
             raise
 
     async def search_pdfs(
-        self, request: api.SearchPdfsRequest, ctx
+        self, request: api.SearchPdfsRequest, ctx,
     ) -> api.SearchPdfsResponse:
         logger.info("Received SearchPdfsRequest")
 
@@ -155,7 +153,7 @@ class LoadingServiceImplementation:
         )
 
     async def get_pdf(
-        self, request: api.GetPdfRequest, ctx
+        self, request: api.GetPdfRequest, ctx,
     ) -> api.GetPdfResponse:
         logger.info(f"Received GetPdfRequest for ID: {request.id}")
 
