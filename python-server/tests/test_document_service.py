@@ -1,10 +1,10 @@
 """Tests for DocumentService v1alpha2 implementation."""
 
-import pytest
-from datetime import datetime, timezone
 
-from document_service_implementation import DocumentServiceImplementation
+import pytest
+
 import bibliophage.v1alpha2.document_pb2 as api
+from document_service_implementation import DocumentServiceImplementation
 
 
 @pytest.fixture
@@ -155,7 +155,7 @@ async def test_search_documents_not_implemented(document_service):
     request = api.SearchDocumentsRequest(
         name_query="test",
         page_size=10,
-        page_number=0
+        page_number=0,
     )
 
     response = await document_service.search_documents(request, None)

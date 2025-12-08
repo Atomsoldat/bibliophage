@@ -1,16 +1,13 @@
-import os
-import sys
 import logging
-
+import sys
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from bibliophage.v1alpha2.pdf_connect import PdfServiceASGIApplication
-from loading_service_implementation import LoadingServiceImplementation
-
 from bibliophage.v1alpha2.document_connect import DocumentServiceASGIApplication
+from bibliophage.v1alpha2.pdf_connect import PdfServiceASGIApplication
 from document_service_implementation import DocumentServiceImplementation
+from loading_service_implementation import LoadingServiceImplementation
 
 
 def configure_logging():

@@ -4,7 +4,6 @@ Note: These tests are basic structural tests for the API.
 Full integration tests require a running PostgreSQL database with pgvector extension.
 """
 
-import pytest
 import bibliophage.v1alpha2.pdf_pb2 as api
 from bibliophage.v1alpha2.common_pb2 import Tag
 
@@ -29,7 +28,7 @@ def test_load_pdf_request_structure():
     request = api.LoadPdfRequest(
         pdf=pdf,
         file_data=b"fake pdf data",
-        chunking_config=chunking_config
+        chunking_config=chunking_config,
     )
 
     assert request.pdf.name == "Test PDF"
@@ -50,7 +49,7 @@ def test_load_pdf_response_structure():
     response = api.LoadPdfResponse(
         success=True,
         message="PDF loaded successfully",
-        pdf=pdf
+        pdf=pdf,
     )
 
     assert response.success is True
@@ -61,7 +60,7 @@ def test_load_pdf_response_structure():
 
 def test_search_pdfs_request_structure():
     """Test that SearchPdfsRequest can be constructed with filters."""
-    from bibliophage.v1alpha2.common_pb2 import TagFilter, SortOrder
+    from bibliophage.v1alpha2.common_pb2 import SortOrder, TagFilter
 
     tag_filter = TagFilter()
     tag_filter.name = "genre"
@@ -74,7 +73,7 @@ def test_search_pdfs_request_structure():
         tag_filters=[tag_filter],
         page_size=20,
         page_number=0,
-        sort_order=SortOrder.NAME_ASC
+        sort_order=SortOrder.NAME_ASC,
     )
 
     assert request.title_query == "Player's Handbook"
@@ -102,7 +101,7 @@ def test_search_pdfs_response_structure():
         pdfs=[pdf1, pdf2],
         total_count=2,
         page_number=0,
-        has_more=False
+        has_more=False,
     )
 
     assert response.success is True
@@ -127,7 +126,7 @@ def test_get_pdf_response_structure():
     response = api.GetPdfResponse(
         success=True,
         message="PDF retrieved",
-        pdf=pdf
+        pdf=pdf,
     )
 
     assert response.success is True
