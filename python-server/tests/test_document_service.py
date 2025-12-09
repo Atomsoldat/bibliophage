@@ -2,14 +2,19 @@
 
 
 import pytest
+from unittest.mock import AsyncMock
 
 import bibliophage.v1alpha2.document_pb2 as api
 from document_service_implementation import DocumentServiceImplementation
 
 
 @pytest.fixture
-def document_service():
-    """Create a DocumentServiceImplementation instance for testing."""
+def document_service(mock_database):
+    """Create a DocumentServiceImplementation instance for testing.
+
+    The mock_database fixture from conftest.py is automatically applied,
+    so this service will use the mocked database.
+    """
     return DocumentServiceImplementation()
 
 
@@ -133,6 +138,9 @@ async def test_update_document_updates_character_count(document_service):
 
     assert response.document.character_count == len(doc.content)
 
+
+# TODO: Update these tests to work with the new database-backed implementation
+# The tests below need to be updated because we've implemented actual database operations.
 
 @pytest.mark.asyncio
 async def test_get_document_not_implemented(document_service):

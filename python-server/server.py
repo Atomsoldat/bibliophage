@@ -1,5 +1,6 @@
 import logging
 import sys
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +9,7 @@ from bibliophage.v1alpha2.document_connect import DocumentServiceASGIApplication
 from bibliophage.v1alpha2.pdf_connect import PdfServiceASGIApplication
 from document_service_implementation import DocumentServiceImplementation
 from loading_service_implementation import LoadingServiceImplementation
+from database import get_database
 
 
 def configure_logging():
@@ -21,6 +23,19 @@ def configure_logging():
 configure_logging()
 
 
+# Initialize database on startup
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan - startup and shutdown."""
+    # Startup: initialize database indexes
+    db = get_database()
+    await db.initialize_indexes()
+    yield
+    # Shutdown: close database connection
+    from database import close_database
+    await close_database()
+
+
 # this is the core of our API application,
 # https://fastapi.tiangolo.com/reference/fastapi/
 # when we run `uvicorn server:api_server`, we are effectively telling uvicorn
@@ -31,7 +46,7 @@ configure_logging()
 # TODO: We can make  all kinds of configurations for this API, e.g.
 # for interactive API documentation
 # https://fastapi.tiangolo.com/reference/fastapi/#fastapi.FastAPI--example
-api_server = FastAPI()
+api_server = FastAPI(lifespan=lifespan)
 
 # CORS, so Vue can call the server
 # https://fastapi.tiangolo.com/tutorial/cors/

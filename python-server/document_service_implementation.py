@@ -5,11 +5,16 @@ from datetime import datetime, timezone
 from google.protobuf import timestamp_pb2
 
 import bibliophage.v1alpha2.document_pb2 as api
+from database import get_database
 
 logger = logging.getLogger(__name__)
 
 
 class DocumentServiceImplementation:
+    def __init__(self):
+        """Initialize the document service with database repository."""
+        self.db = get_database()
+        logger.info("Document service initialized with database repository")
     # TODO: figure out where the type of ctx is defined, we  don't use it in the loading service either
     async def store_document(
         self, request: api.StoreDocumentRequest, ctx,
@@ -18,20 +23,29 @@ class DocumentServiceImplementation:
             f"Received StoreDocumentRequest for document: {request.document.name}",
         )
 
-        # first we just pretend to do something with the request. later, we will actually store the document
-        # for that, we need to just return a mock response
-        # our frontend can then do stuff with that response, i.e. display a little animation or play a sound or whatnot
+        # Generate document ID and store in database
+        document_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc)
 
-        # Create stored document with server-assigned fields
+        await self.db.store_document(
+            document_id=document_id,
+            name=request.document.name,
+            content=request.document.content,
+            doc_type=request.document.type,
+            tags=list(request.document.tags) if request.document.tags else [],
+            created_at=now,
+        )
+
+        # Create response with stored document metadata
         stored_document = api.Document()
         stored_document.CopyFrom(request.document)
-        stored_document.id = str(uuid.uuid4())
+        stored_document.id = document_id
 
         # Set timestamps
-        now = timestamp_pb2.Timestamp()
-        now.FromDatetime(datetime.now(timezone.utc))
-        stored_document.created_at.CopyFrom(now)
-        stored_document.updated_at.CopyFrom(now)
+        timestamp = timestamp_pb2.Timestamp()
+        timestamp.FromDatetime(now)
+        stored_document.created_at.CopyFrom(timestamp)
+        stored_document.updated_at.CopyFrom(timestamp)
 
         # Set character count
         stored_document.character_count = len(request.document.content)
@@ -47,10 +61,37 @@ class DocumentServiceImplementation:
     ) -> api.GetDocumentResponse:
         logger.info(f"Received GetDocumentRequest for ID: {request.id}")
 
-        # TODO: Implement actual document retrieval from storage
+        # Retrieve document from database
+        doc_data = await self.db.get_document_by_id(request.id)
+
+        if doc_data is None:
+            return api.GetDocumentResponse(
+                success=False,
+                message=f"Document with ID {request.id} not found",
+            )
+
+        # Convert database document to protobuf Document
+        document = api.Document()
+        document.id = doc_data['_id']
+        document.name = doc_data['name']
+        document.content = doc_data['content']
+        document.type = doc_data['type']
+        document.character_count = doc_data['character_count']
+        document.tags.extend(doc_data.get('tags', []))
+
+        # Set timestamps
+        created_timestamp = timestamp_pb2.Timestamp()
+        created_timestamp.FromDatetime(doc_data['created_at'])
+        document.created_at.CopyFrom(created_timestamp)
+
+        updated_timestamp = timestamp_pb2.Timestamp()
+        updated_timestamp.FromDatetime(doc_data['updated_at'])
+        document.updated_at.CopyFrom(updated_timestamp)
+
         return api.GetDocumentResponse(
-            success=False,
-            message="Document retrieval not yet implemented",
+            success=True,
+            message=f"Document '{document.name}' retrieved successfully",
+            document=document,
         )
 
     # TODO: We should have an update function that allows us to update a document by ID
@@ -65,22 +106,42 @@ class DocumentServiceImplementation:
     ) -> api.UpdateDocumentResponse:
         logger.info(f"Received UpdateDocumentRequest for ID: {request.document.id}")
 
-        # TODO: Implement actual document update in storage
+        # Update document in database
+        doc_data = await self.db.update_document(
+            document_id=request.document.id,
+            name=request.document.name if request.document.name else None,
+            content=request.document.content if request.document.content else None,
+            doc_type=request.document.type if request.document.type else None,
+            tags=list(request.document.tags) if request.document.tags else None,
+        )
+
+        if doc_data is None:
+            return api.UpdateDocumentResponse(
+                success=False,
+                message=f"Document with ID {request.document.id} not found",
+            )
+
+        # Convert updated database document to protobuf Document
         updated_document = api.Document()
-        updated_document.CopyFrom(request.document)
+        updated_document.id = doc_data['_id']
+        updated_document.name = doc_data['name']
+        updated_document.content = doc_data['content']
+        updated_document.type = doc_data['type']
+        updated_document.character_count = doc_data['character_count']
+        updated_document.tags.extend(doc_data.get('tags', []))
 
-        # Update timestamps
-        now = timestamp_pb2.Timestamp()
-        now.FromDatetime(datetime.now(timezone.utc))
-        updated_document.updated_at.CopyFrom(now)
+        # Set timestamps
+        created_timestamp = timestamp_pb2.Timestamp()
+        created_timestamp.FromDatetime(doc_data['created_at'])
+        updated_document.created_at.CopyFrom(created_timestamp)
 
-        # Update character count
-        updated_document.character_count = len(request.document.content)
+        updated_timestamp = timestamp_pb2.Timestamp()
+        updated_timestamp.FromDatetime(doc_data['updated_at'])
+        updated_document.updated_at.CopyFrom(updated_timestamp)
 
         return api.UpdateDocumentResponse(
-            success=False,
-            message=f"Document upate functionality not implemented yet; document '{updated_document.name}' not updated successfully",
-            # TODO: should the response really contain the updated document? seems pretty redunant
+            success=True,
+            message=f"Document '{updated_document.name}' updated successfully",
             document=updated_document,
         )
 
@@ -116,8 +177,16 @@ class DocumentServiceImplementation:
     ) -> api.DeleteDocumentResponse:
         logger.info(f"Received DeleteDocumentRequest for ID: {request.id}")
 
-        # TODO: Implement actual document deletion
+        # Delete document from database
+        deleted = await self.db.delete_document(request.id)
+
+        if not deleted:
+            return api.DeleteDocumentResponse(
+                success=False,
+                message=f"Document with ID {request.id} not found",
+            )
+
         return api.DeleteDocumentResponse(
-            success=False,
-            message="Document deletion not yet implemented",
+            success=True,
+            message=f"Document with ID {request.id} deleted successfully",
         )
