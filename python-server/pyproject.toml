@@ -91,6 +91,10 @@ cmd = ["ty", "check"]
 [tool.pixi.tasks.deps]
 cmd = ["deptry", "."]
 
+[tool.pixi.tasks.tests]
+cmd = ["pytest", "tests"]
+
+
 [tool.pixi.tasks.ded]
 cmd = ["vulture", ".", "--exclude", "bibliophage,.pixi,.mypy_cache,__pycache__,__pytest_cache,.ruff_cache"]
 
