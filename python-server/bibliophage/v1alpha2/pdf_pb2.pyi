@@ -1,9 +1,12 @@
+import datetime
+
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from bibliophage.v1alpha2 import common_pb2 as _common_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
+from collections.abc import Iterable as _Iterable, Mapping as _Mapping
+from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -31,7 +34,7 @@ class Pdf(_message.Message):
     file_size: int
     chunk_count: int
     tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., system: _Optional[str] = ..., type: _Optional[str] = ..., page_count: _Optional[int] = ..., origin_path: _Optional[str] = ..., created_at: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., file_size: _Optional[int] = ..., chunk_count: _Optional[int] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ...) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., system: _Optional[str] = ..., type: _Optional[str] = ..., page_count: _Optional[int] = ..., origin_path: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., file_size: _Optional[int] = ..., chunk_count: _Optional[int] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ...) -> None: ...
 
 class PdfListItem(_message.Message):
     __slots__ = ("id", "name", "system", "type", "page_count", "origin_path", "created_at", "updated_at", "file_size", "chunk_count", "tags")
@@ -57,7 +60,7 @@ class PdfListItem(_message.Message):
     file_size: int
     chunk_count: int
     tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., system: _Optional[str] = ..., type: _Optional[str] = ..., page_count: _Optional[int] = ..., origin_path: _Optional[str] = ..., created_at: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., file_size: _Optional[int] = ..., chunk_count: _Optional[int] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ...) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., system: _Optional[str] = ..., type: _Optional[str] = ..., page_count: _Optional[int] = ..., origin_path: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., file_size: _Optional[int] = ..., chunk_count: _Optional[int] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ...) -> None: ...
 
 class LoadPdfRequest(_message.Message):
     __slots__ = ("pdf", "file_data", "chunking_config")
