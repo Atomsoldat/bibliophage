@@ -37,6 +37,8 @@ vulture = ">=2.14,<3"
 pytorch = ">=2.9.1,<3"
 pymupdf = ">=1.26.1,<2"
 docling = ">=2.45.0,<3"
+motor = ">=3.6.0,<4"
+psutil = ">=6.1.1,<7"
 
 [tool.pixi.pypi-dependencies]
 langchain-community = ">=0.3.31, <0.4"
@@ -52,7 +54,7 @@ cmd = ["uvicorn",
         "--reload",
         "server:api_server",
 ]
-env = {VECTOR_DB_URL = 'postgresql+psycopg://pgvector:pgvector_dev@localhost:5432/pgvector', DOC_DB_URL = 'mongodb://localhost:27017/'}
+env = {VECTOR_DB_URL = 'postgresql+psycopg://pgvector:pgvector_dev@localhost:5432/pgvector', DOC_DB_URL = 'mongodb://postgres:ferretdb_dev@localhost:27017/'}
 
 [tool.pixi.tasks.gen_proto]
 cmd = [

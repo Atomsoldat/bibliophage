@@ -2,151 +2,302 @@ import logging
 import traceback
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from tempfile import NamedTemporaryFile
+import gc
 
 from google.protobuf import timestamp_pb2
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_postgres.vectorstores import PGVector
+from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
+from docling.datamodel.base_models import ConversionStatus, InputFormat
+from docling.datamodel.pipeline_options import ThreadedPdfPipelineOptions
+from docling.document_converter import DocumentConverter, PdfFormatOption
+import motor.motor_asyncio
 
 import bibliophage.v1alpha2.pdf_pb2 as api
 from config import get_settings
+from batch_size_calculator import calculate_batch_size
+from pdf_outline_inspector import inspect_pdf_outline, analyze_outline_for_batching, get_pdf_page_count
 
 logger = logging.getLogger(__name__)
 
 
-# this class implements the interface that our generated connect RPC code defines
-# it does that by having all the methods of the interface class
 class LoadingServiceImplementation:
+    """
+    Loading service implementation using Docling for PDF processing.
+
+    This replaces the legacy chunking approach with docling's batch-based
+    PDF processing pipeline, storing full documents in FerretDB instead
+    of chunked embeddings in pgvector.
+    """
+
     def __init__(self):
         """Initialize the loading service with configuration from environment variables."""
         settings = get_settings()
 
-        # Initialise vector database connection
-        # collection_name creates a separate table for our embeddings
-        # pre_delete_collection=False means we keep existing data
-        self.pgvector = PGVector(
-            connection=str(settings.database.vector_db_url),
-            embeddings=HuggingFaceEmbeddings(model_name=settings.embedding.embedding_model_name),
-            # we could store our embeddings in separate tables per use case
-            # that would make searching across all information more complex
-            # until we can figure  out a use case for that, i think we should
-            # skip it
-            #collection_name="pdf_chunks",
+        # Initialize FerretDB/MongoDB connection for document storage
+        self.mongo_client = motor.motor_asyncio.AsyncIOMotorClient(str(settings.database.doc_db_url))
+        # Use 'bibliophage' database and 'documents' collection
+        self.db = self.mongo_client.bibliophage
+        self.documents_collection = self.db.documents
 
-            # whether the collection should be recreated each time
-            pre_delete_collection=False,
+        # Initialize docling pipeline options
+        # TODO: Make these configurable via environment variables or request parameters
+        self.pipeline_options = ThreadedPdfPipelineOptions(
+            accelerator_options=AcceleratorOptions(
+                device=AcceleratorDevice.CUDA,
+            ),
+            ocr_batch_size=4,
+            layout_batch_size=64,
+            table_batch_size=4,
         )
+        self.pipeline_options.do_ocr = False
 
-    # TODO: figure out why we can use ctx without a type  here, also we should probably prevent that
+        logger.info("Loading service initialized with Docling pipeline and FerretDB storage")
+
     async def load_pdf(self, request: api.LoadPdfRequest, ctx):
-        try:
-            # TODO: actually do stuff with the request
-            logger.info(f"Received LoadPdf request for file: {request.pdf.name}")
+        """
+        Load a PDF using docling's batch processing pipeline.
 
-            # request will be the LoadPdfRequest from the client
-            # we should access the fields in the request and do stuff with it
-            # like setting metadata
+        This method:
+        1. Writes PDF bytes to a temporary file
+        2. Calculates optimal batch size based on system memory
+        3. Processes PDF pages in batches using docling's DocumentConverter
+        4. Stores the full document with batches in FerretDB
+        5. Returns LoadPdfResponse with metadata
+
+        Args:
+            request: LoadPdfRequest containing PDF metadata and file data
+            ctx: gRPC context (unused)
+
+        Returns:
+            LoadPdfResponse with stored document metadata
+        """
+        try:
+            logger.info(f"Received LoadPdf request for file: {request.pdf.name}")
 
             pdf_bytes = request.file_data
 
-            # store transmitted data in a temporary file
-            # `with` will always run the cleanup functions of the file object we create
-            # https://docs.python.org/3/reference/compound_stmts.html#index-18
-            # https://docs.python.org/3/reference/datamodel.html#with-statement-context-managers
+            # Write PDF to temporary file for processing
+            # Using 'with' ensures cleanup after processing
             with NamedTemporaryFile(delete=True, suffix=".pdf") as tmp:
                 tmp.write(pdf_bytes)
                 tmp.flush()
-                logger.info(f"Temporary file name: {tmp.name}")
+                tmp_path = Path(tmp.name)
+                logger.info(f"Temporary file created: {tmp_path}")
 
-                # https://python.langchain.com/api_reference/community/document_loaders/langchain_community.document_loaders.pdf.PyPDFLoader.html
+                # Calculate optimal batch size based on system memory
+                # For table-heavy PDFs: 67.8 MB/page (default)
+                # For text-heavy PDFs: use 40.0 MB/page
+                # For image-heavy PDFs: use 100.0 MB/page
+                logger.info("Calculating optimal batch size...")
+                batch_config = calculate_batch_size(memory_per_page_mb=67.8)
+                logger.info(f"Batch configuration: {batch_config}")
+                batch_size = batch_config['recommended_batch_size']
 
-                # access path on disk and try to  load
-                # loader = PyPDFLoader(request.pdf.origin_path)
-                # use transferred data in request
-                loader = PyPDFLoader(tmp.name)
-                documents = loader.load()
+                # Get total page count
+                logger.info(f"Reading PDF metadata from {request.pdf.name}...")
+                total_pages = get_pdf_page_count(tmp_path)
+                logger.info(f"PDF has {total_pages} pages")
 
-            # as far as i know, this loads individual pages
-            logger.info(f'PDF "documents" loaded: {len(documents)}')
+                # Try smart batching based on PDF outline
+                # TODO: Make configurable
+                batches = []
+                use_smart_batching = True
 
-            chunk_size = request.chunking_config.chunk_size if request.HasField("chunking_config") and request.chunking_config.chunk_size > 0 else 600
-            chunk_overlap = request.chunking_config.chunk_overlap if request.HasField("chunking_config") and request.chunking_config.chunk_overlap > 0 else 50
+                if use_smart_batching:
+                    logger.info("Attempting smart batching based on PDF outline...")
+                    try:
+                        outline_result = inspect_pdf_outline(tmp_path)
+                        if outline_result['has_outline']:
+                            batches = analyze_outline_for_batching(
+                                outline_result['outline_items'],
+                                total_pages,
+                                batch_size
+                            )
+                            if batches:
+                                logger.info(f"✓ Smart batching enabled: {len(batches)} chapter-based batches")
+                                logger.info(f"  Batch sizes range from {min(b[1]-b[0]+1 for b in batches)} to {max(b[1]-b[0]+1 for b in batches)} pages")
+                            else:
+                                logger.warning("Could not create smart batches from outline")
+                        else:
+                            logger.info("PDF has no outline/bookmarks")
+                    except Exception as e:
+                        logger.warning(f"Smart batching failed: {e}")
 
-            # https://python.langchain.com/api_reference/text_splitters/character/langchain_text_splitters.character.RecursiveCharacterTextSplitter.html
-            text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=chunk_size, chunk_overlap=chunk_overlap,
-            )
-            # TODO: perhaps we can send some kind of progress indicator to the user here?
-            chunks = text_splitter.split_documents(documents)
+                # Fall back to fixed-size batching
+                if not batches:
+                    logger.info(f"Using fixed-size batching: {batch_size} pages per batch")
+                    batches = []
+                    for i in range(0, total_pages, batch_size):
+                        start = i + 1
+                        end = min(i + batch_size, total_pages)
+                        batches.append((start, end, f"Pages {start}-{end}"))
 
-            # it seems weird to attach information like the original PDF path to  every chunk
-            # TODO: we probably just want to have a separate, regular table containing the origin information and
-            # then we can reference that table
-            for chunk in chunks:
-                chunk.metadata.update({"source": request.pdf.origin_path})
-                chunk.metadata.update({"origin_path": request.pdf.origin_path})
-                chunk.metadata.update({"system": request.pdf.system})
-                chunk.metadata.update({"type": request.pdf.type})
-                chunk.metadata.update({"page_count": len(documents)})
-                chunk.metadata.update({"chunk_count": len(chunks)})
-                # TODO: uuid/md5sum
+                num_batches = len(batches)
+                logger.info(f"Will process in {num_batches} batches")
 
-            # Store Chunks in Vector DB
-            self.pgvector.add_documents(chunks)
+                # Initialize docling converter with pipeline options
+                doc_converter = DocumentConverter(
+                    format_options={
+                        InputFormat.PDF: PdfFormatOption(
+                            pipeline_options=self.pipeline_options,
+                        )
+                    }
+                )
 
-            # Create response with stored PDF metadata
+                # Initialize pipeline once (reused across batches)
+                doc_converter.initialize_pipeline(InputFormat.PDF)
+                logger.info("Pipeline initialized")
+
+                # Process batches and collect results
+                processed_batches = []
+                successful_batches = 0
+                failed_batches = 0
+
+                for batch_num, (start_page, end_page, description) in enumerate(batches):
+                    pages_in_batch = end_page - start_page + 1
+
+                    logger.info("=" * 60)
+                    logger.info(f"BATCH {batch_num + 1}/{num_batches}: Pages {start_page}-{end_page} ({pages_in_batch} pages)")
+                    logger.info(f"  Content: {description}")
+                    logger.info("=" * 60)
+
+                    try:
+                        # Convert this batch of pages
+                        conv_result = doc_converter.convert(
+                            tmp_path,
+                            page_range=(start_page, end_page)
+                        )
+
+                        if conv_result.status != ConversionStatus.SUCCESS:
+                            logger.warning(f"Batch {batch_num + 1} conversion status: {conv_result.status}")
+                            failed_batches += 1
+                            processed_batches.append({
+                                'batch_number': batch_num + 1,
+                                'start_page': start_page,
+                                'end_page': end_page,
+                                'description': description,
+                                'status': str(conv_result.status),
+                                'markdown': None,
+                                'success': False
+                            })
+                            continue
+
+                        # Export batch to markdown
+                        batch_markdown = conv_result.document.export_to_markdown()
+
+                        processed_batches.append({
+                            'batch_number': batch_num + 1,
+                            'start_page': start_page,
+                            'end_page': end_page,
+                            'description': description,
+                            'status': 'SUCCESS',
+                            'markdown': batch_markdown,
+                            'success': True
+                        })
+
+                        successful_batches += 1
+                        logger.info(f"Batch {batch_num + 1} complete")
+
+                        # Free memory before next batch
+                        del conv_result
+                        del batch_markdown
+                        gc.collect()
+
+                    except Exception as e:
+                        logger.error(f"Batch {batch_num + 1} failed with error: {e}")
+                        failed_batches += 1
+                        processed_batches.append({
+                            'batch_number': batch_num + 1,
+                            'start_page': start_page,
+                            'end_page': end_page,
+                            'description': description,
+                            'status': 'ERROR',
+                            'error': str(e),
+                            'success': False
+                        })
+                        gc.collect()
+
+            # Create document to store in FerretDB
+            document_id = str(uuid.uuid4())
+            now = datetime.now(timezone.utc)
+
+            document = {
+                '_id': document_id,
+                'name': request.pdf.name,
+                'system': request.pdf.system,
+                'type': request.pdf.type,
+                'origin_path': request.pdf.origin_path,
+                'page_count': total_pages,
+                'file_size': len(pdf_bytes),
+                'batch_count': len(processed_batches),
+                'successful_batches': successful_batches,
+                'failed_batches': failed_batches,
+                'batches': processed_batches,
+                'batch_config': batch_config,
+                'use_smart_batching': use_smart_batching,
+                'created_at': now,
+                'updated_at': now,
+                'tags': list(request.pdf.tags) if request.pdf.tags else []
+            }
+
+            # Store document in FerretDB
+            await self.documents_collection.insert_one(document)
+            logger.info(f"Document stored in FerretDB with ID: {document_id}")
+
+            # Create response matching LoadPdfResponse structure
             stored_pdf = api.Pdf()
             stored_pdf.CopyFrom(request.pdf)
-            stored_pdf.id = str(uuid.uuid4())
-            stored_pdf.page_count = len(documents)
-            stored_pdf.chunk_count = len(chunks)
+            stored_pdf.id = document_id
+            stored_pdf.page_count = total_pages
+            # For API compatibility, set chunk_count to batch_count
+            # (API expects chunk_count, but we're storing batches now)
+            stored_pdf.chunk_count = len(processed_batches)
             stored_pdf.file_size = len(pdf_bytes)
 
             # Set timestamps
-            now = timestamp_pb2.Timestamp()
-            now.FromDatetime(datetime.now(timezone.utc))
-            stored_pdf.created_at.CopyFrom(now)
-            stored_pdf.updated_at.CopyFrom(now)
+            timestamp = timestamp_pb2.Timestamp()
+            timestamp.FromDatetime(now)
+            stored_pdf.created_at.CopyFrom(timestamp)
+            stored_pdf.updated_at.CopyFrom(timestamp)
 
-            # when that's done, we return a LoadPdfResponse
             return api.LoadPdfResponse(
                 success=True,
-                message=f"PDF {request.pdf.name} loaded successfully",
-                # Returning the pdf here makes no sense to me
+                message=f"PDF {request.pdf.name} processed successfully ({successful_batches}/{len(processed_batches)} batches)",
                 pdf=stored_pdf,
-                # TODO: uuid/md5sum
-                # document_id="some-uuid"
             )
+
         except Exception as e:
-            logger.error(f"Exception: {e}\n{traceback.format_exc()}")
+            logger.error(f"Exception in load_pdf: {e}\n{traceback.format_exc()}")
             raise
 
     async def search_pdfs(
         self, request: api.SearchPdfsRequest, ctx,
     ) -> api.SearchPdfsResponse:
+        """
+        Search for PDFs in FerretDB.
+
+        TODO: Implement actual search functionality using MongoDB queries.
+        """
         logger.info("Received SearchPdfsRequest")
 
-        # TODO: Implement actual PDF search
-        # When implementing, create PdfListItem instances from Pdf metadata:
-        # list_item = api.PdfListItem(
-        #     id=pdf.id,
-        #     name=pdf.name,
-        #     system=pdf.system,
-        #     type=pdf.type,
-        #     page_count=pdf.page_count,
-        #     origin_path=pdf.origin_path,
-        #     created_at=pdf.created_at,
-        #     updated_at=pdf.updated_at,
-        #     file_size=pdf.file_size,
-        #     chunk_count=pdf.chunk_count,
-        #     tags=pdf.tags
-        # )
+        # TODO: Implement actual PDF search against FerretDB
+        # Example query structure:
+        # query = {}
+        # if request.title_query:
+        #     query['name'] = {'$regex': request.title_query, '$options': 'i'}
+        # if request.system_filter:
+        #     query['system'] = request.system_filter
+        # if request.type_filter:
+        #     query['type'] = request.type_filter
+        #
+        # cursor = self.documents_collection.find(query)
+        # documents = await cursor.to_list(length=request.page_size)
+
         return api.SearchPdfsResponse(
             success=False,
             message="Search not yet implemented",
-            pdfs=[],  # This will be a list of PdfListItem, not Pdf
+            pdfs=[],
             total_count=0,
             page_number=request.page_size if request.page_number else 0,
             has_more=False,
@@ -155,9 +306,19 @@ class LoadingServiceImplementation:
     async def get_pdf(
         self, request: api.GetPdfRequest, ctx,
     ) -> api.GetPdfResponse:
+        """
+        Retrieve a specific PDF by ID from FerretDB.
+
+        TODO: Implement actual PDF retrieval from FerretDB.
+        """
         logger.info(f"Received GetPdfRequest for ID: {request.id}")
 
         # TODO: Implement actual PDF retrieval
+        # document = await self.documents_collection.find_one({'_id': request.id})
+        # if document:
+        #     # Convert document to api.Pdf
+        #     pass
+
         return api.GetPdfResponse(
             success=False,
             message="PDF retrieval not yet implemented",
