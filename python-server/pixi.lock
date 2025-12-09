@@ -264,6 +264,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
       - pypi: https://files.pythonhosted.org/packages/b1/14/49f9748d86a8b4b5805d845978ad4f57e203c28ea40c9839c2b9f0edbc1e/connect_python-0.5.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c3/be/d0d44e092656fe7a06b55e6103cbce807cdbdee17884a5367c68c9860853/dataclasses_json-0.6.7-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ab/28/960c311aae084deef57ece41aac13cb359b06ce31b7771139e79c394a1b7/deptry-0.24.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/d2/fd/6668e5aec43ab844de6fc74927e155a3b37bf40d7c3790e49fc0406b6578/httpx_sse-0.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f6/d5/4861816a95b2f6993f1360cfb605aacb015506ee2090433a71de9cca8477/langchain-0.3.27-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e6/0a/b8848db67ad7c8d4652cb6f4cb78d49b5b5e6e8e51d695d62025aa3f7dbc/langchain_community-0.3.31-py3-none-any.whl
@@ -271,6 +272,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/34/75/51952c7b2d3873b44a0028b1bd26a25078c18f92f256608e8d1dc61b39fd/marshmallow-3.26.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/79/7b/2c79738432f5c924bef5071f933bcc9efd0473bac3b4aa584a6f7c1c8df8/mypy_extensions-1.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/7e/be/9087ec3483731ed68822b3dcd9ffcef112aac7ea6e698900df14400613ea/protoc_gen_connect_python-0.5.0-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.musllinux_1_1_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/bd/60/50fbb6ffb35f733654466f1a90d162bcbea358adc3b0871339254fbc37b2/requirements_parser-0.13.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2c/57/dbb92206cf2f798d8c51ea16504e8afb90a139d0ff105c31cec9a1db29f9/ty-0.0.1a32-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/65/f3/107a22063bf27bdccf2024833d3445f4eea42b2e598abfbd46f6a63b6cb0/typing_inspect-0.9.0-py3-none-any.whl
 packages:
@@ -863,6 +865,17 @@ packages:
   - pkg:pypi/datasets?source=hash-mapping
   size: 356765
   timestamp: 1755878391633
+- pypi: https://files.pythonhosted.org/packages/ab/28/960c311aae084deef57ece41aac13cb359b06ce31b7771139e79c394a1b7/deptry-0.24.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  name: deptry
+  version: 0.24.0
+  sha256: dd22fa2dbbdf4b38061ca9504f2a6ce41ec14fa5c9fe9b0b763ccc1275efebd5
+  requires_dist:
+  - click>=8.0.0,<9
+  - colorama>=0.4.6 ; sys_platform == 'win32'
+  - packaging>=23.2
+  - requirements-parser>=0.11.0,<1
+  - tomli>=2.0.1 ; python_full_version < '3.11'
+  requires_python: '>=3.10'
 - conda: https://conda.anaconda.org/conda-forge/noarch/dill-0.3.8-pyhd8ed1ab_0.conda
   sha256: 482b5b566ca559119b504c53df12b08f3962a5ef8e48061d62fd58a47f8f2ec4
   md5: 78745f157d56877a2c6e7b386f66f3e2
@@ -3397,6 +3410,13 @@ packages:
   - pkg:pypi/requests-toolbelt?source=hash-mapping
   size: 44285
   timestamp: 1733734886897
+- pypi: https://files.pythonhosted.org/packages/bd/60/50fbb6ffb35f733654466f1a90d162bcbea358adc3b0871339254fbc37b2/requirements_parser-0.13.0-py3-none-any.whl
+  name: requirements-parser
+  version: 0.13.0
+  sha256: 2b3173faecf19ec5501971b7222d38f04cb45bb9d87d0ad629ca71e2e62ded14
+  requires_dist:
+  - packaging>=23.2
+  requires_python: '>=3.8,<4.0'
 - conda: https://conda.anaconda.org/conda-forge/noarch/rich-14.2.0-pyhcf101f3_0.conda
   sha256: edfb44d0b6468a8dfced728534c755101f06f1a9870a7ad329ec51389f16b086
   md5: a247579d8a59931091b16a1e932bbed6
