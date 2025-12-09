@@ -1,5 +1,6 @@
 
 ## pymupdf
+- pymupdf originally went by the name [fitz](https://artifex.com/blog/pymupdf-1.24.3-and-farewell-to-fitz). This is a historical artifact from its original development. History is cool so we will honor that by using the old name, as long as it is supported.
 - output looks good
 - pymupdf is single threaded, which becomes a problem in large documents (rule books). The developers mention some ways to use multiprocessing to alleviate this somewhat,  but those require [custom code](https://pymupdf.readthedocs.io/en/latest/recipes-multiprocessing.html)
 
