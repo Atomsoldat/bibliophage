@@ -1,12 +1,31 @@
 ## Accessing the local development container databases
 
 
-FerretDB
+### FerretDB
+
+Access DB
 ```bash
 mongosh mongodb://postgres:ferretdb_dev@localhost:27017/
 ```
 
-pgVector
+Count Documents
+```bash
+mongosh mongodb://postgres:ferretdb_dev@localhost:27017/ --eval 'db = db.getSiblingDB("bibliophage"); db.pdfs.countDocuments({system: "PATHFINDER_1E"})'
+```
+
+Get one Document
+```bash
+mongosh mongodb://postgres:ferretdb_dev@localhost:27017/ --eval 'db = db.getSiblingDB("bibliophage"); db.pdfs.find().limit(1).toArray()'
+```
+
+Pass a filter to find 
+```
+mongosh mongodb://postgres:ferretdb_dev@localhost:27017/ --eval 'db = db.getSiblingDB("bibliophage"); db.pdfs.find({system: "PATHFINDER_1E", type: "BESTIARY"})' | less
+```
+
+
+
+### pgVector
 ```bash
 psql postgresql://pgvector:pgvector_dev@localhost/pgvector
 ```
