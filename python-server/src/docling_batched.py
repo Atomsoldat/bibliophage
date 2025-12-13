@@ -22,12 +22,10 @@ import logging
 import time
 from pathlib import Path
 
-from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
 from docling.datamodel.base_models import ConversionStatus, InputFormat
 from docling.datamodel.pipeline_options import ThreadedPdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
-from batch_size_calculator import calculate_batch_size
 from pdf_outline_inspector import inspect_pdf_outline, analyze_outline_for_batching, get_pdf_page_count
 
 _log: logging.Logger = logging.getLogger(__name__)
@@ -167,7 +165,7 @@ def convert_pdf_in_batches(
                 output_file.write("\n\n")
 
                 # Batch separator
-                output_file.write(f"---\n\n")
+                output_file.write("---\n\n")
 
                 # Flush to disk immediately
                 output_file.flush()

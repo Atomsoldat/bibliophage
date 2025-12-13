@@ -8,10 +8,9 @@ These tests verify the batch PDF conversion functionality, including:
 - Error handling and recovery
 """
 
-import gc
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from docling.datamodel.base_models import ConversionStatus

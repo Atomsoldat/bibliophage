@@ -9,7 +9,6 @@ Based on empirical data:
 """
 
 import psutil
-from pathlib import Path
 
 
 def get_available_memory_gb() -> float:
