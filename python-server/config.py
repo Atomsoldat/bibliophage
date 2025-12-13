@@ -15,6 +15,42 @@
 from pydantic import Field, MongoDsn, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Global settings instance - lazy loaded on first access
+_settings: Settings | None = None
+
+
+def get_settings() -> Settings:
+    """Get application settings (singleton pattern).
+
+    This is the main function other modules should use to access configuration.
+    It caches the settings instance so validation only happens once.
+
+    Returns:
+        Settings: Application configuration loaded from environment variables
+
+    Raises:
+        ValidationError: If required environment variables are missing or invalid
+
+    """
+    global _settings
+    if _settings is None:
+        _settings = Settings()
+    return _settings
+
+class Settings(BaseSettings):
+    """Application settings - aggregates all configuration."""
+
+    database: DatabaseConfig = Field(default_factory=DatabaseConfig)
+    embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
+    log: LogConfig = Field(default_factory=LogConfig)
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
 
 class DatabaseConfig(BaseSettings):
     """Database connection configuration."""
@@ -69,41 +105,3 @@ class LogConfig(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
-
-
-class Settings(BaseSettings):
-    """Application settings - aggregates all configuration."""
-
-    database: DatabaseConfig = Field(default_factory=DatabaseConfig)
-    embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
-    log: LogConfig = Field(default_factory=LogConfig)
-
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore",
-    )
-
-
-# Global settings instance - lazy loaded on first access
-_settings: Settings | None = None
-
-
-def get_settings() -> Settings:
-    """Get application settings (singleton pattern).
-
-    This is the main function other modules should use to access configuration.
-    It caches the settings instance so validation only happens once.
-
-    Returns:
-        Settings: Application configuration loaded from environment variables
-
-    Raises:
-        ValidationError: If required environment variables are missing or invalid
-
-    """
-    global _settings
-    if _settings is None:
-        _settings = Settings()
-    return _settings
