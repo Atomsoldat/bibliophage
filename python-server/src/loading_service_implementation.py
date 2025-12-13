@@ -263,34 +263,45 @@ class LoadingServiceImplementation:
     async def search_pdfs(
         self, request: api.SearchPdfsRequest, ctx,
     ) -> api.SearchPdfsResponse:
-        """
-        Search for PDFs in FerretDB.
+        """Search for PDFs in FerretDB."""
 
-        TODO: Implement actual search functionality using MongoDB queries.
-        """
         logger.info("Received SearchPdfsRequest")
 
-        # TODO: Implement actual PDF search against FerretDB
-        # Example query structure:
-        # query = {}
-        # if request.title_query:
-        #     query['name'] = {'$regex': request.title_query, '$options': 'i'}
-        # if request.system_filter:
-        #     query['system'] = request.system_filter
-        # if request.type_filter:
-        #     query['type'] = request.type_filter
-        #
-        # cursor = self.documents_collection.find(query)
-        # documents = await cursor.to_list(length=request.page_size)
+        try: 
+            found_pdfs: tuple[list[dict[str, Any]], int] = await self.db.search_pdfs(
+                # TODO: see the TODO about inconsistent naming in database.py
+                name_query=request.title_query,
+                system_filter=request.system_filter,
+                type_filter=request.type_filter,
+                # TODO: actually do something with the tags, this  code is buggy
+                #tags=request.tag_filters if request.tag_filters else [],
+                # the parameters  default to 0 when unspecified
+                page_size=request.page_size if request.page_size > 0 else 50,
+                page_number=request.page_number,
+            )
 
-        return api.SearchPdfsResponse(
-            success=False,
-            message="Search not yet implemented",
-            pdfs=[],
-            total_count=0,
-            page_number=request.page_size if request.page_number else 0,
-            has_more=False,
-        )
+            return api.SearchPdfsResponse(
+                success=True,
+                message="Search succesful",
+                pdfs=found_pdfs[0],
+                total_count=found_pdfs[1],
+                page_number=request.page_number if request.page_number else 0,
+                has_more=False,
+            )
+        except Exception as e:
+            exception_message= f"{type(e).__name__} occured during PDF search: {e}"
+            logger.error(exception_message)
+            logger.error(traceback.format_exc())
+
+            return api.SearchPdfsResponse(
+                success=False,
+                message=exception_message,
+                pdfs=[],
+                total_count=0,
+                page_number=request.page_number if request.page_number else 0,
+                has_more=False,
+            )
+
 
     async def get_pdf(
         self, request: api.GetPdfRequest, ctx,

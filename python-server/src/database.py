@@ -147,11 +147,16 @@ class DocumentDatabase:
         document = await self.pdfs_collection.find_one({'_id': document_id})
         return document
 
+    # TODO: i think a tuple is not the best possible choice for returning the data
     async def search_pdfs(
         self,
+        # TODO: this is called title_query in pdf.proto
+        # why is this named differently?
         name_query: Optional[str] = None,
         system_filter: Optional[str] = None,
         type_filter: Optional[str] = None,
+        # TODO: this is called tag_filters in  pdf.proto
+        # why is this named differently?
         tags: Optional[list[str]] = None,
         page_size: int = 50,
         page_number: int = 0,
@@ -164,7 +169,7 @@ class DocumentDatabase:
             type_filter: Filter by document type
             tags: Filter by tags (documents must have all specified tags)
             page_size: Number of results per page
-            page_number: Page number (0-indexed)
+            page_number: Page number (0-indexed) of results
 
         Returns:
             Tuple of (list of matching documents, total count)

@@ -144,6 +144,9 @@ message SearchPdfsRequest {
   // Example: [{"name": "genre", "value": "fantasy"}, {"name": "campaign", "value": "storm-kings-thunder"}]
   repeated TagFilter tag_filters = 4;
 
+  // TODO: these should be optional; change that in future API versions
+  // these default to zero, if unset, which is why it would be better
+  // to not use their value, when the user does not explicitly send them
   // Pagination
   int32 page_size = 5; // Max results to return (default: 50)
   int32 page_number = 6; // Which page of results (0-indexed)
