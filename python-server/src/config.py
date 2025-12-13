@@ -15,27 +15,6 @@
 from pydantic import Field, MongoDsn, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Global settings instance - lazy loaded on first access
-_settings: "Settings | None" = None
-
-
-def get_settings() -> "Settings":
-    """Get application settings (singleton pattern).
-
-    This is the main function other modules should use to access configuration.
-    It caches the settings instance so validation only happens once.
-
-    Returns:
-        Settings: Application configuration loaded from environment variables
-
-    Raises:
-        ValidationError: If required environment variables are missing or invalid
-
-    """
-    global _settings
-    if _settings is None:
-        _settings = Settings()
-    return _settings
 
 
 class DatabaseConfig(BaseSettings):
@@ -106,3 +85,25 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+    
+## Python is interpreted, so the stuff using other stuff has to come later
+_settings: Settings | None = None
+
+
+def get_settings() -> Settings:
+    """Get application settings (singleton pattern).
+
+    This is the main function other modules should use to access configuration.
+    It caches the settings instance so validation only happens once.
+
+    Returns:
+        Settings: Application configuration loaded from environment variables
+
+    Raises:
+        ValidationError: If required environment variables are missing or invalid
+
+    """
+    global _settings
+    if _settings is None:
+        _settings = Settings()
+    return _settings
