@@ -2,7 +2,7 @@
 # https://docs.astral.sh/ruff/configuration/
 exclude = [
     # ignore auto generated
-    "bibliophage",
+    "src/bibliophage",
     # ignore other common stuff
     ".bzr",
     ".direnv",

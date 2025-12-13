@@ -16,10 +16,10 @@ from pydantic import Field, MongoDsn, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Global settings instance - lazy loaded on first access
-_settings: Settings | None = None
+_settings: "Settings | None" = None
 
 
-def get_settings() -> Settings:
+def get_settings() -> "Settings":
     """Get application settings (singleton pattern).
 
     This is the main function other modules should use to access configuration.
@@ -36,20 +36,6 @@ def get_settings() -> Settings:
     if _settings is None:
         _settings = Settings()
     return _settings
-
-class Settings(BaseSettings):
-    """Application settings - aggregates all configuration."""
-
-    database: DatabaseConfig = Field(default_factory=DatabaseConfig)
-    embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
-    log: LogConfig = Field(default_factory=LogConfig)
-
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore",
-    )
 
 
 class DatabaseConfig(BaseSettings):
@@ -98,6 +84,21 @@ class LogConfig(BaseSettings):
         default="INFO",
         description="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
     )
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+
+class Settings(BaseSettings):
+    """Application settings - aggregates all configuration."""
+
+    database: DatabaseConfig = Field(default_factory=DatabaseConfig)
+    embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
+    log: LogConfig = Field(default_factory=LogConfig)
 
     model_config = SettingsConfigDict(
         env_file=".env",
