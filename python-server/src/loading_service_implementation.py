@@ -268,7 +268,7 @@ class LoadingServiceImplementation:
         logger.info("Received SearchPdfsRequest")
 
         try: 
-            found_pdfs: tuple[list[dict[str, Any]], int] = await self.db.search_pdfs(
+            mongodb_response: tuple[list[dict[str, Any]], int] = await self.db.search_pdfs(
                 # TODO: see the TODO about inconsistent naming in database.py
                 name_query=request.title_query,
                 system_filter=request.system_filter,
@@ -279,12 +279,44 @@ class LoadingServiceImplementation:
                 page_size=request.page_size if request.page_size > 0 else 50,
                 page_number=request.page_number,
             )
+            
+            # we convert what FerretDB returns into what protobuf expects here
+            # FerretDB prefixes the ID with an underscore, for example
+            found_pdfs: list[PdfListItem] = []
+            
+            for doc in mongodb_response[0]:
+              pdf_item = api.PdfListItem(
+                  id=doc.get('_id', ''),  # map _id → id
+                  name=doc.get('name', ''),
+                  system=doc.get('system', ''),
+                  type=doc.get('type', ''),
+                  page_count=doc.get('page_count', 0),
+                  origin_path=doc.get('origin_path', ''),
+                  file_size=doc.get('file_size', 0),
+                  # TODO: this is an old value which we are abusing here
+                  # we should refactor this in the future
+                  chunk_count=doc.get('batch_count', 0),  # Map batch_count → chunk_count
+              )
+
+              # Handle timestamps if present
+              if 'created_at' in doc:
+                  created_ts = timestamp_pb2.Timestamp()
+                  created_ts.FromDatetime(doc['created_at'])
+                  pdf_item.created_at.CopyFrom(created_ts)
+        
+              if 'updated_at' in doc:
+                  updated_ts = timestamp_pb2.Timestamp()
+                  updated_ts.FromDatetime(doc['updated_at'])
+                  pdf_item.updated_at.CopyFrom(updated_ts)
+                  # TODO: Handle tags
+
+              found_pdfs.append(pdf_item)
 
             return api.SearchPdfsResponse(
                 success=True,
                 message="Search succesful",
-                pdfs=found_pdfs[0],
-                total_count=found_pdfs[1],
+                pdfs=found_pdfs,
+                total_count=mongodb_response[1],
                 page_number=request.page_number if request.page_number else 0,
                 has_more=False,
             )

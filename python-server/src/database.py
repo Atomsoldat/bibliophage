@@ -189,7 +189,10 @@ class DocumentDatabase:
         total_count = await self.pdfs_collection.count_documents(query)
 
         # Get paginated results
-        cursor = self.pdfs_collection.find(query).sort('created_at', DESCENDING)
+        # filter out the raw markdown contained under batches:
+        # TODO: we want to have this under a proper "content" key eventually, so this
+        # will need to be refactored
+        cursor = self.pdfs_collection.find(query, {'batches': 0}).sort('created_at', DESCENDING)
         cursor.skip(page_number * page_size).limit(page_size)
         documents = await cursor.to_list(length=page_size)
 

@@ -46,6 +46,8 @@ message Pdf {
   // File size in bytes
   int64 file_size = 9;
 
+  // TODO: rename this or alternatively have a separate field for how many batches
+  // of pages were processed by docling
   // Number of chunks this PDF was split into
   int32 chunk_count = 10;
 

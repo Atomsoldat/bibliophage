@@ -19,8 +19,14 @@ mongosh mongodb://postgres:ferretdb_dev@localhost:27017/ --eval 'db = db.getSibl
 ```
 
 Pass a filter to find 
-```
+```bash
 mongosh mongodb://postgres:ferretdb_dev@localhost:27017/ --eval 'db = db.getSiblingDB("bibliophage"); db.pdfs.find({system: "PATHFINDER_1E", type: "BESTIARY"})' | less
+```
+
+Use a Projection after the filter to only return certain fields
+```bash
+mongosh mongodb://postgres:ferretdb_dev@localhost:27017/ --quiet --eval 'db = db.getSiblingDB("bibliophage"); db.pdfs.find({system:
+      "PATHFINDER_1E"}, {name: 1, system: 1}).toArray()'
 ```
 
 
