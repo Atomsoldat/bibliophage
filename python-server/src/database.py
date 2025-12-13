@@ -1,11 +1,11 @@
 """Database repository module for FerretDB/MongoDB operations.
 
 This module provides a centralized interface for all database operations,
-abstracting away Motor's API and providing domain-specific methods for
+abstracting away PyMongo's async API and providing domain-specific methods for
 documents and PDFs.
 
 Architecture:
-- Singleton connection management (one Motor client for the entire app)
+- Singleton connection management (one AsyncMongoClient for the entire app)
 - Domain-specific methods that speak the application's language
 - Easy to mock for testing
 - Single source of truth for all database operations
@@ -22,8 +22,7 @@ import logging
 from datetime import datetime
 from typing import Any, Optional
 
-import motor.motor_asyncio
-from pymongo import ASCENDING, DESCENDING
+from pymongo import ASCENDING, DESCENDING, AsyncMongoClient
 
 from config import get_settings
 
@@ -38,11 +37,11 @@ class DocumentDatabase:
     instead of accessing Motor directly.
     """
 
-    def __init__(self, mongo_client: motor.motor_asyncio.AsyncIOMotorClient):
+    def __init__(self, mongo_client: AsyncMongoClient):
         """Initialize the database repository.
 
         Args:
-            mongo_client: Motor async MongoDB client
+            mongo_client: PyMongo async MongoDB client
         """
         self.client = mongo_client
         self.db = mongo_client.bibliophage
@@ -391,15 +390,15 @@ class DocumentDatabase:
 # ============================================================================
 
 _database: Optional[DocumentDatabase] = None
-_mongo_client: Optional[motor.motor_asyncio.AsyncIOMotorClient] = None
+_mongo_client: Optional[AsyncMongoClient] = None
 
 
 def get_database() -> DocumentDatabase:
     """Get the application's database repository (singleton pattern).
 
     This is the main function services should use to access the database.
-    It ensures only one Motor client connection is created for the entire
-    application, which is more efficient than creating multiple connections.
+    It ensures only one PyMongo AsyncMongoClient connection is created for the
+    entire application, which is more efficient than creating multiple connections.
 
     Returns:
         DocumentDatabase: The database repository instance
@@ -412,7 +411,7 @@ def get_database() -> DocumentDatabase:
 
     if _database is None:
         settings = get_settings()
-        _mongo_client = motor.motor_asyncio.AsyncIOMotorClient(
+        _mongo_client = AsyncMongoClient(
             str(settings.database.doc_db_url)
         )
         _database = DocumentDatabase(_mongo_client)
@@ -425,7 +424,7 @@ async def close_database():
     """Close the database connection.
 
     This should be called when the application shuts down to cleanly
-    close the Motor client connection.
+    close the PyMongo AsyncMongoClient connection.
     """
     global _database, _mongo_client
 
