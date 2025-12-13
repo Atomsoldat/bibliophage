@@ -2,7 +2,6 @@
 
 
 import pytest
-from unittest.mock import AsyncMock
 
 import bibliophage.v1alpha2.document_pb2 as api
 from document_service_implementation import DocumentServiceImplementation
