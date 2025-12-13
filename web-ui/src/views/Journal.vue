@@ -1,4 +1,4 @@
-i<script setup lang="ts">
+<script setup lang="ts">
 import { ref } from 'vue'
 
 import TextEditorCard from '../components/TextEditorCard.vue';
