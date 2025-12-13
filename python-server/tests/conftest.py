@@ -48,9 +48,10 @@ def mock_database(monkeypatch):
     database._database = None
     database._mongo_client = None
 
-    # Mock the motor client creation to avoid actual DB connections
-    mock_motor_client = MagicMock()
-    monkeypatch.setattr("motor.motor_asyncio.AsyncIOMotorClient", lambda *args, **kwargs: mock_motor_client)
+    # Mock the PyMongo async client creation to avoid actual DB connections
+    # Since database.py imports AsyncMongoClient directly, we need to patch it there
+    mock_mongo_client = MagicMock()
+    monkeypatch.setattr("database.AsyncMongoClient", lambda *args, **kwargs: mock_mongo_client)
 
     # Return our mock database directly from get_database
     monkeypatch.setattr(database, "get_database", lambda: mock_db)
