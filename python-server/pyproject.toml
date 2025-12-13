@@ -52,17 +52,17 @@ deptry = ">=0.24.0, <0.25"
 [tool.pixi.tasks.dev]
 cmd = ["uvicorn",
         "--reload",
-        "server:api_server",
+        "src.server:api_server",
 ]
-env = {VECTOR_DB_URL = 'postgresql+psycopg://pgvector:pgvector_dev@localhost:5432/pgvector', DOC_DB_URL = 'mongodb://postgres:ferretdb_dev@localhost:27017/'}
+env = {PYTHONPATH = 'src', VECTOR_DB_URL = 'postgresql+psycopg://pgvector:pgvector_dev@localhost:5432/pgvector', DOC_DB_URL = 'mongodb://postgres:ferretdb_dev@localhost:27017/'}
 
 [tool.pixi.tasks.gen_proto]
 cmd = [
     "python", "-m", "grpc_tools.protoc",
     "--proto_path=../api",
-    "--connect-python_out=./",
-    "--python_out=./",
-    "--pyi_out=./",
+    "--connect-python_out=./src",
+    "--python_out=./src",
+    "--pyi_out=./src",
     "../api/bibliophage/v1alpha2/*.proto"
 ]
 description = "Generate protobuf code"
@@ -70,9 +70,9 @@ description = "Generate protobuf code"
 [tool.pixi.tasks.touch_inits]
 cmd = [
     "touch",
-    "bibliophage/__init__.py",
-    "bibliophage/v1alpha1/__init__.py",
-    "bibliophage/v1alpha2/__init__.py"
+    "src/bibliophage/__init__.py",
+    "src/bibliophage/v1alpha1/__init__.py",
+    "src/bibliophage/v1alpha2/__init__.py"
 ]
 description = "Create __init__.py files"
 
@@ -103,3 +103,4 @@ select = ["ALL"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+pythonpath = "src"

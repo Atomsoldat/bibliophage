@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 import os
 
-# Add the parent directory to the Python path so we can import our modules
-parent_dir = Path(__file__).parent.parent
-sys.path.insert(0, str(parent_dir))
+# Add the src directory to the Python path so we can import our modules
+src_dir = Path(__file__).parent.parent / "src"
+sys.path.insert(0, str(src_dir))
 
 # Set required environment variables for config validation
 # This prevents ValidationError when importing modules that use get_settings()
