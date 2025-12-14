@@ -28,11 +28,12 @@ const loading = ref(false)
 const output = ref<string[]>([])
 
 //TODO: make this actually send the Search request
-//onBeforeMount(async () => {
-  // send a search without  any filters and use that for our table of pdfs
-//})  
+onBeforeMount(async () => {
+  // send a search without any filters and use that for our table of pdfs
+  // so there's something to look at
+  handleSearchSubmit()
+})  
 
-// TODO: bend this around to handle  PDF searching
 function buildSearchPdfsRequest(): SearchPdfsRequest {
 
   // Create the request with hardcoded search parameters
@@ -49,7 +50,6 @@ function buildSearchPdfsRequest(): SearchPdfsRequest {
   return req;
 }
 
-// TODO: bend this around to send a PDF search request
 async function handleSearchSubmit() {
   loading.value = true;
 
@@ -57,7 +57,6 @@ async function handleSearchSubmit() {
     const request = buildSearchPdfsRequest();
     output.value.push("Searching for PDFs...");
 
-    output.value.push("Sending Request...");
     const response = await client.searchPdfs(request);
 
     // Store the results
@@ -110,6 +109,8 @@ async function handleSearchSubmit() {
   </button>
 </form>
 
+<!-- TODO: I think this should be open by default, at least until we have more document types -->
+<!-- TODO: Make Table Columns adjustable (show or hide, possibly width?)-->
 <details class="collapse bg-base-100 border-base-300 border">
       <summary class="collapse-title font-bold">PDFs</summary>
       <div class="collapse-content text-sm">
@@ -119,18 +120,36 @@ async function handleSearchSubmit() {
               <tr>
                 <th>Index</th>
                 <th>Name</th>
-                <th>Role</th>
+                <th>ID</th>
+                <th>System</th>
+                <th>Type</th>
+                <th>Page Count</th>
+                <th>Origin Path</th>
+                <th>Created</th>
+                <th>Updated</th>
+                <th>Size</th>
+                <th>Chunk Count</th>
+                <th>Tags</th>
               </tr>
             </thead>
             <tbody>
-              <!--https://vuejs.org/guide/essentials/list-->
-              <!--TODO: do we need this to be reactive? apparently, we can
-              do something along those lines using the additional key= parameter
-              https://vuejs.org/guide/essentials/list#maintaining-state-with-key -->
-              <tr v-for="(item, index) in detectives" :key="index">
+              <!-- https://vuejs.org/guide/essentials/list -->
+              <!-- https://vuejs.org/guide/essentials/list#maintaining-state-with-key -->
+              <tr v-for="(item, index) in pdfs" :key="index">
                 <th>{{ index }}</th>
                 <td>{{ item.name }}</td>
-                <td>{{ item.role }}</td>
+                <td>{{ item.id }}</td>
+                <td>{{ item.system }}</td>
+                <td>{{ item.type }}</td>
+                <td>{{ item.pageCount }}</td>
+                <td>{{ item.originPath }}</td>
+                <!-- TODO: use human readable units-->
+                <td>{{ item.createdAt }}</td>
+                <td>{{ item.updatedAt }}</td>
+                <!-- TODO: use human readable units-->
+                <td>{{ item.fileSize }}</td>
+                <td>{{ item.chunkCount }}</td>
+                <td>{{ item.tags }}</td>
               </tr>
             </tbody>
             <tfoot>
