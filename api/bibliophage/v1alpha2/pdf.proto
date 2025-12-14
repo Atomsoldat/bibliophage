@@ -81,6 +81,7 @@ message PdfListItem {
   int32 page_count = 5;
 
   // Original filesystem path (where it was loaded from)
+  // TODO: this field is no longer needed because we upload files via the API
   string origin_path = 6;
 
   // When this PDF was first loaded into the system
