@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onBeforeMount } from 'vue'
 import { Icon } from '@iconify/vue'
+import type { Client } from "@connectrpc/connect"
 
 //api stuff
 import { createClient } from "@connectrpc/connect";
@@ -9,11 +10,14 @@ import { PdfService } from "../bibliophage/v1alpha2/pdf_connect.ts";
 import { SearchPdfsRequest, Pdf, PdfListItem } from "../bibliophage/v1alpha2/pdf_pb.ts";
 import { SortOrder } from "../bibliophage/v1alpha2/common_pb.ts";
 
+// Configuration
+import { useConfig } from "../composables/useConfig";
+
+const { config, loadConfig } = useConfig();
+
+// Client will be initialized after config loads
 // see https://connectrpc.com/docs/node/using-clients/#connect
-const transport = createConnectTransport({
-  baseUrl: "http://localhost:8000",  // TODO: make this configurable
-});
-const client = createClient(PdfService, transport);
+const client = ref<Client<typeof PdfService> | null>(null)
 
 const detectives = ref(
   [
@@ -27,10 +31,17 @@ const pdfs = ref<PdfListItem[]>([])
 const loading = ref(false)
 const output = ref<string[]>([])
 
-//TODO: make this actually send the Search request
 onBeforeMount(async () => {
-  // send a search without any filters and use that for our table of pdfs
-  // so there's something to look at
+  // Load configuration first
+  await loadConfig()
+
+  // Create client with loaded config
+  const transport = createConnectTransport({
+    baseUrl: config.value.backendHost,
+  });
+  client.value = createClient(PdfService, transport);
+
+  // Send initial search to populate table
   handleSearchSubmit()
 })  
 
@@ -51,13 +62,18 @@ function buildSearchPdfsRequest(): SearchPdfsRequest {
 }
 
 async function handleSearchSubmit() {
+  if (!client.value) {
+    output.value.push("Error: Client not initialized. Configuration may not be loaded yet.");
+    return;
+  }
+
   loading.value = true;
 
   try {
     const request = buildSearchPdfsRequest();
     output.value.push("Searching for PDFs...");
 
-    const response = await client.searchPdfs(request);
+    const response = await client.value.searchPdfs(request);
 
     // Store the results
     pdfs.value = response.pdfs;

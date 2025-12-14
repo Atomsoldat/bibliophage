@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
+import type { Client } from "@connectrpc/connect"
 
 import BaseCard from '../components/BaseCard.vue';
 
@@ -10,17 +11,23 @@ import { createConnectTransport } from "@connectrpc/connect-web";
 import { PdfService } from "../bibliophage/v1alpha2/pdf_connect.ts";
 import { LoadPdfRequest, Pdf, ChunkingConfig } from "../bibliophage/v1alpha2/pdf_pb.ts";
 
-// TODO: We need to derive most of this from environment variables
+// Configuration
+import { useConfig } from "../composables/useConfig";
+
+const { config, loadConfig } = useConfig();
+
+// Client will be initialized after config loads
+// see https://connectrpc.com/docs/node/using-clients/#connect
+const client = ref<Client<typeof PdfService> | null>(null)
+
 // Form state
 // ref() is a Vue function that returns an object with a single property .value
-// basically a pointer. But the neat thing is that Vue tracks the value of this 
+// basically a pointer. But the neat thing is that Vue tracks the value of this
 // object and does stuff in reaction to it changing (they call that "reactive")
 // https://vuejs.org/api/reactivity-core.html#ref
 // using the const keyword instead of var is us saying "we will always be storing the same
 // pointer here, and no other", technically, var could work too, but then someone could reassign the ref
 // and not just the ref's .value property
-const serverAddress = ref('localhost')
-const serverPort = ref(8000)
 const pdfName = ref('')
 const rpgSystem = ref('PATHFINDER_1E')
 const publicationType = ref('BESTIARY')
@@ -32,11 +39,16 @@ const pdfFile = ref<File | null>(null)
 const loading = ref(false)
 const output = ref<string[]>([])
 
-// see https://connectrpc.com/docs/node/using-clients/#connect
-const transport = createConnectTransport({
-  baseUrl: `http://${serverAddress.value}:${serverPort.value}`,
-});
-const client = createClient(PdfService, transport);
+onMounted(async () => {
+  // Load configuration
+  await loadConfig()
+
+  // Create client with loaded config
+  const transport = createConnectTransport({
+    baseUrl: config.value.backendHost,
+  });
+  client.value = createClient(PdfService, transport);
+})
 
 // if someone used our file input element to select a file
 // - store that file object (which gives access to data AND metadata of that file) in  pdfFile.value
@@ -83,7 +95,7 @@ function buildPdfLoadRequest(fileData: Uint8Array<ArrayBuffer>): LoadPdfRequest 
 
 // async functions return a promise which other stuff
 // can await, or use then(), finally() and other funny  Promise related functions on
-// we don't do that though 
+// we don't do that though
 // TODO: It would be splendid, if we could have some kind of progress indicator
 async function handleFormSubmit() {
   // returning settles the promise
@@ -93,11 +105,16 @@ async function handleFormSubmit() {
     return
   }
 
+  if (!client.value) {
+    output.value = ["Error: Client not initialized. Configuration may not be loaded yet."]
+    return
+  }
+
   // show cute loading animation
   loading.value = true
   output.value = []
 
-  output.value.push(`Connecting to server at ${serverAddress.value}:${serverPort.value}...`)
+  output.value.push(`Connecting to server at ${config.value.backendHost}...`)
   output.value.push(`File: ${pdfFile.value.name}`)
   output.value.push(`PDF Name: ${pdfName.value}`)
   output.value.push(`System: ${rpgSystem.value}`)
@@ -111,7 +128,7 @@ async function handleFormSubmit() {
 
     // Make the Connect-RPC call (async)
     output.value.push("Sending Request...");
-    const response = await client.loadPdf(request);
+    const response = await client.value.loadPdf(request);
 
     output.value.push("Upload successful!");
     output.value.push(`PDF ID: ${response.pdf?.id}`);

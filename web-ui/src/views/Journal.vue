@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import type { Client } from "@connectrpc/connect"
 
 import TextEditorCard from '../components/TextEditorCard.vue';
 
@@ -7,6 +8,15 @@ import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { DocumentService } from "../bibliophage/v1alpha2/document_connect.ts";
 import { StoreDocumentRequest, Document, DocumentType } from "../bibliophage/v1alpha2/document_pb.ts"
+
+// Configuration
+import { useConfig } from "../composables/useConfig";
+
+const { config, loadConfig } = useConfig();
+
+// Client will be initialized after config loads
+// see https://connectrpc.com/docs/node/using-clients/#connect
+const client = ref<Client<typeof DocumentService> | null>(null)
 
 // technically this is not necessary, because the editor just initialises itself with this
 // string, but apparently we  can end up  with desynchronised variables if we don't override the value
@@ -23,15 +33,16 @@ const editorCardRef = ref<InstanceType<typeof TextEditorCard> | null>(null)
 
 const documentName = ref('i-should-change-for-each-document')
 
-// TODO: we want to put this somewhere global, so we don't have to set this in each view
-const serverAddress = ref('localhost')
-const serverPort = ref(8000)
+onMounted(async () => {
+  // Load configuration
+  await loadConfig()
 
-// see https://connectrpc.com/docs/node/using-clients/#connect
-const transport = createConnectTransport({
-  baseUrl: `http://${serverAddress.value}:${serverPort.value}`,
-});
-const client = createClient(DocumentService, transport);
+  // Create client with loaded config
+  const transport = createConnectTransport({
+    baseUrl: config.value.backendHost,
+  });
+  client.value = createClient(DocumentService, transport);
+})
 
 
 function buildDocumentStoreRequest(documentName: string, documentContent: string): StoreDocumentRequest {
@@ -64,13 +75,18 @@ function buildDocumentStoreRequest(documentName: string, documentContent: string
 // if the document is new, send a DocumentStoreRequest
 // TODO: sed some kind of output / user feedback during this
 async function handleDocumentSave() {
+  if (!client.value) {
+    console.error("Client not initialized. Configuration may not be loaded yet.")
+    return
+  }
+
   try {
     // TODO: if we are editing an existing doc, send a DocumentUpdateRequest
     const request = buildDocumentStoreRequest(documentName.value, editorContent.value);
 
     // TODO: do something with the response
     //const response = await client.loadPDF(request);
-    await client.storeDocument(request);
+    await client.value.storeDocument(request);
 
   } catch (error) {
     // this should also do stuff
