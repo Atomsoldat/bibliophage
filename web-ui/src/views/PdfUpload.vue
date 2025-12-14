@@ -175,7 +175,7 @@ async function handleFormSubmit() {
       <!-- Card Grid Layout -->
       <!-- default 1 column, with more depending on screen size -->
       <!-- gap-... for neat gaps and mb-... for spacing underneath -->
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
 
         <!-- The actual cards in here use daisy-ui classes -->
         <!-- https://daisyui.com/components/card/ -->
@@ -185,28 +185,6 @@ async function handleFormSubmit() {
         <!-- for input elements https://daisyui.com/components/input -->
         <!-- font weights https://tailwindcss.com/docs/font-weight -->
         <!-- the font used needs to support them, otherwise they have no effect -->
-
-
-        <!-- Server Configuration -->
-        <!-- TODO: this should be read from environment vars-->
-        <!-- transport is only instantiated once and the values are unlikely to change-->
-        <BaseCard title="Server Configuration" icon="heroicons:server">
-        <!-- rest of the form inputs -->
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold">Server Address</span>
-              </label>
-              <!-- v-model references the vue ref variables we define in our <script> section-->
-              <input type="text" v-model="serverAddress" class="input input-bordered" />
-            </div>
-
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold">Server Port</span>
-              </label>
-              <input type="number" v-model="serverPort" :min="1" :max="65535" class="input input-bordered"/>
-            </div>
-        </BaseCard>
 
         <!-- PDF File -->
         <BaseCard title="PDF File" icon="heroicons:document">
