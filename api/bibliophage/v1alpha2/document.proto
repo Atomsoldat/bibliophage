@@ -151,7 +151,10 @@ message UpdateDocumentResponse {
   Document document = 3;
 }
 
+
 // SearchDocumentsRequest - Search for documents by various criteria
+// TODO: The PDF API object class probably wants similar search parameters
+// we should make those search parameters a shared message
 message SearchDocumentsRequest {
   // Search by name (partial match, case-insensitive)
   optional string name_query = 1;

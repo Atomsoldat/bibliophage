@@ -137,6 +137,7 @@ message LoadPdfResponse {
 }
 
 // SearchPdfsRequest - Search for PDFs by various criteria
+// TODO: we should turn these search parameters into a generic message, so that it can be reused
 message SearchPdfsRequest {
   // Search by title (partial match, case-insensitive)
   optional string title_query = 1;
