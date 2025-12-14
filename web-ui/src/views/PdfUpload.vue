@@ -13,8 +13,10 @@ import { LoadPdfRequest, Pdf, ChunkingConfig } from "../bibliophage/v1alpha2/pdf
 
 // Configuration
 import { useConfig } from "../composables/useConfig";
+import { useAppConsole } from "../composables/useAppConsole";
 
 const { config, loadConfig } = useConfig();
+const { log } = useAppConsole();
 
 // Client will be initialized after config loads
 // see https://connectrpc.com/docs/node/using-clients/#connect
@@ -37,7 +39,6 @@ const chunkOverlap = ref(50)
 const pdfFile = ref<File | null>(null)
 // if we are loading, we display a cute little animation
 const loading = ref(false)
-const output = ref<string[]>([])
 
 onMounted(async () => {
   // Load configuration
@@ -106,41 +107,38 @@ async function handleFormSubmit() {
   }
 
   if (!client.value) {
-    output.value = ["Error: Client not initialized. Configuration may not be loaded yet."]
+    log("Error: Client not initialized. Configuration may not be loaded yet.", "error")
     return
   }
 
   // show cute loading animation
   loading.value = true
-  output.value = []
 
-  output.value.push(`Connecting to server at ${config.value.backendHost}...`)
-  output.value.push(`File: ${pdfFile.value.name}`)
-  output.value.push(`PDF Name: ${pdfName.value}`)
-  output.value.push(`System: ${rpgSystem.value}`)
-  output.value.push(`Type: ${publicationType.value}`)
-  output.value.push('')
+  log(`Connecting to server at ${config.value.backendHost}...`, "info")
+  log(`File: ${pdfFile.value.name}`, "info")
+  log(`PDF Name: ${pdfName.value}`, "info")
+  log(`System: ${rpgSystem.value}`, "info")
+  log(`Type: ${publicationType.value}`, "info")
 
   try {
     const fileData = new Uint8Array(await pdfFile.value.arrayBuffer());
     const request = buildPdfLoadRequest(fileData);
-    output.value.push("Loading PDF...");
+    log("Loading PDF...", "info")
 
     // Make the Connect-RPC call (async)
-    output.value.push("Sending Request...");
+    log("Sending Request...", "info")
     const response = await client.value.loadPdf(request);
 
-    output.value.push("Upload successful!");
-    output.value.push(`PDF ID: ${response.pdf?.id}`);
-    output.value.push(`Pages: ${response.pdf?.pageCount}`);
-    output.value.push(`Chunks: ${response.pdf?.chunkCount}`);
-    output.value.push(`File Size: ${response.pdf?.fileSize} bytes`);
+    log("Upload successful!", "success")
+    log(`PDF ID: ${response.pdf?.id}`, "success")
+    log(`Pages: ${response.pdf?.pageCount}`, "info")
+    log(`Chunks: ${response.pdf?.chunkCount}`, "info")
+    log(`File Size: ${response.pdf?.fileSize} bytes`, "info")
   } catch (error) {
     // TODO: check if we are correctly handling timeouts
-    output.value.push(`Error during upload: ${(error as Error).message}`);
+    log(`Error during upload: ${(error as Error).message}`, "error")
   } finally {
-    loading.value = false;
-    output.value.push("");
+    loading.value = false
   }
 }
 
@@ -178,11 +176,11 @@ async function handleFormSubmit() {
       <!-- default 1 column, with more depending on screen size -->
       <!-- gap-... for neat gaps and mb-... for spacing underneath -->
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
-        
+
         <!-- The actual cards in here use daisy-ui classes -->
         <!-- https://daisyui.com/components/card/ -->
         <!-- https://daisyui.com/docs/colors/ -->
-        
+
         <!-- for the shadows https://tailwindcss.com/docs/box-shadow -->
         <!-- for input elements https://daisyui.com/components/input -->
         <!-- font weights https://tailwindcss.com/docs/font-weight -->
@@ -290,20 +288,6 @@ async function handleFormSubmit() {
       <p v-if="!pdfFile" class="text-center text-sm mt-2 opacity-70">
         Please select a PDF file to upload
       </p>
-
-      <!-- Output Terminal -->
-      <!--If something is in our list of output strings, display it here -->
-      <div v-if="output.length > 0" class="card bg-base-100 shadow-xl max-w-5xl mx-auto">
-        <div class="card-body">
-          <h2 class="card-title">
-            <Icon icon="heroicons:command-line" class="text-xl" />
-            Output
-          </h2>
-          <div class="bg-base-200 rounded-lg p-4 font-mono text-sm">
-            <pre v-for="(line, index) in output" :key="index" class="mb-1">{{ line }}</pre>
-          </div>
-        </div>
-      </div>
 
     </form>
   </div>
