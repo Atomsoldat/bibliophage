@@ -19,13 +19,18 @@ service PdfService {
 // Pdf represents a PDF document in the system
 // Does not actually contain the raw data, only metadata
 message Pdf {
-  // Unique identifier for this PDF (assigned by the system)
+  // Unique identifier for this PDF (assigned by the backend)
   string id = 1;
 
   // Human-readable name (e.g., "Monster Manual", "Player's Handbook")
   string name = 2;
 
-  // Which RPG system this belongs to (e.g., "D&D 5e", "Pathfinder 2e")
+  // Which RPG system this belongs to (e.g., "Call of Cthulhu", "Pathfinder 1e")
+  // TODO: There may be PDFs that users want to use in multiple systems, or that do not belong
+  // to any particular system (agnostic stuff like General GMing tips or such)
+  // how do we handle that with regards to the vector database?
+  // should we select based on the system and then allow the user to add additional selection
+  // criteria for books that do not match the used system?
   string system = 3;
 
   // Type of publication (e.g., "Core Rulebook", "Adventure", "Supplement")
