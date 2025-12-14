@@ -12,8 +12,10 @@ import { SortOrder } from "../bibliophage/v1alpha2/common_pb.ts";
 
 // Configuration
 import { useConfig } from "../composables/useConfig";
+import { useAppConsole } from "../composables/useAppConsole";
 
 const { config, loadConfig } = useConfig();
+const { log } = useAppConsole();
 
 // Client will be initialized after config loads
 // see https://connectrpc.com/docs/node/using-clients/#connect
@@ -29,7 +31,6 @@ const detectives = ref(
 
 const pdfs = ref<PdfListItem[]>([])
 const loading = ref(false)
-const output = ref<string[]>([])
 
 onBeforeMount(async () => {
   // Load configuration first
@@ -63,7 +64,7 @@ function buildSearchPdfsRequest(): SearchPdfsRequest {
 
 async function handleSearchSubmit() {
   if (!client.value) {
-    output.value.push("Error: Client not initialized. Configuration may not be loaded yet.");
+    log("Error: Client not initialized. Configuration may not be loaded yet.", "error");
     return;
   }
 
@@ -71,20 +72,19 @@ async function handleSearchSubmit() {
 
   try {
     const request = buildSearchPdfsRequest();
-    output.value.push("Searching for PDFs...");
+    log("Searching for PDFs...", "info");
 
     const response = await client.value.searchPdfs(request);
 
     // Store the results
     pdfs.value = response.pdfs;
-    output.value.push(`Success! Found ${response.totalCount} PDFs`);
-    output.value.push(`Returned ${response.pdfs.length} results on page ${response.pageNumber}`);
+    log(`Success! Found ${response.totalCount} PDFs`, "success");
+    log(`Returned ${response.pdfs.length} results on page ${response.pageNumber}`, "info");
 
   } catch (error) {
-    output.value.push(`Error during PDF search: ${(error as Error).message}`);
+    log(`Error during PDF search: ${(error as Error).message}`, "error");
   } finally {
     loading.value = false;
-    output.value.push("");
   }
 }
 
@@ -96,21 +96,6 @@ async function handleSearchSubmit() {
     <h1 class="text-4xl font-bold mb-4">Document List</h1>
     <p class="text-lg">Here is where we would like to have a searchable list of all documents</p>
   </div>
-  
-  <!-- Output Terminal -->
-  <!--If something is in our list of output strings, display it here -->
-  <!--<div v-if="output.length > 0" class="card bg-base-100 shadow-xl max-w-5xl mx-auto">-->
-  <div class="card bg-base-100 shadow-xl max-w-5xl mx-auto">
-    <div class="card-body">
-      <h2 class="card-title">
-        <Icon icon="heroicons:command-line" class="text-xl" />
-        Output
-      </h2>
-      <div class="bg-base-200 rounded-lg p-4 font-mono text-sm">
-        <pre v-for="(line, index) in output" :key="index" class="mb-1">{{ line }}</pre>
-      </div>
-    </div>
-  </div>  
 
 <form @submit.prevent="handleSearchSubmit">
 
