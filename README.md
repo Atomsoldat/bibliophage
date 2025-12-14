@@ -6,10 +6,10 @@ Currently, there's a rudimentary web-ui which is in the process of being hooked 
 
 ## Toolchain Requirements
 
-- [Tilt](https://tilt.dev/) - orchestration
-- [Docker](https://www.docker.com/) - containerised databases
-- [pixi](https://pixi.sh/) - Python dependency management
-- [Yarn](https://yarnpkg.com/) - JavaScript dependency management
+- [Tilt](https://docs.tilt.dev/) - orchestration
+- [Docker](https://docs.docker.com/engine/install/) - containerised databases
+- [pixi](https://pixi.sh/latest/installation/) - Python dependency management
+- [Yarn](https://yarnpkg.com/getting-started/install) - JavaScript dependency management
 
 ## Quick Start
 
