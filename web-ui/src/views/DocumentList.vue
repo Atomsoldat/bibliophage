@@ -20,14 +20,6 @@ const { log } = useAppConsole()
 // see https://connectrpc.com/docs/node/using-clients/#connect
 const client = ref<Client<typeof PdfService> | null>(null)
 
-const detectives = ref(
-  [
-    { name: 'Justus Jonas', role: 'Erster Detektiv' },
-    { name: 'Peter Shaw', role: 'Zweiter Detektiv' },
-    { name: 'Bow Andrews', role: 'Recherchen und Archiv' },
-  ],
-)
-
 const pdfs = ref<PdfListItem[]>([])
 const loading = ref(false)
 
