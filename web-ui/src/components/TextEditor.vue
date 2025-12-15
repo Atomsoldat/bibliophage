@@ -194,7 +194,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="rich-text-editor">
+  <div class="rich-text-editor w-full">
     <!-- Menubar -->
     <div class="mb-4 p-3 bg-base-200 rounded-t-lg flex flex-wrap gap-1">
 
@@ -400,7 +400,7 @@ onBeforeUnmount(() => {
         <!-- double consontant represented by single laguz -->
         <!-- ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ -->
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-          <div class="text-base-200 font-serif text-4xl font-light tracking-[0.3em]">
+          <div class="text-base-200 font-serif text-3xl font-light tracking-[0.3em]">
             ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ
           </div>
         </div>

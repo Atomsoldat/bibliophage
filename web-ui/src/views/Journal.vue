@@ -110,7 +110,7 @@ async function handleDocumentAbort() {
 </script>
 
 <template>
-  <div class="max-w-max mx-auto">
+  <div class="max-w-7xl mx-auto px-4">
     <!-- mb for spacing underneath heading-->
     <h1 class="text-4xl font-bold mb-8">Journal</h1>
     
