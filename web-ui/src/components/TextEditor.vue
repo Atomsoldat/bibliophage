@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import { Editor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
@@ -33,6 +33,12 @@ onMounted(() => {
   editor.value = new Editor({
     extensions: [StarterKit, Markdown, Image],
     content: defaultContent.value,
+    onUpdate: ({ editor }) => {
+      // Extract markdown from editor and sync back to the model
+      // This enables parent components to receive markdown via v-model
+      const markdown = editor.storage.markdown.getMarkdown()
+      defaultContent.value = markdown
+    },
   })
 })
 
