@@ -1,4 +1,4 @@
-import { ref, readonly } from 'vue'
+import { readonly, ref } from 'vue'
 
 /**
  * Console message types for different log levels
@@ -42,7 +42,7 @@ export function useAppConsole() {
     const newMessage: ConsoleMessage = {
       message,
       type,
-      timestamp: new Date()
+      timestamp: new Date(),
     }
 
     // Ring buffer: if at capacity, remove oldest message
@@ -101,6 +101,6 @@ export function useAppConsole() {
     toggleVisibility,
     show,
     hide,
-    clear
+    clear,
   }
 }

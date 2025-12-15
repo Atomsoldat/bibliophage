@@ -1,4 +1,4 @@
-import { ref, readonly } from 'vue'
+import { readonly, ref } from 'vue'
 
 /**
  * Application configuration interface
@@ -11,7 +11,7 @@ export interface AppConfig {
  * Hardcoded fallback values
  */
 const HARDCODED_DEFAULTS: AppConfig = {
-  backendHost: 'http://localhost:8000'
+  backendHost: 'http://localhost:8000',
 }
 
 // Shared state across all component instances
@@ -60,10 +60,16 @@ export function useConfig() {
           const fileConfig = await response.json() as Partial<AppConfig>
           loadedConfig = {
             ...loadedConfig,
-            ...fileConfig
+            ...fileConfig,
           }
         }
-      } catch (err) {
+      }
+      catch (err) {
+        // we convert whatever is thrown into a strictly formated Error
+        // technically, something entirely different could be thrown, so this
+        // guards against that
+        error.value = err instanceof Error ? err : new Error(String(err))
+        console.error('Failed to load config file:', error.value.message)
         console.warn('config.json not available, using defaults and environment variables')
       }
 
@@ -75,7 +81,8 @@ export function useConfig() {
 
       config.value = loadedConfig
       isLoaded.value = true
-    } catch (err) {
+    }
+    catch (err) {
       error.value = err instanceof Error ? err : new Error(String(err))
       console.error('Failed to load config:', error.value.message)
 
@@ -83,7 +90,8 @@ export function useConfig() {
       // It sounds convenient, but it  might also surprise people
       config.value = { ...HARDCODED_DEFAULTS }
       isLoaded.value = true
-    } finally {
+    }
+    finally {
       isLoading.value = false
     }
   }
@@ -93,6 +101,6 @@ export function useConfig() {
     isLoaded: readonly(isLoaded),
     isLoading: readonly(isLoading),
     error: readonly(error),
-    loadConfig
+    loadConfig,
   }
 }

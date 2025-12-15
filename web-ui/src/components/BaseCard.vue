@@ -1,3 +1,12 @@
+<script setup lang="ts">
+import { Icon } from '@iconify/vue'
+
+defineProps<{
+  title: string
+  icon: string
+}>()
+</script>
+
 <template>
   <div class="card bg-base-200 shadow-xl">
     <div class="card-body">
@@ -9,11 +18,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { Icon } from '@iconify/vue';
-defineProps<{
-  title: string;
-  icon: string;
-}>();
-</script>
