@@ -25,18 +25,33 @@ const defaultContent = defineModel('defaultContent', { type: String, default: "<
 // until we have instantiated the editor, it might be null
 const editor = ref<Editor | null>(null)
 
+// Track whether we're in WYSIWYG mode or raw markdown mode
+type ViewMode = 'wysiwyg' | 'markdown'
+const viewMode = ref<ViewMode>('markdown')
+
 // when this component is mounted (basically when someone wants to see it)
 // we instantiate the editor
 // this is how the Tiptap people do it in their examples and source code
 // https://github.com/ueberdosis/tiptap
 onMounted(() => {
   editor.value = new Editor({
-    extensions: [StarterKit, Markdown, Image],
+    extensions: [
+      StarterKit,
+      Markdown.configure({
+        // Enable markdown serialization
+        html: false,
+        transformPastedText: true,
+      }),
+      Image,
+    ],
     content: defaultContent.value,
+    // Parse initial content as markdown
+    contentType: 'markdown',
     onUpdate: ({ editor }) => {
       // Extract markdown from editor and sync back to the model
       // This enables parent components to receive markdown via v-model
-      const markdown = editor.storage.markdown.getMarkdown()
+      // In Tiptap v3, use editor.getMarkdown() directly
+      const markdown = editor.getMarkdown()
       defaultContent.value = markdown
     },
   })
@@ -117,6 +132,51 @@ const addImage = () => {
   }
 }
 
+// Mode toggling between WYSIWYG and raw markdown
+const toggleViewMode = () => {
+  if (viewMode.value === 'markdown') {
+    // Switching to WYSIWYG: recreate the editor to properly parse markdown
+    // Store the markdown content before recreating
+    const markdownContent = defaultContent.value
+
+    // Destroy existing editor and recreate with markdown content
+    // This ensures the Markdown extension properly parses the markdown syntax
+    editor.value?.destroy()
+    editor.value = new Editor({
+      extensions: [
+        StarterKit,
+        Markdown.configure({
+          html: false,
+          transformPastedText: true,
+        }),
+        Image,
+      ],
+      content: markdownContent,
+      // Tell Tiptap to parse content as markdown, not HTML
+      contentType: 'markdown',
+      onUpdate: ({ editor }) => {
+        const markdown = editor.getMarkdown()
+        defaultContent.value = markdown
+      },
+    })
+
+    viewMode.value = 'wysiwyg'
+  } else {
+    // Switching to markdown: first extract current markdown from editor
+    if (editor.value) {
+      const currentMarkdown = editor.value.getMarkdown()
+      defaultContent.value = currentMarkdown
+    }
+    viewMode.value = 'markdown'
+  }
+}
+
+// Handle textarea changes in markdown mode
+const handleMarkdownInput = (event: Event) => {
+  const target = event.target as HTMLTextAreaElement
+  defaultContent.value = target.value
+}
+
 // Expose methods that parent components can call
 defineExpose({
   // Reset editor content to a specific value (or back to default)
@@ -136,9 +196,25 @@ onBeforeUnmount(() => {
   <div class="rich-text-editor">
     <!-- Menubar -->
     <div class="mb-4 p-3 bg-base-200 rounded-t-lg flex flex-wrap gap-1">
-      
-      <!-- Text Formatting -->
+
+      <!-- View Mode Toggle -->
       <button
+        @click="toggleViewMode"
+        class="btn btn-sm btn-primary"
+        :title="viewMode === 'markdown' ? 'Switch to WYSIWYG mode' : 'Switch to markdown mode'"
+      >
+        <Icon v-if="viewMode === 'markdown'" icon="mdi:eye" />
+        <Icon v-else icon="mdi:code-tags" />
+        <span v-if="viewMode === 'markdown'">Preview</span>
+        <span v-else>Source</span>
+      </button>
+
+      <!-- Formatting buttons only visible in WYSIWYG mode -->
+      <template v-if="viewMode === 'wysiwyg'">
+        <div class="divider divider-horizontal mx-0"></div>
+
+        <!-- Text Formatting -->
+        <button
         @click="editor?.chain().focus().toggleBold().run()"
         :class="{ 'btn-active': activeMarks.bold }"
         class="btn btn-sm btn-ghost"
@@ -275,6 +351,7 @@ onBeforeUnmount(() => {
       >
         <Icon icon="mdi:redo" />
       </button>
+      </template>
     </div>
     
     <!-- Link Input Modal -->
@@ -315,10 +392,21 @@ onBeforeUnmount(() => {
     
     <!-- Editor -->
     <div class="border border-t-0 border-base-300 rounded-b-lg overflow-hidden">
+      <!-- WYSIWYG Mode: Rich text editor -->
       <EditorContent
-        v-if="editor"
+        v-if="viewMode === 'wysiwyg' && editor"
         v-bind:editor="(editor as Editor)"
         class="ProseMirror prose max-w-none focus:outline-none p-4 min-h-96 bg-base-100"
+      />
+
+      <!-- Markdown Mode: Plain textarea -->
+      <textarea
+        v-else
+        :value="defaultContent"
+        @input="handleMarkdownInput"
+        class="textarea textarea-bordered w-full min-h-96 font-mono text-sm p-4 bg-base-100 rounded-none border-0 focus:outline-none resize-none"
+        placeholder="Enter markdown here..."
+        spellcheck="false"
       />
     </div>
   </div>
