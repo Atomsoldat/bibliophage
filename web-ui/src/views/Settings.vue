@@ -1,32 +1,7 @@
-<template>
-  <div class="max-w-3xl mx-auto">
-    <h1 class="text-4xl font-bold mb-8">Settings</h1>
-
-    <BaseCard title="Appearance" icon="heroicons:paint-brush">
-        <div class="flex justify-between items-center py-4">
-          <div>
-            <label for="darkModeToggle" class="font-semibold">Dark Mode</label>
-            <p class="text-sm opacity-70">Enable dark color scheme</p>
-          </div>
-          <input
-            type="checkbox"
-            id="darkModeToggle"
-            class="toggle toggle-primary"
-            v-model="darkMode"
-            @change="toggleDarkMode"
-          />
-        </div>
-
-    </BaseCard>
-
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 
-import BaseCard from '../components/BaseCard.vue';
-
+import BaseCard from '../components/BaseCard.vue'
 
 const darkMode = ref(true)
 
@@ -44,8 +19,35 @@ function toggleDarkMode() {
 function applyDarkMode() {
   if (darkMode.value) {
     document.documentElement.setAttribute('data-theme', 'dark')
-  } else {
+  }
+  else {
     document.documentElement.setAttribute('data-theme', 'light')
   }
 }
 </script>
+
+<template>
+  <div class="max-w-3xl mx-auto">
+    <h1 class="text-4xl font-bold mb-8">
+      Settings
+    </h1>
+
+    <BaseCard title="Appearance" icon="heroicons:paint-brush">
+      <div class="flex justify-between items-center py-4">
+        <div>
+          <label for="darkModeToggle" class="font-semibold">Dark Mode</label>
+          <p class="text-sm opacity-70">
+            Enable dark color scheme
+          </p>
+        </div>
+        <input
+          id="darkModeToggle"
+          v-model="darkMode"
+          type="checkbox"
+          class="toggle toggle-primary"
+          @change="toggleDarkMode"
+        >
+      </div>
+    </BaseCard>
+  </div>
+</template>

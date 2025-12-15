@@ -1,22 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import type { Client } from '@connectrpc/connect'
+
+import { createClient } from '@connectrpc/connect'
+import { createConnectTransport } from '@connectrpc/connect-web'
+
 import { Icon } from '@iconify/vue'
-import type { Client } from "@connectrpc/connect"
 
-import BaseCard from '../components/BaseCard.vue';
+import { onMounted, ref } from 'vue'
 
-//api stuff
-import { createClient } from "@connectrpc/connect";
-import { createConnectTransport } from "@connectrpc/connect-web";
-import { PdfService } from "../bibliophage/v1alpha2/pdf_connect.ts";
-import { LoadPdfRequest, Pdf, ChunkingConfig } from "../bibliophage/v1alpha2/pdf_pb.ts";
+import { PdfService } from '../bibliophage/v1alpha2/pdf_connect.ts'
+import { ChunkingConfig, LoadPdfRequest, Pdf } from '../bibliophage/v1alpha2/pdf_pb.ts'
+import BaseCard from '../components/BaseCard.vue'
+import { useAppConsole } from '../composables/useAppConsole'
+import { useConfig } from '../composables/useConfig'
 
-// Configuration
-import { useConfig } from "../composables/useConfig";
-import { useAppConsole } from "../composables/useAppConsole";
-
-const { config, loadConfig } = useConfig();
-const { log } = useAppConsole();
+const { config, loadConfig } = useConfig()
+const { log } = useAppConsole()
 
 // Client will be initialized after config loads
 // see https://connectrpc.com/docs/node/using-clients/#connect
@@ -47,8 +46,8 @@ onMounted(async () => {
   // Create client with loaded config
   const transport = createConnectTransport({
     baseUrl: config.value.backendHost,
-  });
-  client.value = createClient(PdfService, transport);
+  })
+  client.value = createClient(PdfService, transport)
 })
 
 // if someone used our file input element to select a file
@@ -58,13 +57,13 @@ function handleFileSelect(event: Event) {
   const target = event.target as HTMLInputElement
   if (target.files && target.files.length > 0) {
     // in case the first file in the files property is undefined due to whatever reason, set the value to null
-    // ?? works like || execpt that it returns the right side  if the left side is null or undefined 
+    // ?? works like || execpt that it returns the right side  if the left side is null or undefined
     pdfFile.value = target.files[0] ?? null
-    // a?.b means `a` might be undefined or null, but if it isn't, we would like to access `b` 
+    // a?.b means `a` might be undefined or null, but if it isn't, we would like to access `b`
     // if b then happens do be undefined, `??` returns a string saying that instead
     const fileName = target.files[0]?.name ?? 'undefined'
     // regex replace all case variations of `.pdf` with an empty string
-    pdfName.value = fileName.replace(/\.[pP][dD][fF]/, '')
+    pdfName.value = fileName.replace(/\.pdf/i, '')
   }
 }
 
@@ -74,24 +73,24 @@ function buildPdfLoadRequest(fileData: Uint8Array<ArrayBuffer>): LoadPdfRequest 
     name: pdfName.value,
     system: rpgSystem.value,
     type: publicationType.value,
-    originPath: "web-upload", // Mark as uploaded via web interface
+    originPath: 'web-upload', // Mark as uploaded via web interface
     tags: [], // Empty tags for now - could be extended in the future
-  });
+  })
 
   // Create chunking configuration
   const chunkingConfig = new ChunkingConfig({
     chunkSize: chunkSize.value,
     chunkOverlap: chunkOverlap.value,
-  });
+  })
 
   // Create the request
   const req = new LoadPdfRequest({
-    pdf: pdf,
-    fileData: fileData,
-    chunkingConfig: chunkingConfig,
-  });
+    pdf,
+    fileData,
+    chunkingConfig,
+  })
 
-  return req;
+  return req
 }
 
 // async functions return a promise which other stuff
@@ -107,57 +106,60 @@ async function handleFormSubmit() {
   }
 
   if (!client.value) {
-    log("Error: Client not initialized. Configuration may not be loaded yet.", "error")
+    log('Error: Client not initialized. Configuration may not be loaded yet.', 'error')
     return
   }
 
   // show cute loading animation
   loading.value = true
 
-  log(`Connecting to server at ${config.value.backendHost}...`, "info")
-  log(`File: ${pdfFile.value.name}`, "info")
-  log(`PDF Name: ${pdfName.value}`, "info")
-  log(`System: ${rpgSystem.value}`, "info")
-  log(`Type: ${publicationType.value}`, "info")
+  log(`Connecting to server at ${config.value.backendHost}...`, 'info')
+  log(`File: ${pdfFile.value.name}`, 'info')
+  log(`PDF Name: ${pdfName.value}`, 'info')
+  log(`System: ${rpgSystem.value}`, 'info')
+  log(`Type: ${publicationType.value}`, 'info')
 
   try {
-    const fileData = new Uint8Array(await pdfFile.value.arrayBuffer());
-    const request = buildPdfLoadRequest(fileData);
-    log("Loading PDF...", "info")
+    const fileData = new Uint8Array(await pdfFile.value.arrayBuffer())
+    const request = buildPdfLoadRequest(fileData)
+    log('Loading PDF...', 'info')
 
     // Make the Connect-RPC call (async)
-    log("Sending Request...", "info")
-    const response = await client.value.loadPdf(request);
+    log('Sending Request...', 'info')
+    const response = await client.value.loadPdf(request)
 
-    log("Upload successful!", "success")
-    log(`PDF ID: ${response.pdf?.id}`, "success")
-    log(`Pages: ${response.pdf?.pageCount}`, "info")
-    log(`Chunks: ${response.pdf?.chunkCount}`, "info")
-    log(`File Size: ${response.pdf?.fileSize} bytes`, "info")
-  } catch (error) {
+    log('Upload successful!', 'success')
+    log(`PDF ID: ${response.pdf?.id}`, 'success')
+    log(`Pages: ${response.pdf?.pageCount}`, 'info')
+    log(`Chunks: ${response.pdf?.chunkCount}`, 'info')
+    log(`File Size: ${response.pdf?.fileSize} bytes`, 'info')
+  }
+  catch (error) {
     // TODO: check if we are correctly handling timeouts
-    log(`Error during upload: ${(error as Error).message}`, "error")
-  } finally {
+    log(`Error during upload: ${(error as Error).message}`, 'error')
+  }
+  finally {
     loading.value = false
   }
 }
-
 </script>
 
 <template>
-  <!-- This is the top level div, we just use that to apply common styling via classes here-->
-  <!-- m... classes deal with margins (above, below, left and right)-->
+  <!-- This is the top level div, we just use that to apply common styling via classes here -->
+  <!-- m... classes deal with margins (above, below, left and right) -->
   <!-- mx-auto automatically centers stuff horizontally -->
   <!-- https://v3.tailwindcss.com/docs/margin -->
-  <!-- the  max-w-... classes define the max-widht of an element-->
-  <!-- 7xl is equivalent to 80rem which is  equivalent to 1280px normally-->
-  <!-- the actual size depends on the root element's font size-->
+  <!-- the  max-w-... classes define the max-widht of an element -->
+  <!-- 7xl is equivalent to 80rem which is  equivalent to 1280px normally -->
+  <!-- the actual size depends on the root element's font size -->
   <!-- that way we adapt to the user's font settings -->
-  <!-- is this what web developers think about all day? gosh...-->
+  <!-- is this what web developers think about all day? gosh... -->
   <!-- https://v3.tailwindcss.com/docs/max-width  -->
   <div class="max-w-max mx-auto">
-    <!-- mb for spacing underneath heading-->
-    <h1 class="text-4xl font-bold mb-8">PDF Upload</h1>
+    <!-- mb for spacing underneath heading -->
+    <h1 class="text-4xl font-bold mb-8">
+      PDF Upload
+    </h1>
 
     <!-- .prevent is an event modifier -->
     <!-- see https://vuejs.org/guide/essentials/event-handling.html#event-modifiers -->
@@ -165,18 +167,16 @@ async function handleFormSubmit() {
     <!-- see https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault -->
     <!-- preventDefault() prevents the default behaviour of an event -->
     <!-- that is because we are handling the response to the event ourselves with our event handler -->
-    
-    <!-- all our stuff lives inside the form element  -->
-    <!-- normally the submit event on a form would try to make a POST request-->
-    <!-- with the entered values to a specified URL and reload the page-->
-    <!-- see https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/submit_event-->
-    <form @submit.prevent="handleFormSubmit">
 
+    <!-- all our stuff lives inside the form element  -->
+    <!-- normally the submit event on a form would try to make a POST request -->
+    <!-- with the entered values to a specified URL and reload the page -->
+    <!-- see https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/submit_event -->
+    <form @submit.prevent="handleFormSubmit">
       <!-- Card Grid Layout -->
       <!-- default 1 column, with more depending on screen size -->
       <!-- gap-... for neat gaps and mb-... for spacing underneath -->
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
-
         <!-- The actual cards in here use daisy-ui classes -->
         <!-- https://daisyui.com/components/card/ -->
         <!-- https://daisyui.com/docs/colors/ -->
@@ -188,85 +188,98 @@ async function handleFormSubmit() {
 
         <!-- PDF File -->
         <BaseCard title="PDF File" icon="heroicons:document">
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold">Select PDF</span>
-              </label>
-              <!-- the @change="ABC" means, that our Vue code executes the handler ABC on change events-->
-              <!-- see https://vuejs.org/guide/essentials/event-handling.html -->
-              <!-- handlers can also be inline functions -->
-              <input type="file" accept=".pdf" @change="handleFileSelect" class="file-input file-input-bordered" />
-            </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Select PDF</span>
+            </label>
+            <!-- the @change="ABC" means, that our Vue code executes the handler ABC on change events -->
+            <!-- see https://vuejs.org/guide/essentials/event-handling.html -->
+            <!-- handlers can also be inline functions -->
+            <input type="file" accept=".pdf" class="file-input file-input-bordered" @change="handleFileSelect">
+          </div>
 
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold">PDF Name</span>
-              </label>
-              <input type="text" v-model="pdfName" class="input input-bordered" />
-            </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">PDF Name</span>
+            </label>
+            <input v-model="pdfName" type="text" class="input input-bordered">
+          </div>
         </BaseCard>
 
         <!-- Metadata -->
         <BaseCard title="Metadata" icon="heroicons:tag">
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">RPG System</span>
+            </label>
+            <select v-model="rpgSystem" class="select select-bordered">
+              <option value="DND_35">
+                D&D 3.5
+              </option>
+              <option value="PATHFINDER_1E">
+                Pathfinder 1e
+              </option>
+              <option value="PATHFINDER_2E">
+                Pathfinder 2e
+              </option>
+            </select>
+          </div>
 
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold">RPG System</span>
-              </label>
-              <select v-model="rpgSystem" class="select select-bordered">
-                <option value="DND_35">D&D 3.5</option>
-                <option value="PATHFINDER_1E">Pathfinder 1e</option>
-                <option value="PATHFINDER_2E">Pathfinder 2e</option>
-              </select>
-            </div>
-
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold">Publication Type</span>
-              </label>
-              <select v-model="publicationType" class="select select-bordered">
-                <option value="CORE_RULEBOOK">Core Rulebook</option>
-                <option value="BESTIARY">Bestiary</option>
-                <option value="SUPPLEMENT">Supplement</option>
-                <option value="ADVENTURE">Adventure</option>
-                <option value="SETTING">Setting</option>
-              </select>
-            </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Publication Type</span>
+            </label>
+            <select v-model="publicationType" class="select select-bordered">
+              <option value="CORE_RULEBOOK">
+                Core Rulebook
+              </option>
+              <option value="BESTIARY">
+                Bestiary
+              </option>
+              <option value="SUPPLEMENT">
+                Supplement
+              </option>
+              <option value="ADVENTURE">
+                Adventure
+              </option>
+              <option value="SETTING">
+                Setting
+              </option>
+            </select>
+          </div>
         </BaseCard>
 
         <!-- Chunking Parameters -->
         <BaseCard title="Chunking Parameters" icon="heroicons:adjustments-horizontal">
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold">Chunk Size (100-2000)</span>
-              </label>
-              <input type="number" v-model="chunkSize" :min="100" :max="2000" class="input input-bordered" />
-            </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Chunk Size (100-2000)</span>
+            </label>
+            <input v-model="chunkSize" type="number" :min="100" :max="2000" class="input input-bordered">
+          </div>
 
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold">Chunk Overlap (0-500)</span>
-              </label>
-              <input type="number" v-model="chunkOverlap" :min="0" :max="500" class="input input-bordered" />
-            </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Chunk Overlap (0-500)</span>
+            </label>
+            <input v-model="chunkOverlap" type="number" :min="0" :max="500" class="input input-bordered">
+          </div>
         </BaseCard>
-
       </div>
 
-      <!-- Submit Button-->
+      <!-- Submit Button -->
       <button
         type="submit"
         class="btn btn-accent btn-lg w-full gap-2"
         :disabled="!pdfFile || loading"
       >
         <Icon v-if="!loading" icon="heroicons:arrow-up-tray" class="text-xl" />
-        <span v-if="loading" class="loading loading-spinner"></span>
+        <span v-if="loading" class="loading loading-spinner" />
         {{ !pdfFile ? 'Select a PDF first' : 'Load PDF' }}
       </button>
       <p v-if="!pdfFile" class="text-center text-sm mt-2 opacity-70">
         Please select a PDF file to upload
       </p>
-
     </form>
   </div>
 </template>
