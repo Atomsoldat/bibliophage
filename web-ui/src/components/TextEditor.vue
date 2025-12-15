@@ -19,7 +19,8 @@ import type { Level } from '@tiptap/extension-heading'
 // https://vuejs.org/api/sfc-script-setup.html#definemodel
 // walliþ nu, gaþankōz"
 // double consontant represented by single laguz
-const defaultContent = defineModel('defaultContent', { type: String, default: "<p>ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ<p>"})
+// Runic inscription moved to background watermark (see CSS below)
+const defaultContent = defineModel('defaultContent', { type: String, default: ""})
   
   
 // until we have instantiated the editor, it might be null
@@ -392,22 +393,34 @@ onBeforeUnmount(() => {
     
     <!-- Editor -->
     <div class="border border-t-0 border-base-300 rounded-b-lg overflow-hidden">
-      <!-- WYSIWYG Mode: Rich text editor -->
-      <EditorContent
-        v-if="viewMode === 'wysiwyg' && editor"
-        v-bind:editor="(editor as Editor)"
-        class="ProseMirror prose max-w-none focus:outline-none p-4 min-h-96 bg-base-100"
-      />
+      <!-- Editor wrapper with runic watermark background -->
+      <div class="relative bg-base-100">
+        <!-- Runic watermark as actual element -->
+        <!-- walliþ nu, gaþankōz" -->
+        <!-- double consontant represented by single laguz -->
+        <!-- ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+          <div class="text-base-200 font-serif text-4xl font-light tracking-[0.3em]">
+            ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ
+          </div>
+        </div>
 
-      <!-- Markdown Mode: Plain textarea -->
-      <textarea
-        v-else
-        :value="defaultContent"
-        @input="handleMarkdownInput"
-        class="textarea textarea-bordered w-full min-h-96 font-mono text-sm p-4 bg-base-100 rounded-none border-0 focus:outline-none resize-none"
-        placeholder="Enter markdown here..."
-        spellcheck="false"
-      />
+        <!-- WYSIWYG Mode: Rich text editor -->
+        <EditorContent
+          v-if="viewMode === 'wysiwyg' && editor"
+          v-bind:editor="(editor as Editor)"
+          class="ProseMirror prose max-w-none focus:outline-none p-4 min-h-96 bg-transparent relative z-10"
+        />
+
+        <!-- Markdown Mode: Plain textarea -->
+        <textarea
+          v-else
+          :value="defaultContent"
+          @input="handleMarkdownInput"
+          class="textarea textarea-bordered w-full min-h-96 font-mono text-sm p-4 bg-transparent rounded-none border-0 focus:outline-none resize-none relative z-10"
+          spellcheck="false"
+        />
+      </div>
     </div>
   </div>
 </template>
