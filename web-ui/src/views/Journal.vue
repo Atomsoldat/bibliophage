@@ -1,18 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import type { Client } from "@connectrpc/connect"
+import type { Client } from '@connectrpc/connect'
 
-import TextEditorCard from '../components/TextEditorCard.vue';
+import { createClient } from '@connectrpc/connect'
+import { createConnectTransport } from '@connectrpc/connect-web'
 
-import { createClient } from "@connectrpc/connect";
-import { createConnectTransport } from "@connectrpc/connect-web";
-import { DocumentService } from "../bibliophage/v1alpha2/document_connect.ts";
-import { StoreDocumentRequest, Document, DocumentType } from "../bibliophage/v1alpha2/document_pb.ts"
+import { onMounted, ref } from 'vue'
 
-// Configuration
-import { useConfig } from "../composables/useConfig";
+import { DocumentService } from '../bibliophage/v1alpha2/document_connect.ts'
+import { Document, DocumentType, StoreDocumentRequest } from '../bibliophage/v1alpha2/document_pb.ts'
+import TextEditorCard from '../components/TextEditorCard.vue'
+import { useConfig } from '../composables/useConfig'
 
-const { config, loadConfig } = useConfig();
+const { config, loadConfig } = useConfig()
 
 // Client will be initialized after config loads
 // see https://connectrpc.com/docs/node/using-clients/#connect
@@ -40,10 +39,9 @@ onMounted(async () => {
   // Create client with loaded config
   const transport = createConnectTransport({
     baseUrl: config.value.backendHost,
-  });
-  client.value = createClient(DocumentService, transport);
+  })
+  client.value = createClient(DocumentService, transport)
 })
-
 
 function buildDocumentStoreRequest(documentName: string, documentContent: string): StoreDocumentRequest {
   // Create the document object
@@ -52,45 +50,46 @@ function buildDocumentStoreRequest(documentName: string, documentContent: string
     content: documentContent,
     type: DocumentType.NOTE, // Default to NOTE type
     tags: [], // Empty tags for now
-  });
+  })
 
   // Create the request with the document
   const req = new StoreDocumentRequest({
-    document: document,
-  });
+    document,
+  })
 
-  return req;
+  return req
 }
 
 // not part of the API... yet
-//function buildDocumentUpdateRequest(id: Int, stringData: string): DocumentUpdateRequest {
+// function buildDocumentUpdateRequest(id: Int, stringData: string): DocumentUpdateRequest {
 //  const req = new DocumentUpdateRequest();
 //  req.documentName = documentName.value;
 //  req.id = 999;
 //  req.content = stringData;
 //
 //  return req;
-//}
+// }
 
 // if the document is new, send a DocumentStoreRequest
 // TODO: sed some kind of output / user feedback during this
 async function handleDocumentSave() {
   if (!client.value) {
-    console.error("Client not initialized. Configuration may not be loaded yet.")
+    console.error('Client not initialized. Configuration may not be loaded yet.')
     return
   }
 
   try {
     // TODO: if we are editing an existing doc, send a DocumentUpdateRequest
-    const request = buildDocumentStoreRequest(documentName.value, editorContent.value);
+    const request = buildDocumentStoreRequest(documentName.value, editorContent.value)
 
     // TODO: do something with the response
-    //const response = await client.loadPDF(request);
-    await client.value.storeDocument(request);
-
-  } catch (error) {
+    // const response = await client.loadPDF(request);
+    await client.value.storeDocument(request)
+  }
+  catch (error) {
     // this should also do stuff
-  } finally {
+  }
+  finally {
     // stuff
   }
 }
@@ -99,36 +98,36 @@ async function handleDocumentAbort() {
   try {
     // Reset the editor to the default content
     editorCardRef.value?.resetEditor(editorDefaultContent.value)
-  } catch (error) {
+  }
+  catch (error) {
     // what could happen here, that we would  want to catch?
-  } finally {
+  }
+  finally {
     // stuff
   }
 }
-
-
 </script>
 
 <template>
   <div class="max-w-7xl mx-auto px-4">
-    <!-- mb for spacing underneath heading-->
-    <h1 class="text-4xl font-bold mb-8">Journal</h1>
-    
-    <!--TODO: Some kind of selector for notes-->
+    <!-- mb for spacing underneath heading -->
+    <h1 class="text-4xl font-bold mb-8">
+      Journal
+    </h1>
+
+    <!-- TODO: Some kind of selector for notes -->
     <!-- Tree Structure and sortable/searchable by name, date, category, ... -->
-    <!-- Drag and Drop Notes to establish hierarchies? Or is that too easy to mess up? Maybe have a button for that-->
-
-
+    <!-- Drag and Drop Notes to establish hierarchies? Or is that too easy to mess up? Maybe have a button for that -->
 
     <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
       <!-- v-model basically means -->
-      <!--"The child component gets passed this variable-->
+      <!-- "The child component gets passed this variable -->
       <!-- and when it modifies its copy, the parent copy is also modified" -->
       <!-- https://vuejs.org/guide/components/v-model -->
-      <!-- for this to work, the child has to do some stuff as well, see-->
-      <!-- https://vuejs.org/api/sfc-script-setup.html#definemodel-->
+      <!-- for this to work, the child has to do some stuff as well, see -->
+      <!-- https://vuejs.org/api/sfc-script-setup.html#definemodel -->
       <!-- directly putting an HTML string in here was annoying, hence variable -->
-      <!-- multiple v-model:variable pairs can be passed-->
+      <!-- multiple v-model:variable pairs can be passed -->
       <TextEditorCard
         ref="editorCardRef"
         v-model:content="editorContent"

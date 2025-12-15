@@ -2,8 +2,6 @@
 
 This web application serves as the frontend for our ML related Python services. It is written in Vue.js and Typescript, and uses DaisyUI (which is based on Tailwind CSS) for styling. The communication between the frontend and backend works via Connect RPC.
 
-
-
 ## Recent NodeJS breakage
 
 Looks like the NodeJS people decided to introduce a change that ends up breaking our vite dev server.

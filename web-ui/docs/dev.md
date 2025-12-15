@@ -13,14 +13,12 @@ We use a script in our `package.json` to execute [knip](https://knip.dev/), whic
 yarn knip
 ```
 
-
 ## Debugging
 
 - https://devtools.vuejs.org/
 - https://devtools.vuejs.org/guide/vite-plugin
 
 In Vite, `ALT + SHIFT + D` will  open the debugger panel
-
 
 ### Standalone application
 
