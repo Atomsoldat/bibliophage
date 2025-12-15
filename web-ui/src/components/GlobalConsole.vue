@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
-import { Icon } from '@iconify/vue'
-import { useAppConsole } from '../composables/useAppConsole'
 import type { ConsoleMessageType } from '../composables/useAppConsole'
+import { Icon } from '@iconify/vue'
+import { nextTick, ref, watch } from 'vue'
+import { useAppConsole } from '../composables/useAppConsole'
 
 const { messages, isVisible, unreadCount, toggleVisibility, clear } = useAppConsole()
 
@@ -53,7 +53,7 @@ function formatTime(date: Date): string {
     hour12: false,
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit'
+    second: '2-digit',
   })
 }
 </script>
@@ -61,9 +61,9 @@ function formatTime(date: Date): string {
 <template>
   <!-- Toggle Button - Fixed position in bottom-right corner -->
   <button
-    @click="toggleVisibility"
     class="btn btn-circle btn-primary fixed bottom-4 right-4 z-50 shadow-lg"
     :class="{ 'btn-accent': unreadCount > 0 }"
+    @click="toggleVisibility"
   >
     <div class="indicator">
       <Icon icon="heroicons:command-line" class="text-xl" />
@@ -83,15 +83,17 @@ function formatTime(date: Date): string {
     <div class="flex items-center justify-between px-4 py-2 bg-base-200 border-b border-base-300">
       <div class="flex items-center gap-2">
         <Icon icon="heroicons:command-line" class="text-xl text-primary" />
-        <h3 class="font-bold text-lg">Application Console</h3>
+        <h3 class="font-bold text-lg">
+          Application Console
+        </h3>
         <span class="badge badge-sm">{{ messages.length }} / 1000</span>
       </div>
       <div class="flex gap-2">
-        <button @click="clear" class="btn btn-sm btn-ghost gap-1">
+        <button class="btn btn-sm btn-ghost gap-1" @click="clear">
           <Icon icon="heroicons:trash" />
           Clear
         </button>
-        <button @click="toggleVisibility" class="btn btn-sm btn-ghost gap-1">
+        <button class="btn btn-sm btn-ghost gap-1" @click="toggleVisibility">
           <Icon icon="heroicons:chevron-down" />
           Hide
         </button>
@@ -130,7 +132,7 @@ function formatTime(date: Date): string {
   <!-- Backdrop overlay when console is visible -->
   <div
     v-if="isVisible"
-    @click="toggleVisibility"
     class="fixed inset-0 bg-black/20 z-30 backdrop-blur-sm"
+    @click="toggleVisibility"
   />
 </template>
