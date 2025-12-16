@@ -5,9 +5,17 @@ import antfu from '@antfu/eslint-config'
 // https://eslint.vuejs.org/user-guide/
 // https://eslint.vuejs.org/rules/
 
-export default antfu({
-  rules: {
-    // override default which would abbreviate v-bind:xyz to :xyz
-    'vue/v-bind-style': ['error', 'longform'],
+export default antfu(
+  {
+    ignores: [
+      // ignore generated API code
+      'src/bibliophage/**',
+    ],
   },
-})
+  {
+    rules: {
+      // override default which would abbreviate v-bind:xyz to :xyz
+      'vue/v-bind-style': ['error', 'longform'],
+    },
+  },
+)
