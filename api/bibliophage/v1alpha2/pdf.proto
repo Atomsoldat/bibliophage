@@ -203,3 +203,5 @@ message GetPdfResponse {
   // The requested PDF (null if not found)
   optional Pdf pdf = 3;
 }
+
+//TODO: We need a deletePdfRequest and a Response for that request
