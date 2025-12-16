@@ -94,7 +94,7 @@ async function handleSearchSubmit() {
     <button
       type="search"
       class="btn btn-accent btn-lg w-full gap-2"
-      :disabled="loading"
+      v-bind:disabled="loading"
     >
       <Icon v-if="!loading" icon="game-icons:magnifying-glass" class="text-xl" />
       <span v-if="loading" class="loading loading-spinner" />
@@ -130,7 +130,7 @@ async function handleSearchSubmit() {
           <tbody>
             <!-- https://vuejs.org/guide/essentials/list -->
             <!-- https://vuejs.org/guide/essentials/list#maintaining-state-with-key -->
-            <tr v-for="(item, index) in pdfs" :key="index">
+            <tr v-for="(item, index) in pdfs" v-bind:key="index">
               <th>{{ index }}</th>
               <td>{{ item.name }}</td>
               <td>{{ item.id }}</td>

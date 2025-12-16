@@ -202,12 +202,12 @@ onBeforeUnmount(() => {
     <!-- Menubar -->
     <div class="mb-4 p-3 bg-base-200 rounded-t-lg flex flex-wrap gap-1">
       <!-- View Mode Toggle -->
-      <!-- TODO: Why does this button seem to emit a "save" event?-->
-      <!-- Probably because the editor  is destroyed each time?-->
-      <!-- That seems really stupid-->
+      <!-- TODO: Why does this button seem to emit a "save" event? -->
+      <!-- Probably because the editor  is destroyed each time? -->
+      <!-- That seems really stupid -->
       <button
         class="btn btn-sm btn-primary"
-        :title="viewMode === 'markdown' ? 'Switch to WYSIWYG mode' : 'Switch to markdown mode'"
+        v-bind:title="viewMode === 'markdown' ? 'Switch to WYSIWYG mode' : 'Switch to markdown mode'"
         @click="toggleViewMode"
       >
         <Icon v-if="viewMode === 'markdown'" icon="mdi:eye" />
@@ -222,7 +222,7 @@ onBeforeUnmount(() => {
 
         <!-- Text Formatting -->
         <button
-          :class="{ 'btn-active': activeMarks.bold }"
+          v-bind:class="{ 'btn-active': activeMarks.bold }"
           class="btn btn-sm btn-ghost"
           title="Bold"
           @click="editor?.chain().focus().toggleBold().run()"
@@ -231,7 +231,7 @@ onBeforeUnmount(() => {
         </button>
 
         <button
-          :class="{ 'btn-active': activeMarks.italic }"
+          v-bind:class="{ 'btn-active': activeMarks.italic }"
           class="btn btn-sm btn-ghost"
           title="Italic"
           @click="editor?.chain().focus().toggleItalic().run()"
@@ -240,7 +240,7 @@ onBeforeUnmount(() => {
         </button>
 
         <button
-          :class="{ 'btn-active': activeMarks.underline }"
+          v-bind:class="{ 'btn-active': activeMarks.underline }"
           class="btn btn-sm btn-ghost"
           title="Underline"
           @click="editor?.chain().focus().toggleUnderline().run()"
@@ -249,7 +249,7 @@ onBeforeUnmount(() => {
         </button>
 
         <button
-          :class="{ 'btn-active': activeMarks.strike }"
+          v-bind:class="{ 'btn-active': activeMarks.strike }"
           class="btn btn-sm btn-ghost"
           title="Strikethrough"
           @click="editor?.chain().focus().toggleStrike().run()"
@@ -269,9 +269,9 @@ onBeforeUnmount(() => {
             H <Icon icon="mdi:chevron-down" class="w-4 h-4" />
           </button>
           <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow border border-base-300">
-            <li v-for="level in 6" :key="level">
+            <li v-for="level in 6" v-bind:key="level">
               <a
-                :class="{ active: currentHeading === level }"
+                v-bind:class="{ active: currentHeading === level }"
                 @click="setHeading(level as Level)"
               >
                 Heading {{ level }}
@@ -284,7 +284,7 @@ onBeforeUnmount(() => {
 
         <!-- Lists & Blocks -->
         <button
-          :class="{ 'btn-active': activeBlocks.bulletList }"
+          v-bind:class="{ 'btn-active': activeBlocks.bulletList }"
           class="btn btn-sm btn-ghost"
           title="Bullet List"
           @click="editor?.chain().focus().toggleBulletList().run()"
@@ -293,7 +293,7 @@ onBeforeUnmount(() => {
         </button>
 
         <button
-          :class="{ 'btn-active': activeBlocks.orderedList }"
+          v-bind:class="{ 'btn-active': activeBlocks.orderedList }"
           class="btn btn-sm btn-ghost"
           title="Ordered List"
           @click="editor?.chain().focus().toggleOrderedList().run()"
@@ -302,7 +302,7 @@ onBeforeUnmount(() => {
         </button>
 
         <button
-          :class="{ 'btn-active': activeBlocks.blockquote }"
+          v-bind:class="{ 'btn-active': activeBlocks.blockquote }"
           class="btn btn-sm btn-ghost"
           title="Blockquote"
           @click="editor?.chain().focus().toggleBlockquote().run()"
@@ -311,7 +311,7 @@ onBeforeUnmount(() => {
         </button>
 
         <button
-          :class="{ 'btn-active': activeBlocks.codeBlock }"
+          v-bind:class="{ 'btn-active': activeBlocks.codeBlock }"
           class="btn btn-sm btn-ghost"
           title="Code Block"
           @click="editor?.chain().focus().toggleCodeBlock().run()"
@@ -342,7 +342,7 @@ onBeforeUnmount(() => {
 
         <!-- Undo/Redo -->
         <button
-          :disabled="!editor?.can().undo()"
+          v-bind:disabled="!editor?.can().undo()"
           class="btn btn-sm btn-ghost"
           title="Undo"
           @click="editor?.chain().focus().undo().run()"
@@ -351,7 +351,7 @@ onBeforeUnmount(() => {
         </button>
 
         <button
-          :disabled="!editor?.can().redo()"
+          v-bind:disabled="!editor?.can().redo()"
           class="btn btn-sm btn-ghost"
           title="Redo"
           @click="editor?.chain().focus().redo().run()"
@@ -418,7 +418,7 @@ onBeforeUnmount(() => {
         <!-- WYSIWYG Mode: Rich text editor -->
         <EditorContent
           v-if="viewMode === 'wysiwyg' && editor"
-          :editor="(editor as Editor)"
+          v-bind:editor="(editor as Editor)"
           class="ProseMirror prose max-w-none focus:outline-none p-4 min-h-96 bg-transparent relative z-10"
         />
 
@@ -426,7 +426,7 @@ onBeforeUnmount(() => {
         <textarea
           v-else
           name="raw-markdown-textfield"
-          :value="defaultContent"
+          v-bind:value="defaultContent"
           class="textarea textarea-bordered w-full min-h-96 font-mono text-sm p-4 bg-transparent rounded-none border-0 focus:outline-none resize-none relative z-10"
           spellcheck="false"
           @input="handleMarkdownInput"
