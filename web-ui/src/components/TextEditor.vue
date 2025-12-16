@@ -202,6 +202,9 @@ onBeforeUnmount(() => {
     <!-- Menubar -->
     <div class="mb-4 p-3 bg-base-200 rounded-t-lg flex flex-wrap gap-1">
       <!-- View Mode Toggle -->
+      <!-- TODO: Why does this button seem to emit a "save" event?-->
+      <!-- Probably because the editor  is destroyed each time?-->
+      <!-- That seems really stupid-->
       <button
         class="btn btn-sm btn-primary"
         :title="viewMode === 'markdown' ? 'Switch to WYSIWYG mode' : 'Switch to markdown mode'"
@@ -422,6 +425,7 @@ onBeforeUnmount(() => {
         <!-- Markdown Mode: Plain textarea -->
         <textarea
           v-else
+          name="raw-markdown-textfield"
           :value="defaultContent"
           class="textarea textarea-bordered w-full min-h-96 font-mono text-sm p-4 bg-transparent rounded-none border-0 focus:outline-none resize-none relative z-10"
           spellcheck="false"
