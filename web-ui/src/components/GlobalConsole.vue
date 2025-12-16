@@ -62,7 +62,7 @@ function formatTime(date: Date): string {
   <!-- Toggle Button - Fixed position in bottom-right corner -->
   <button
     class="btn btn-circle btn-primary fixed bottom-4 right-4 z-50 shadow-lg"
-    :class="{ 'btn-accent': unreadCount > 0 }"
+    v-bind:class="{ 'btn-accent': unreadCount > 0 }"
     @click="toggleVisibility"
   >
     <div class="indicator">
@@ -111,18 +111,18 @@ function formatTime(date: Date): string {
       </div>
       <div
         v-for="(msg, index) in messages"
-        :key="index"
+        v-bind:key="index"
         class="mb-2 flex gap-2 items-start"
       >
         <span class="text-base-content/50 text-xs whitespace-nowrap">
           {{ formatTime(msg.timestamp) }}
         </span>
         <Icon
-          :icon="getMessageIcon(msg.type)"
-          :class="getMessageClasses(msg.type)"
+          v-bind:icon="getMessageIcon(msg.type)"
+          v-bind:class="getMessageClasses(msg.type)"
           class="text-base mt-0.5"
         />
-        <span :class="getMessageClasses(msg.type)" class="flex-1 break-words">
+        <span v-bind:class="getMessageClasses(msg.type)" class="flex-1 break-words">
           {{ msg.message }}
         </span>
       </div>

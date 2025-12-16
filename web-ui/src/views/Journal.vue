@@ -9,8 +9,8 @@ import { onMounted, ref } from 'vue'
 import { DocumentService } from '../bibliophage/v1alpha2/document_connect.ts'
 import { Document, DocumentType, StoreDocumentRequest } from '../bibliophage/v1alpha2/document_pb.ts'
 import TextEditorCard from '../components/TextEditorCard.vue'
-import { useConfig } from '../composables/useConfig'
 import { useAppConsole } from '../composables/useAppConsole'
+import { useConfig } from '../composables/useConfig'
 
 const { config, loadConfig } = useConfig()
 const { log } = useAppConsole()

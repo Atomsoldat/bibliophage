@@ -255,14 +255,14 @@ async function handleFormSubmit() {
             <label class="label">
               <span class="label-text font-semibold">Chunk Size (100-2000)</span>
             </label>
-            <input v-model="chunkSize" type="number" :min="100" :max="2000" class="input input-bordered">
+            <input v-model="chunkSize" type="number" v-bind:min="100" v-bind:max="2000" class="input input-bordered">
           </div>
 
           <div class="form-control">
             <label class="label">
               <span class="label-text font-semibold">Chunk Overlap (0-500)</span>
             </label>
-            <input v-model="chunkOverlap" type="number" :min="0" :max="500" class="input input-bordered">
+            <input v-model="chunkOverlap" type="number" v-bind:min="0" v-bind:max="500" class="input input-bordered">
           </div>
         </BaseCard>
       </div>
@@ -271,7 +271,7 @@ async function handleFormSubmit() {
       <button
         type="submit"
         class="btn btn-accent btn-lg w-full gap-2"
-        :disabled="!pdfFile || loading"
+        v-bind:disabled="!pdfFile || loading"
       >
         <Icon v-if="!loading" icon="heroicons:arrow-up-tray" class="text-xl" />
         <span v-if="loading" class="loading loading-spinner" />
