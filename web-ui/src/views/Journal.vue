@@ -10,8 +10,10 @@ import { DocumentService } from '../bibliophage/v1alpha2/document_connect.ts'
 import { Document, DocumentType, StoreDocumentRequest } from '../bibliophage/v1alpha2/document_pb.ts'
 import TextEditorCard from '../components/TextEditorCard.vue'
 import { useConfig } from '../composables/useConfig'
+import { useAppConsole } from '../composables/useAppConsole'
 
 const { config, loadConfig } = useConfig()
+const { log } = useAppConsole()
 
 // Client will be initialized after config loads
 // see https://connectrpc.com/docs/node/using-clients/#connect
@@ -79,31 +81,35 @@ async function handleDocumentSave() {
   }
 
   try {
+    log('Received save event. Saving editor content...', 'info')
     // TODO: if we are editing an existing doc, send a DocumentUpdateRequest
     const request = buildDocumentStoreRequest(documentName.value, editorContent.value)
 
     // TODO: do something with the response
     // const response = await client.loadPDF(request);
-    await client.value.storeDocument(request)
+    const response = await client.value.storeDocument(request)
   }
   catch (error) {
     // this should also do stuff
+    log(`Error during document save: ${(error as Error).message}`, 'error')
   }
   finally {
-    // stuff
+    log('Succesfully saved editor content!', 'success')
   }
 }
 
 async function handleDocumentAbort() {
   try {
+    log('Received abort event. Discarding editor content...', 'info')
     // Reset the editor to the default content
     editorCardRef.value?.resetEditor(editorDefaultContent.value)
   }
   catch (error) {
     // what could happen here, that we would  want to catch?
+    log(`Error during document abort: ${(error as Error).message}`, 'error')
   }
   finally {
-    // stuff
+    log('Succesfully discarded editor content!', 'success')
   }
 }
 </script>

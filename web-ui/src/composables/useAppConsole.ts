@@ -1,5 +1,6 @@
 import { readonly, ref } from 'vue'
 
+// TODO: Do we really need the success type?
 /**
  * Console message types for different log levels
  */
