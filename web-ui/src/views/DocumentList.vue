@@ -78,6 +78,12 @@ async function handleSearchSubmit() {
     loading.value = false
   }
 }
+
+// Placeholder for future edit functionality
+function handleEditDocument(pdf: PdfListItem) {
+  // TODO: Implement edit document functionality
+  console.log('Edit document:', pdf.name)
+}
 </script>
 
 <template>
@@ -125,6 +131,7 @@ async function handleSearchSubmit() {
               <th>Size</th>
               <th>Chunk Count</th>
               <th>Tags</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -145,6 +152,16 @@ async function handleSearchSubmit() {
               <td>{{ item.fileSize }}</td>
               <td>{{ item.chunkCount }}</td>
               <td>{{ item.tags }}</td>
+              <td>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary gap-1"
+                  @click="handleEditDocument(item)"
+                >
+                  <Icon icon="heroicons:pencil" />
+                  Edit
+                </button>
+              </td>
             </tr>
           </tbody>
           <tfoot>
