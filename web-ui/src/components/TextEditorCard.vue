@@ -5,7 +5,6 @@ import TextEditor from './TextEditor.vue'
 
 // Props for card configuration
 defineProps<{
-  title: string
   icon?: string
 }>()
 
@@ -19,6 +18,11 @@ const emit = defineEmits<{
 const editorContent = defineModel('content', {
   type: String,
   default: '<p>ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ<p>',
+})
+
+const title = defineModel('title', {
+  type: String,
+  default: '<p>New Document<p>',
 })
 
 // Template ref to access the TextEditor component instance
@@ -44,10 +48,11 @@ defineExpose({
 
 <template>
   <BaseCard
-    :title="title"
-    :icon="icon || 'heroicons:document-text'"
+    v-model:title="title"
+    v-bind:icon="icon || 'heroicons:document-text'"
     class="col-span-1 md:col-span-2 xl:col-span-3"
   >
+    <input v-model="title" type="text" v-bind:min="100" v-bind:max="2000" class="input input-bordered">
     <form @submit.prevent="handleSave" @reset.prevent="handleAbort">
       <!-- Editor with two-way binding to parent's content -->
       <TextEditor ref="textEditorRef" v-model:default-content="editorContent" />

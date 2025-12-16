@@ -137,7 +137,7 @@ async function handleDocumentAbort() {
       <TextEditorCard
         ref="editorCardRef"
         v-model:content="editorContent"
-        :title="documentName"
+        v-model:title="documentName"
         icon="heroicons:document-text"
         @save="handleDocumentSave"
         @abort="handleDocumentAbort"
