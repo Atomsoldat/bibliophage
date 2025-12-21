@@ -13,6 +13,8 @@ import { SearchPdfsRequest } from '../bibliophage/v1alpha2/pdf_pb.ts'
 import { useAppConsole } from '../composables/useAppConsole'
 import { useConfig } from '../composables/useConfig'
 
+import TextEditorWindow from '../components/TextEditorWindow.vue'
+
 const { config, loadConfig } = useConfig()
 const { log } = useAppConsole()
 
