@@ -30,6 +30,11 @@ import { Icon } from '@iconify/vue'
       </button>
     </router-link>
 
+    <router-link to="/sandbox">
+      <button class="btn btn-ghost btn-square">
+        <Icon icon="game-icons:plastic-duck" class="text-3xl" />
+      </button>
+    </router-link>
     <div class="flex-1" />
 
     <!-- Settings at bottom -->
