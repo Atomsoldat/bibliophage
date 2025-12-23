@@ -9,7 +9,6 @@ import Sidebar from './components/Sidebar.vue'
     <main class="ml-16 p-8">
       <router-view />
     </main>
-    <!-- Global console - available everywhere -->
     <GlobalConsole />
   </div>
 </template>
