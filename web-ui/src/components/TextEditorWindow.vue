@@ -21,16 +21,28 @@ const isOpen = ref(true)
 </script>
 
 <template>
-    <div ref="el" :style="style" style="position: fixed">
-      <!-- If we ever need to access the coordinates -->
-      <!--Drag me! I am at {{ x }}, {{ y }}   -->
-      {{ documentName }}
-      <!--TODO: should the minimise / open be a toggle button instead? -->
-      <button class="btn">Minimise</button>
-      <button class="btn" @click="isOpen = true">Open</button>
-      <button class="btn">Maximise</button>
-      <button class="btn" @click="isOpen = false">Close</button>
-      <dialog v-if="isOpen" draggable open>
+    <div ref="el" :style="style" style="position: fixed" class="min-w-lg">
+      <!-- Menu Bar -->
+      <div class="flex items-center justify-between gap-4 p-2 bg-base-200 border border-base-300 rounded-t-lg">
+        <!-- Document Title (Left) -->
+        <div class="flex-1 font-semibold truncate">
+          <!-- If we ever need to access the coordinates -->
+          <!-- I am at {{ x }}, {{ y }} -->
+          {{ documentName }}
+        </div>
+
+        <!-- Buttons (Right) -->
+        <div class="flex gap-2 flex-shrink-0">
+          <!--TODO: should the minimise / open be a toggle button instead? -->
+          <!--<button class="btn btn-sm">Minimise</button>-->
+          <button class="btn btn-sm" @click="isOpen = true">Open</button>
+          <!--<button class="btn btn-sm">Maximise</button>-->
+          <button class="btn btn-sm" @click="isOpen = false">Close</button>
+        </div>
+      </div>
+
+      <!-- Editor Dialog -->
+      <dialog v-if="isOpen" draggable open class="w-full">
         <TextEditorCard
           ref="editorCardRef"
           v-model:content="editorContent"
