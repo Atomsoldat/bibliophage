@@ -7,21 +7,24 @@ import { useTemplateRef, ref } from 'vue'
 import TextEditorCard from '../components/TextEditorCard.vue'
 
 
-const el = useTemplateRef('el')
+const floatingEditorWindow = useTemplateRef('floatingEditorWindow')
 
 // `style` will be a helper computed for `left: ?px; top: ?px;`
-const { x, y, style } = useDraggable(el, {
+// https://vueuse.org/core/useDraggable/
+const { x, y, style } = useDraggable(floatingEditorWindow, {
   initialValue: { x: 400, y: 400 },
 })
 
 const editorContent = ref("lolEditorContent")
 const documentName = ref("lolDocumentName")
+const documentIsNew = ref(true)
+const documentId = ref("123456")
 const isOpen = ref(true)
 
 </script>
 
 <template>
-    <div ref="el" :style="style" style="position: fixed" class="min-w-lg">
+    <div ref="floatingEditorWindow" :style="style" style="position: fixed" class="min-w-lg">
       <!-- Menu Bar -->
       <div class="flex items-center justify-between gap-4 p-2 bg-base-200 border border-base-300 rounded-t-lg">
         <!-- Document Title (Left) -->
@@ -42,11 +45,13 @@ const isOpen = ref(true)
       </div>
 
       <!-- Editor Dialog -->
-      <dialog v-if="isOpen" draggable open class="w-full">
+      <dialog v-if="isOpen" open class="w-full">
         <TextEditorCard
           ref="editorCardRef"
           v-model:content="editorContent"
           v-model:title="documentName"
+          v-model:isNew= "documentIsNew"
+          v-model:documentId="documentId"
           icon="heroicons:document-text"
         />
       </dialog>

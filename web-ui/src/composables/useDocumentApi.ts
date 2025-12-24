@@ -82,7 +82,7 @@ export function useDocumentApi() {
    * Update an existing document
    * The document must include an id
    */
-  async function updateDocument(document: Partial<Document> & { id: string }): Promise<UpdateDocumentResponse> {
+  async function updateDocument(document: Partial<Document>): Promise<UpdateDocumentResponse> {
     checkInitialisation()
 
     const request = new UpdateDocumentRequest({

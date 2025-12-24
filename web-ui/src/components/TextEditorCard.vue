@@ -3,6 +3,13 @@ import { ref } from 'vue'
 import BaseCard from './BaseCard.vue'
 import TextEditor from './TextEditor.vue'
 
+import { useDocumentApi } from '../composables/useDocumentApi';
+
+import { useAppConsole } from '../composables/useAppConsole'
+
+const { log } = useAppConsole()
+
+
 // Props for card configuration
 defineProps<{
   icon?: string
@@ -17,7 +24,8 @@ const emit = defineEmits<{
 // v-model for editor content - allows parent to control and react to changes
 const editorContent = defineModel('content', {
   type: String,
-  default: '<p>ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ<p>',
+  //default: '<p>ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ<p>',
+  default: '',
 })
 
 const title = defineModel('title', {
@@ -25,16 +33,54 @@ const title = defineModel('title', {
   default: '<p>New Document<p>',
 })
 
+const isNew = defineModel('isNew', {
+  type: Boolean,
+  default: false,
+})
+
+const documentId = defineModel('documentId', {
+  type: String,
+  default: '',
+})
+
 // Template ref to access the TextEditor component instance
 const textEditorRef = ref<InstanceType<typeof TextEditor> | null>(null)
 
-// Event handlers that emit to parent
-function handleSave() {
-  emit('save')
+
+const api = useDocumentApi()
+await api.initialise()
+
+async function handleSave() {
+  try {
+    if (isNew.value) {
+      const response = await api.storeDocument({
+        name: title.value,
+        content: editorContent.value
+      })
+      if (response?.success && response.document) {
+        documentId.value = response.document.id
+        isNew.value = false
+        log(`Document created: ${response.document.id}`, 'success')
+      }
+    } else {
+      const response = await api.updateDocument({
+        id: documentId.value,
+        name: title.value,
+        content: editorContent.value
+      })
+      if (response?.success) {
+        log('Document updated', 'success')
+      }
+    }
+  } catch (error) {
+    log(`Error while saving document: ${(error as Error).message}`, 'error')
+  }
 }
 
 function handleAbort() {
-  emit('abort')
+  // TODO: we should dismantle the text editor window in the parent,
+  // after asking for confirmation
+  // emit('abort')
 }
 
 // Expose methods that parent components can call
