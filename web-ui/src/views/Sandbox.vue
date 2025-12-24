@@ -1,5 +1,5 @@
 <script setup lang="ts">
-
+import TextEditorWindow from '../components/TextEditorWindow.vue';
 </script>
 
 <template>
@@ -11,4 +11,10 @@
       Testing ground for experimental features
     </p>
   </div>
+  
+  <!-- Test out Floating Text editor windows-->
+  <div>
+    <TextEditorWindow />
+  </div>
+
 </template>
