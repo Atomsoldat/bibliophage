@@ -11,7 +11,7 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Pdf(_message.Message):
-    __slots__ = ("id", "name", "system", "type", "page_count", "origin_path", "created_at", "updated_at", "file_size", "chunk_count", "tags")
+    __slots__ = ("id", "name", "system", "type", "page_count", "origin_path", "created_at", "updated_at", "file_size", "chunk_count", "tags", "content")
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     SYSTEM_FIELD_NUMBER: _ClassVar[int]
@@ -23,6 +23,7 @@ class Pdf(_message.Message):
     FILE_SIZE_FIELD_NUMBER: _ClassVar[int]
     CHUNK_COUNT_FIELD_NUMBER: _ClassVar[int]
     TAGS_FIELD_NUMBER: _ClassVar[int]
+    CONTENT_FIELD_NUMBER: _ClassVar[int]
     id: str
     name: str
     system: str
@@ -34,7 +35,8 @@ class Pdf(_message.Message):
     file_size: int
     chunk_count: int
     tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., system: _Optional[str] = ..., type: _Optional[str] = ..., page_count: _Optional[int] = ..., origin_path: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., file_size: _Optional[int] = ..., chunk_count: _Optional[int] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ...) -> None: ...
+    content: str
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., system: _Optional[str] = ..., type: _Optional[str] = ..., page_count: _Optional[int] = ..., origin_path: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., file_size: _Optional[int] = ..., chunk_count: _Optional[int] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., content: _Optional[str] = ...) -> None: ...
 
 class PdfListItem(_message.Message):
     __slots__ = ("id", "name", "system", "type", "page_count", "origin_path", "created_at", "updated_at", "file_size", "chunk_count", "tags")
