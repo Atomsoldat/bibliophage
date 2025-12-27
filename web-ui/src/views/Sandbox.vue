@@ -50,7 +50,7 @@ function createMultipleWindows() {
         Global Editor Windows Demo
       </h2>
       <p class="mb-4">
-        The editor windows are now global - they persist across view changes!
+        The editor windows are global - they persist across view changes!
         Try navigating to another view and back.
       </p>
 
@@ -63,18 +63,7 @@ function createMultipleWindows() {
             {{ windows.length }}
           </div>
           <div class="stat-desc">
-            Windows: {{ windows.map(w => w.id).join(', ') || 'none' }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Debug info -->
-      <div class="alert alert-info mb-4">
-        <div class="flex flex-col gap-2 text-sm w-full">
-          <div><strong>Debug Info:</strong></div>
-          <div>Windows array length: {{ windows.length }}</div>
-          <div v-for="win in windows" :key="win.id" class="pl-4">
-            • {{ win.id }}: "{{ win.title }}" at ({{ win.x }}, {{ win.y }}) z={{ win.zIndex }}
+            {{ windows.length === 0 ? 'No windows open' : windows.map(w => w.title).join(', ') }}
           </div>
         </div>
       </div>
