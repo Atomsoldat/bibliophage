@@ -580,6 +580,8 @@ export class UpdateDocumentResponse extends Message<UpdateDocumentResponse> {
 
 /**
  * SearchDocumentsRequest - Search for documents by various criteria
+ * TODO: The PDF API object class probably wants similar search parameters
+ * we should make those search parameters a shared message
  *
  * @generated from message bibliophage.v1alpha2.SearchDocumentsRequest
  */

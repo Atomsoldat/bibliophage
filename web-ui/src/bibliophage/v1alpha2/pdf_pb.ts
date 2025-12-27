@@ -15,7 +15,7 @@ import { SortOrder, Tag, TagFilter } from "./common_pb.js";
  */
 export class Pdf extends Message<Pdf> {
   /**
-   * Unique identifier for this PDF (assigned by the system)
+   * Unique identifier for this PDF (assigned by the backend)
    *
    * @generated from field: string id = 1;
    */
@@ -29,7 +29,12 @@ export class Pdf extends Message<Pdf> {
   name = "";
 
   /**
-   * Which RPG system this belongs to (e.g., "D&D 5e", "Pathfinder 2e")
+   * Which RPG system this belongs to (e.g., "Call of Cthulhu", "Pathfinder 1e")
+   * TODO: There may be PDFs that users want to use in multiple systems, or that do not belong
+   * to any particular system (agnostic stuff like General GMing tips or such)
+   * how do we handle that with regards to the vector database?
+   * should we select based on the system and then allow the user to add additional selection
+   * criteria for books that do not match the used system?
    *
    * @generated from field: string system = 3;
    */
@@ -78,6 +83,8 @@ export class Pdf extends Message<Pdf> {
   fileSize = protoInt64.zero;
 
   /**
+   * TODO: rename this or alternatively have a separate field for how many batches
+   * of pages were processed by docling
    * Number of chunks this PDF was split into
    *
    * @generated from field: int32 chunk_count = 10;
@@ -90,6 +97,15 @@ export class Pdf extends Message<Pdf> {
    * @generated from field: repeated bibliophage.v1alpha2.Tag tags = 11;
    */
   tags: Tag[] = [];
+
+  /**
+   * Markdown content extracted from the PDF (optional, only populated for GetPdf)
+   * Contains concatenated markdown from all processed batches
+   * Not included in search results to keep responses lightweight
+   *
+   * @generated from field: optional string content = 12;
+   */
+  content?: string;
 
   constructor(data?: PartialMessage<Pdf>) {
     super();
@@ -110,6 +126,7 @@ export class Pdf extends Message<Pdf> {
     { no: 9, name: "file_size", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 10, name: "chunk_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 11, name: "tags", kind: "message", T: Tag, repeated: true },
+    { no: 12, name: "content", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Pdf {
@@ -175,6 +192,7 @@ export class PdfListItem extends Message<PdfListItem> {
 
   /**
    * Original filesystem path (where it was loaded from)
+   * TODO: this field is no longer needed because we upload files via the API
    *
    * @generated from field: string origin_path = 6;
    */
@@ -418,6 +436,7 @@ export class LoadPdfResponse extends Message<LoadPdfResponse> {
 
 /**
  * SearchPdfsRequest - Search for PDFs by various criteria
+ * TODO: we should turn these search parameters into a generic message, so that it can be reused
  *
  * @generated from message bibliophage.v1alpha2.SearchPdfsRequest
  */
@@ -452,6 +471,9 @@ export class SearchPdfsRequest extends Message<SearchPdfsRequest> {
   tagFilters: TagFilter[] = [];
 
   /**
+   * TODO: these should be optional; change that in future API versions
+   * these default to zero, if unset, which is why it would be better
+   * to not use their value, when the user does not explicitly send them
    * Pagination
    *
    * Max results to return (default: 50)

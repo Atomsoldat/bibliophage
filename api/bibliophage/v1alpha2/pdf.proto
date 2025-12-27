@@ -58,6 +58,11 @@ message Pdf {
 
   // Structured tags for organization (name + multiple values)
   repeated Tag tags = 11;
+
+  // Markdown content extracted from the PDF (optional, only populated for GetPdf)
+  // Contains concatenated markdown from all processed batches
+  // Not included in search results to keep responses lightweight
+  optional string content = 12;
 }
 
 // PdfListItem represents a PDF in list/search results
