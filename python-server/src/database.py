@@ -84,13 +84,14 @@ class DocumentDatabase:
         origin_path: str,
         page_count: int,
         file_size: int,
-        batches: list[dict[str, Any]],
+        content: str,
+        batch_count: int,
         batch_config: dict[str, Any],
         use_smart_batching: bool,
         tags: list[str],
         created_at: datetime,
     ) -> str:
-        """Store a PDF document with its processed batches in the database.
+        """Store a PDF document with its processed markdown content in the database.
 
         Args:
             document_id: Unique identifier for the document
@@ -100,7 +101,8 @@ class DocumentDatabase:
             origin_path: Original file path
             page_count: Total number of pages
             file_size: Size of PDF file in bytes
-            batches: List of processed batches with markdown content
+            content: Concatenated markdown content from all batches
+            batch_count: Number of batches that were processed
             batch_config: Batch processing configuration used
             use_smart_batching: Whether smart batching was used
             tags: List of tags for the document
@@ -109,9 +111,6 @@ class DocumentDatabase:
         Returns:
             The document_id of the stored document
         """
-        successful_batches = sum(1 for b in batches if b.get('success'))
-        failed_batches = len(batches) - successful_batches
-
         document = {
             '_id': document_id,
             'name': name,
@@ -120,10 +119,9 @@ class DocumentDatabase:
             'origin_path': origin_path,
             'page_count': page_count,
             'file_size': file_size,
-            'batch_count': len(batches),
-            'successful_batches': successful_batches,
-            'failed_batches': failed_batches,
-            'batches': batches,
+            'content': content,
+            'character_count': len(content),
+            'batch_count': batch_count,
             'batch_config': batch_config,
             'use_smart_batching': use_smart_batching,
             'created_at': created_at,
@@ -188,11 +186,8 @@ class DocumentDatabase:
         # Get total count
         total_count = await self.pdfs_collection.count_documents(query)
 
-        # Get paginated results
-        # filter out the raw markdown contained under batches:
-        # TODO: we want to have this under a proper "content" key eventually, so this
-        # will need to be refactored
-        cursor = self.pdfs_collection.find(query, {'batches': 0}).sort('created_at', DESCENDING)
+        # Get paginated results (exclude content field for performance)
+        cursor = self.pdfs_collection.find(query, {'content': 0}).sort('created_at', DESCENDING)
         cursor.skip(page_number * page_size).limit(page_size)
         documents = await cursor.to_list(length=page_size)
 

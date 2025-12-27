@@ -215,6 +215,15 @@ class LoadingServiceImplementation:
                         })
                         gc.collect()
 
+            # Concatenate markdown from all successful batches into single content string
+            markdown_parts = []
+            for batch in processed_batches:
+                if batch.get('success') and 'markdown' in batch:
+                    markdown_parts.append(batch['markdown'])
+
+            concatenated_content = '\n\n'.join(markdown_parts)
+            logger.info(f"Concatenated {len(markdown_parts)} batches into {len(concatenated_content)} characters of markdown")
+
             # Store document using database repository
             document_id = str(uuid.uuid4())
             now = datetime.now(timezone.utc)
@@ -227,7 +236,8 @@ class LoadingServiceImplementation:
                 origin_path=request.pdf.origin_path,
                 page_count=total_pages,
                 file_size=len(pdf_bytes),
-                batches=processed_batches,
+                content=concatenated_content,
+                batch_count=len(processed_batches),
                 batch_config=batch_config,
                 use_smart_batching=use_smart_batching,
                 tags=list(request.pdf.tags) if request.pdf.tags else [],
@@ -339,19 +349,71 @@ class LoadingServiceImplementation:
         self, request: api.GetPdfRequest, ctx,
     ) -> api.GetPdfResponse:
         """
-        Retrieve a specific PDF by ID from FerretDB.
+        Retrieve a specific PDF by ID from FerretDB, including markdown content.
 
-        TODO: Implement actual PDF retrieval from FerretDB.
+        The markdown content from all batches is concatenated and included in the response.
+        This allows the frontend to display and edit the processed PDF content.
         """
         logger.info(f"Received GetPdfRequest for ID: {request.id}")
 
-        # TODO: Implement actual PDF retrieval
-        # document = await self.documents_collection.find_one({'_id': request.id})
-        # if document:
-        #     # Convert document to api.Pdf
-        #     pass
+        try:
+            # Fetch PDF document from database
+            doc = await self.db.get_pdf_by_id(request.id)
 
-        return api.GetPdfResponse(
-            success=False,
-            message="PDF retrieval not yet implemented",
-        )
+            if not doc:
+                return api.GetPdfResponse(
+                    success=False,
+                    message=f"PDF with ID '{request.id}' not found",
+                )
+
+            # Convert database document to protobuf Pdf message
+            pdf = api.Pdf(
+                id=doc.get('_id', ''),
+                name=doc.get('name', ''),
+                system=doc.get('system', ''),
+                type=doc.get('type', ''),
+                page_count=doc.get('page_count', 0),
+                origin_path=doc.get('origin_path', ''),
+                file_size=doc.get('file_size', 0),
+                chunk_count=doc.get('batch_count', 0),
+            )
+
+            # Handle timestamps
+            if 'created_at' in doc:
+                created_ts = timestamp_pb2.Timestamp()
+                created_ts.FromDatetime(doc['created_at'])
+                pdf.created_at.CopyFrom(created_ts)
+
+            if 'updated_at' in doc:
+                updated_ts = timestamp_pb2.Timestamp()
+                updated_ts.FromDatetime(doc['updated_at'])
+                pdf.updated_at.CopyFrom(updated_ts)
+
+            # Handle tags
+            if 'tags' in doc and doc['tags']:
+                for tag_dict in doc['tags']:
+                    tag = api.Tag(
+                        name=tag_dict.get('name', ''),
+                        value=tag_dict.get('value', ''),
+                    )
+                    pdf.tags.append(tag)
+
+            # Include markdown content if present
+            if 'content' in doc:
+                pdf.content = doc['content']
+                logger.info(f"Included {len(pdf.content)} characters of content")
+
+            logger.info(f"Successfully retrieved PDF: {pdf.name} ({pdf.id})")
+            return api.GetPdfResponse(
+                success=True,
+                message=f"PDF '{pdf.name}' retrieved successfully",
+                pdf=pdf,
+            )
+
+        except Exception as e:
+            logger.error(f"Error retrieving PDF: {e}")
+            logger.error(traceback.format_exc())
+            return api.GetPdfResponse(
+                success=False,
+                message=f"Error retrieving PDF: {str(e)}",
+            )
