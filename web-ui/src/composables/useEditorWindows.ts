@@ -15,37 +15,35 @@ export interface EditorWindowConfig {
   isMinimized: boolean
 }
 
-// Window management state
+// Global state for window management
 const windows = ref<EditorWindowConfig[]>([])
 let nextWindowId = 1
 let nextZIndex = 10
 
+// Positioning constants
+const INITIAL_OFFSET = { x: 100, y: 100 }
+const CASCADE_OFFSET = 30
+
 /**
  * Composable for global editor window management
  *
- * Provides a global system for managing multiple floating editor windows
- * that persist across view changes, similar to the GlobalConsole.
+ * Provides a singleton-like system for managing floating editor windows
+ * that persist across view changes. Windows are managed globally and
+ * rendered by the GlobalEditorWindows component in App.vue.
  *
  * @example
  * const { openWindow, closeWindow } = useEditorWindows()
  * openWindow({ title: 'My Document', content: 'Hello world!' })
  */
 export function useEditorWindows() {
-  /**
-   * Calculate position for new window with cascade effect
-   */
   function calculatePosition(index: number): { x: number; y: number } {
-    const offset = index * 30
+    const offset = index * CASCADE_OFFSET
     return {
-      x: 100 + offset,
-      y: 100 + offset,
+      x: INITIAL_OFFSET.x + offset,
+      y: INITIAL_OFFSET.y + offset,
     }
   }
 
-  /**
-   * Open a new editor window
-   * Returns the window ID for reference
-   */
   function openWindow(config: {
     documentId?: string
     title?: string
@@ -72,23 +70,18 @@ export function useEditorWindows() {
     }
 
     windows.value.push(newWindow)
-    console.log('[useEditorWindows] Created window:', windowId, 'Total windows:', windows.value.length)
+    console.log(`[EditorWindows] Opened window ${windowId} - Total: ${windows.value.length}`)
     return windowId
   }
 
-  /**
-   * Close a window by ID
-   */
   function closeWindow(windowId: string): void {
     const index = windows.value.findIndex(w => w.id === windowId)
     if (index !== -1) {
       windows.value.splice(index, 1)
+      console.log(`[EditorWindows] Closed window ${windowId} - Total: ${windows.value.length}`)
     }
   }
 
-  /**
-   * Bring a window to front by updating its z-index
-   */
   function bringToFront(windowId: string): void {
     const window = windows.value.find(w => w.id === windowId)
     if (window) {
@@ -96,9 +89,6 @@ export function useEditorWindows() {
     }
   }
 
-  /**
-   * Toggle minimize state for a window
-   */
   function toggleMinimize(windowId: string): void {
     const window = windows.value.find(w => w.id === windowId)
     if (window) {
@@ -106,9 +96,6 @@ export function useEditorWindows() {
     }
   }
 
-  /**
-   * Update window position (for dragging)
-   */
   function updatePosition(windowId: string, x: number, y: number): void {
     const window = windows.value.find(w => w.id === windowId)
     if (window) {
@@ -117,9 +104,6 @@ export function useEditorWindows() {
     }
   }
 
-  /**
-   * Update document data in a window
-   */
   function updateDocument(windowId: string, updates: {
     documentId?: string
     title?: string
@@ -135,18 +119,16 @@ export function useEditorWindows() {
     }
   }
 
-  /**
-   * Get a window by ID
-   */
   function getWindow(windowId: string): EditorWindowConfig | undefined {
     return windows.value.find(w => w.id === windowId)
   }
 
-  /**
-   * Close all windows
-   */
   function closeAll(): void {
+    const count = windows.value.length
     windows.value = []
+    if (count > 0) {
+      console.log(`[EditorWindows] Closed all ${count} windows`)
+    }
   }
 
   return {

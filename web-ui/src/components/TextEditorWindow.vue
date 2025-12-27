@@ -4,12 +4,10 @@ import { useTemplateRef, computed, watch } from 'vue'
 import TextEditorCard from '../components/TextEditorCard.vue'
 import type { EditorWindowConfig } from '../composables/useEditorWindows'
 
-// Props from global state
 const props = defineProps<{
   window: EditorWindowConfig
 }>()
 
-// Events to update global state
 const emit = defineEmits<{
   close: [windowId: string]
   minimize: [windowId: string]
@@ -18,19 +16,18 @@ const emit = defineEmits<{
   bringToFront: [windowId: string]
 }>()
 
+// Draggable window setup
 const floatingEditorWindow = useTemplateRef('floatingEditorWindow')
-
-// Initialize draggable with position from global state
 const { x, y } = useDraggable(floatingEditorWindow, {
   initialValue: { x: props.window.x, y: props.window.y },
 })
 
-// Watch for drag position changes and emit to global state
+// Sync drag position back to global state
 watch([x, y], ([newX, newY]) => {
   emit('positionChange', props.window.id, newX, newY)
 })
 
-// Computed style with z-index from global state
+// Combine draggable position with z-index from global state
 const windowStyle = computed(() => ({
   position: 'fixed',
   left: `${x.value}px`,
@@ -38,6 +35,7 @@ const windowStyle = computed(() => ({
   zIndex: props.window.zIndex,
 }))
 
+// Event handlers
 function handleClose() {
   emit('close', props.window.id)
 }
@@ -50,11 +48,9 @@ function handleBringToFront() {
   emit('bringToFront', props.window.id)
 }
 
-// Handle document changes from the editor card
 function handleDocumentUpdate(field: 'title' | 'content' | 'documentId' | 'isNew', value: string | boolean) {
   emit('documentUpdate', props.window.id, { [field]: value })
 }
-
 </script>
 
 <template>
