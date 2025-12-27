@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import BaseCard from './BaseCard.vue'
 import TextEditor from './TextEditor.vue'
 
@@ -48,7 +48,16 @@ const textEditorRef = ref<InstanceType<typeof TextEditor> | null>(null)
 
 
 const api = useDocumentApi()
-await api.initialise()
+
+// Initialize API on component mount instead of blocking with top-level await
+onMounted(async () => {
+  try {
+    await api.initialise()
+    console.log('[TextEditorCard] API initialized successfully')
+  } catch (error) {
+    log(`Failed to initialize API: ${(error as Error).message}`, 'error')
+  }
+})
 
 async function handleSave() {
   try {
