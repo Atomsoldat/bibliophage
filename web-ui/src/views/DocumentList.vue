@@ -82,14 +82,39 @@ async function handleSearchSubmit() {
 }
 
 // Open a global editor window for the selected document
-function handleEditDocument(pdf: PdfListItem) {
-  openWindow({
-    title: pdf.name,
-    content: '', // PDF content would need to be fetched from backend
-    documentId: pdf.id,
-    isNew: false,
-  })
-  log(`Opened editor for: ${pdf.name}`, 'info')
+async function handleEditDocument(pdf: PdfListItem) {
+  if (!client.value) {
+    log('Error: Client not initialized', 'error')
+    return
+  }
+
+  try {
+    log(`Fetching content for: ${pdf.name}`, 'info')
+
+    // Import the necessary types
+    const { GetPdfRequest } = await import('../bibliophage/v1alpha2/pdf_pb.ts')
+
+    // Fetch the full PDF with content
+    const request = new GetPdfRequest({ id: pdf.id })
+    const response = await client.value.getPdf(request)
+
+    if (!response.success || !response.pdf) {
+      log(`Failed to fetch PDF: ${response.message}`, 'error')
+      return
+    }
+
+    // Open editor window with the fetched content
+    openWindow({
+      title: response.pdf.name,
+      content: response.pdf.content || '',
+      documentId: response.pdf.id,
+      isNew: false,
+    })
+
+    log(`Opened editor for: ${response.pdf.name} (${response.pdf.content?.length || 0} characters)`, 'success')
+  } catch (error) {
+    log(`Error fetching PDF: ${(error as Error).message}`, 'error')
+  }
 }
 </script>
 
