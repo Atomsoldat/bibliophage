@@ -12,11 +12,11 @@ import { PdfService } from '../bibliophage/v1alpha2/pdf_connect.ts'
 import { SearchPdfsRequest } from '../bibliophage/v1alpha2/pdf_pb.ts'
 import { useAppConsole } from '../composables/useAppConsole'
 import { useConfig } from '../composables/useConfig'
-
-import TextEditorWindow from '../components/TextEditorWindow.vue'
+import { useEditorWindows } from '../composables/useEditorWindows'
 
 const { config, loadConfig } = useConfig()
 const { log } = useAppConsole()
+const { openWindow } = useEditorWindows()
 
 // Client will be initialized after config loads
 // see https://connectrpc.com/docs/node/using-clients/#connect
@@ -81,10 +81,15 @@ async function handleSearchSubmit() {
   }
 }
 
-// Placeholder for future edit functionality
+// Open a global editor window for the selected document
 function handleEditDocument(pdf: PdfListItem) {
-  // TODO: Implement edit document functionality
-  console.log('Edit document:', pdf.name)
+  openWindow({
+    title: pdf.name,
+    content: '', // PDF content would need to be fetched from backend
+    documentId: pdf.id,
+    isNew: false,
+  })
+  log(`Opened editor for: ${pdf.name}`, 'info')
 }
 </script>
 
