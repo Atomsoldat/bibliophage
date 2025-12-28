@@ -242,10 +242,14 @@ class DocumentDatabase:
         Returns:
             The document_id of the stored document
         """
+        # Create snippet for search results (max 200 characters)
+        content_snippet = content[:200] + "..." if len(content) > 200 else content
+
         document = {
             '_id': document_id,
             'name': name,
             'content': content,
+            'content_snippet': content_snippet,
             'type': doc_type,
             'character_count': len(content),
             'tags': tags,
@@ -296,6 +300,8 @@ class DocumentDatabase:
         if content is not None:
             updates['content'] = content
             updates['character_count'] = len(content)
+            # Update snippet when content changes
+            updates['content_snippet'] = content[:200] + "..." if len(content) > 200 else content
         if doc_type is not None:
             updates['type'] = doc_type
         if tags is not None:
