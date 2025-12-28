@@ -52,7 +52,7 @@ local_resource(
 )
 
 local_resource(
-    'proto-gen',
+    'api',
     cmd='cd python-server && pixi run api && cd ../web-ui && yarn api',
     deps=['api/bibliophage/'],
     auto_init=False,  # Don't run automatically on startup

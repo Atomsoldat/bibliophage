@@ -31,4 +31,8 @@ Press `space` in the terminal to open the Tilt UI in your browser.
 
 ## Connect RPC API
 
-The components communicate via Connect RPC. To regenerate protocol buffers, trigger the `proto-gen` resource in the Tilt UI.
+The components communicate via Connect RPC. To regenerate protocol buffers, trigger the `api` resource in the Tilt UI, or execute the following command:
+
+```bash
+tilt trigger api
+```
