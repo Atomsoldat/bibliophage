@@ -737,9 +737,9 @@ export class SearchDocumentsResponse extends Message<SearchDocumentsResponse> {
    * Array of matching document summaries (with snippets, not full content)
    * To retrieve full content, use GetDocument RPC with the document ID
    *
-   * @generated from field: repeated bibliophage.v1alpha2.DocumentListItem documents = 3;
+   * @generated from field: repeated bibliophage.v1alpha2.DocumentListItem matches = 3;
    */
-  documents: DocumentListItem[] = [];
+  matches: DocumentListItem[] = [];
 
   /**
    * Total number of results (for pagination)
@@ -772,7 +772,7 @@ export class SearchDocumentsResponse extends Message<SearchDocumentsResponse> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "documents", kind: "message", T: DocumentListItem, repeated: true },
+    { no: 3, name: "matches", kind: "message", T: DocumentListItem, repeated: true },
     { no: 4, name: "total_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 5, name: "page_number", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 6, name: "has_more", kind: "scalar", T: 8 /* ScalarType.BOOL */ },

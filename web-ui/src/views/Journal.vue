@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Client } from '@connectrpc/connect'
-import type { Document } from '../bibliophage/v1alpha2/document_pb.ts'
+import type { Document, DocumentListItem } from '../bibliophage/v1alpha2/document_pb.ts'
 
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
@@ -22,7 +22,7 @@ const { onRefreshTriggered } = useJournalRefresh()
 // Client will be initialized after config loads
 const client = ref<Client<typeof DocumentService> | null>(null)
 
-const documents = ref<Document[]>([])
+const entries = ref<DocumentListItem[]>([])
 const loading = ref(false)
 
 onBeforeMount(async () => {
@@ -68,7 +68,7 @@ async function handleSearchSubmit() {
     const response = await client.value.searchDocuments(request)
 
     // Store the results
-    documents.value = response.documents
+    entries.value = response.matches
     log(`Success! Found ${response.documents.length} journal entries`, 'success')
   }
   catch (error) {
@@ -115,19 +115,21 @@ function handleNewEntry() {
   log('Opened new journal entry', 'info')
 }
 
-async function handleEditEntry(document: Document) {
+async function handleEditEntry(entry: DocumentListItem) {
   try {
-    log(`Opening: ${document.name}`, 'info')
+    log(`Opening: ${entry.name}`, 'info')
+
+    // the documents returned by the
 
     // Open editor window with the document
     openWindow({
-      title: document.name,
-      content: document.content || '',
-      documentId: document.id,
+      title: entry.name,
+      content: entry.content || '',
+      documentId: entry.id,
       isNew: false,
     })
 
-    log(`Opened editor for: ${document.name}`, 'success')
+    log(`Opened editor for: ${entry.name}`, 'success')
   }
   catch (error) {
     log(`Error opening document: ${(error as Error).message}`, 'error')
@@ -165,12 +167,12 @@ async function handleEditEntry(document: Document) {
     </form>
 
     <!-- Loading indicator -->
-    <div v-if="loading && documents.length === 0" class="flex justify-center items-center p-8">
+    <div v-if="loading && entries.length === 0" class="flex justify-center items-center p-8">
       <span class="loading loading-spinner loading-lg" />
     </div>
 
     <!-- Journal entries table -->
-    <div v-else-if="documents.length > 0" class="overflow-x-auto">
+    <div v-else-if="entries.length > 0" class="overflow-x-auto">
       <table class="table table-zebra">
         <thead>
           <tr>
@@ -184,40 +186,40 @@ async function handleEditEntry(document: Document) {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(document, index) in documents" v-bind:key="document.id" class="hover">
+          <tr v-for="(entry, index) in entries" v-bind:key="entry.id" class="hover">
             <th>{{ index }}</th>
             <td>
               <div class="font-semibold">
-                {{ document.name }}
+                {{ entry.name }}
               </div>
               <div class="text-sm text-base-content/70 truncate max-w-md">
-                {{ document.content?.substring(0, 100) }}{{ document.content && document.content.length > 100 ? '...' : '' }}
+                {{ entry.content?.substring(0, 100) }}{{ entry.content && entry.content.length > 100 ? '...' : '' }}
               </div>
             </td>
             <td class="text-xs font-mono">
-              {{ document.id }}
+              {{ entry.id }}
             </td>
             <td>
               <div class="flex gap-1 flex-wrap">
-                <span v-for="tag in document.tags" v-bind:key="tag" class="badge badge-sm badge-outline">
+                <span v-for="tag in entry.tags" v-bind:key="tag" class="badge badge-sm badge-outline">
                   {{ tag }}
                 </span>
-                <span v-if="document.tags.length === 0" class="text-sm text-base-content/50">
+                <span v-if="entry.tags.length === 0" class="text-sm text-base-content/50">
                   -
                 </span>
               </div>
             </td>
             <td>
-              <span class="text-sm">{{ formatDate(document.createdAt) }}</span>
+              <span class="text-sm">{{ formatDate(entry.createdAt) }}</span>
             </td>
             <td>
-              <span class="text-sm">{{ formatDate(document.updatedAt) }}</span>
+              <span class="text-sm">{{ formatDate(entry.updatedAt) }}</span>
             </td>
             <td>
               <button
                 type="button"
                 class="btn btn-sm btn-primary gap-1"
-                @click="handleEditEntry(document)"
+                @click="handleEditEntry(entry)"
               >
                 <Icon icon="heroicons:pencil" />
                 Edit

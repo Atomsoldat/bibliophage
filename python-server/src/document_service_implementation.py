@@ -281,7 +281,7 @@ class DocumentServiceImplementation:
         return api.SearchDocumentsResponse(
             success=True,
             message=f"Found {total_count} document(s)",
-            documents=document_list_items,
+            matches=document_list_items,
             total_count=total_count,
             page_number=page_number,
             has_more=has_more,
