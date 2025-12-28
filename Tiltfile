@@ -61,6 +61,15 @@ local_resource(
 )
 
 local_resource(
+    'api-format',
+    cmd='buf format --write api',
+    deps=['api/bibliophage/'],
+    auto_init=False,  # Don't run automatically on startup
+    trigger_mode=TRIGGER_MODE_MANUAL,
+    labels=['tools'],
+)
+
+local_resource(
     'nuke everything',
     cmd='docker compose down -v',
     auto_init=False,
