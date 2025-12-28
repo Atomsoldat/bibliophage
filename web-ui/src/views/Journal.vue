@@ -87,7 +87,7 @@ function formatDate(timestamp: any): string {
     return 'N/A'
   try {
     const date = timestamp.toDate()
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('de-DE', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
