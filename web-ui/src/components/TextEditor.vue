@@ -1,182 +1,29 @@
 <script setup lang="ts">
-// we only import this for type checking
-// will not be bundled in final JS
-import type { Level } from '@tiptap/extension-heading'
 import { Icon } from '@iconify/vue'
-import Image from '@tiptap/extension-image'
-import { Markdown } from '@tiptap/markdown'
-import StarterKit from '@tiptap/starter-kit'
-import { Editor, EditorContent } from '@tiptap/vue-3'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { marked } from 'marked'
+import { computed, ref } from 'vue'
 
-// in earlier versions of vue, you had to use defineProps()
-// https://vuejs.org/api/sfc-script-setup.html#defineprops-defineemits
-// and define emits and invoke onUpdate functions to pass values
-// between parent and child; but thats not needed anymore
-// see stuff below
-
-// we can set up multiple variables by invoking defineModel() multiple times
-// https://vuejs.org/api/sfc-script-setup.html#definemodel
-// walliþ nu, gaþankōz"
-// double consontant represented by single laguz
-// Runic inscription moved to background watermark (see CSS below)
 const defaultContent = defineModel('defaultContent', { type: String, default: '' })
 
-// until we have instantiated the editor, it might be null
-const editor = ref<Editor | null>(null)
+// Track view mode: 'edit' or 'preview'
+type ViewMode = 'edit' | 'preview'
+const viewMode = ref<ViewMode>('edit')
 
-// Track whether we're in WYSIWYG mode or raw markdown mode
-type ViewMode = 'wysiwyg' | 'markdown'
-const viewMode = ref<ViewMode>('markdown')
-
-// when this component is mounted (basically when someone wants to see it)
-// we instantiate the editor
-// this is how the Tiptap people do it in their examples and source code
-// https://github.com/ueberdosis/tiptap
-onMounted(() => {
-  editor.value = new Editor({
-    extensions: [
-      StarterKit,
-      Markdown.configure({
-        // Enable markdown serialization
-        html: false,
-        transformPastedText: true,
-      }),
-      Image,
-    ],
-    content: defaultContent.value,
-    // Parse initial content as markdown
-    contentType: 'markdown',
-    onUpdate: ({ editor }) => {
-      // Extract markdown from editor and sync back to the model
-      // This enables parent components to receive markdown via v-model
-      // In Tiptap v3, use editor.getMarkdown() directly
-      const markdown = editor.getMarkdown()
-      defaultContent.value = markdown
-    },
-  })
-})
-
-const linkUrl = ref('')
-const showLinkInput = ref(false)
-
-// Track active states for buttons
-// computed() means, that the value of these variables is computed
-// based on the function body provided whenever any of the dependencies
-// in the body change
-// https://vuejs.org/guide/essentials/computed.html#computed-properties
-const activeMarks = computed(() => {
-  if (!editor.value)
-    return {}
-  return {
-    bold: editor.value?.isActive('bold'),
-    italic: editor.value?.isActive('italic'),
-    underline: editor.value?.isActive('underline'),
-    code: editor.value?.isActive('code'),
-    strike: editor.value?.isActive('strike'),
+// Rendered HTML from markdown
+const renderedHtml = computed(() => {
+  try {
+    return marked.parse(defaultContent.value)
+  } catch (error) {
+    return `<p class="text-error">Error rendering markdown: ${(error as Error).message}</p>`
   }
 })
 
-const activeBlocks = computed(() => {
-  if (!editor.value)
-    return {}
-  return {
-    bulletList: editor.value?.isActive('bulletList'),
-    orderedList: editor.value?.isActive('orderedList'),
-    blockquote: editor.value?.isActive('blockquote'),
-    codeBlock: editor.value?.isActive('codeBlock'),
-  }
-})
-
-// Heading levels
-const currentHeading = computed(() => {
-  if (!editor.value)
-    return null
-  for (let level = 1; level <= 6; level++) {
-    if (editor.value?.isActive('heading', { level }))
-      return level
-  }
-  return null
-})
-
-// we use chain() to call multiple commands with one invocation
-// https://tiptap.dev/docs/editor/api/editor#chain
-function setHeading(level: Level) {
-  editor.value?.chain().focus().toggleHeading({ level }).run()
-}
-
-// Link handling
-function openLinkDialog() {
-  const previousUrl = editor.value?.getAttributes('link').href
-  linkUrl.value = previousUrl || ''
-  showLinkInput.value = true
-}
-
-function setLink() {
-  if (linkUrl.value === '') {
-    editor.value?.chain().focus().extendMarkRange('link').unsetLink().run()
-  }
-  else {
-    editor.value?.chain().focus().extendMarkRange('link').setLink({ href: linkUrl.value }).run()
-  }
-  showLinkInput.value = false
-}
-
-function removeLink() {
-  editor.value?.chain().focus().unsetLink().run()
-  showLinkInput.value = false
-}
-
-// Image handling
-// TODO: we want to have proper image upload in the future
-function addImage() {
-  const url = prompt('Enter image URL:')
-  if (url) {
-    editor.value?.chain().focus().setImage({ src: url }).run()
-  }
-}
-
-// Mode toggling between WYSIWYG and raw markdown
+// Toggle between edit and preview modes
 function toggleViewMode() {
-  if (viewMode.value === 'markdown') {
-    // Switching to WYSIWYG: recreate the editor to properly parse markdown
-    // Store the markdown content before recreating
-    const markdownContent = defaultContent.value
-
-    // Destroy existing editor and recreate with markdown content
-    // This ensures the Markdown extension properly parses the markdown syntax
-    editor.value?.destroy()
-    editor.value = new Editor({
-      extensions: [
-        StarterKit,
-        Markdown.configure({
-          html: false,
-          transformPastedText: true,
-        }),
-        Image,
-      ],
-      content: markdownContent,
-      // Tell Tiptap to parse content as markdown, not HTML
-      contentType: 'markdown',
-      onUpdate: ({ editor }) => {
-        const markdown = editor.getMarkdown()
-        defaultContent.value = markdown
-      },
-    })
-
-    viewMode.value = 'wysiwyg'
-  }
-  else {
-    // Switching to markdown: first extract current markdown from editor
-    if (editor.value) {
-      const currentMarkdown = editor.value.getMarkdown()
-      defaultContent.value = currentMarkdown
-    }
-    viewMode.value = 'markdown'
-  }
+  viewMode.value = viewMode.value === 'edit' ? 'preview' : 'edit'
 }
 
-// Handle textarea changes in markdown mode
+// Handle textarea input
 function handleMarkdownInput(event: Event) {
   const target = event.target as HTMLTextAreaElement
   defaultContent.value = target.value
@@ -184,252 +31,60 @@ function handleMarkdownInput(event: Event) {
 
 // Expose methods that parent components can call
 defineExpose({
-  // Reset editor content to a specific value (or back to default)
   resetContent(passedContent?: string) {
-    const newContent = passedContent ?? defaultContent.value
-    editor.value?.commands.setContent(newContent)
+    defaultContent.value = passedContent ?? ''
   },
-})
-
-// Cleanup
-onBeforeUnmount(() => {
-  editor.value?.destroy()
 })
 </script>
 
 <template>
-  <div class="rich-text-editor w-full">
-    <!-- Menubar -->
-    <div class="mb-4 p-3 bg-base-200 rounded-t-lg flex flex-wrap gap-1">
+  <div class="markdown-editor w-full">
+    <!-- Toolbar -->
+    <div class="mb-4 p-3 bg-base-200 rounded-t-lg flex gap-2">
       <!-- View Mode Toggle -->
-      <!-- TODO: Why does this button seem to emit a "save" event? -->
-      <!-- Probably because the editor  is destroyed each time? -->
-      <!-- That seems really stupid -->
       <button
         class="btn btn-sm btn-primary"
-        v-bind:title="viewMode === 'markdown' ? 'Switch to WYSIWYG mode' : 'Switch to markdown mode'"
+        :title="viewMode === 'edit' ? 'Switch to preview' : 'Switch to edit'"
         @click="toggleViewMode"
       >
-        <Icon v-if="viewMode === 'markdown'" icon="mdi:eye" />
-        <Icon v-else icon="mdi:code-tags" />
-        <span v-if="viewMode === 'markdown'">Preview</span>
-        <span v-else>Source</span>
+        <Icon v-if="viewMode === 'edit'" icon="mdi:eye" />
+        <Icon v-else icon="mdi:pencil" />
+        <span>{{ viewMode === 'edit' ? 'Preview' : 'Edit' }}</span>
       </button>
 
-      <!-- Formatting buttons only visible in WYSIWYG mode -->
-      <template v-if="viewMode === 'wysiwyg'">
-        <div class="divider divider-horizontal mx-0" />
-
-        <!-- Text Formatting -->
-        <button
-          v-bind:class="{ 'btn-active': activeMarks.bold }"
-          class="btn btn-sm btn-ghost"
-          title="Bold"
-          @click="editor?.chain().focus().toggleBold().run()"
-        >
-          <Icon icon="mdi:format-bold" />
-        </button>
-
-        <button
-          v-bind:class="{ 'btn-active': activeMarks.italic }"
-          class="btn btn-sm btn-ghost"
-          title="Italic"
-          @click="editor?.chain().focus().toggleItalic().run()"
-        >
-          <Icon icon="mdi:format-italic" />
-        </button>
-
-        <button
-          v-bind:class="{ 'btn-active': activeMarks.underline }"
-          class="btn btn-sm btn-ghost"
-          title="Underline"
-          @click="editor?.chain().focus().toggleUnderline().run()"
-        >
-          <Icon icon="mdi:format-underline" />
-        </button>
-
-        <button
-          v-bind:class="{ 'btn-active': activeMarks.strike }"
-          class="btn btn-sm btn-ghost"
-          title="Strikethrough"
-          @click="editor?.chain().focus().toggleStrike().run()"
-        >
-          <Icon icon="mdi:format-strikethrough" />
-        </button>
-
-        <div class="divider divider-horizontal mx-0" />
-
-        <!-- Headings -->
-        <div class="dropdown">
-          <button
-            tabindex="0"
-            class="btn btn-sm btn-ghost"
-            title="Heading level"
-          >
-            H <Icon icon="mdi:chevron-down" class="w-4 h-4" />
-          </button>
-          <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow border border-base-300">
-            <li v-for="level in 6" v-bind:key="level">
-              <a
-                v-bind:class="{ active: currentHeading === level }"
-                @click="setHeading(level as Level)"
-              >
-                Heading {{ level }}
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        <div class="divider divider-horizontal mx-0" />
-
-        <!-- Lists & Blocks -->
-        <button
-          v-bind:class="{ 'btn-active': activeBlocks.bulletList }"
-          class="btn btn-sm btn-ghost"
-          title="Bullet List"
-          @click="editor?.chain().focus().toggleBulletList().run()"
-        >
-          <Icon icon="mdi:format-list-bulleted" />
-        </button>
-
-        <button
-          v-bind:class="{ 'btn-active': activeBlocks.orderedList }"
-          class="btn btn-sm btn-ghost"
-          title="Ordered List"
-          @click="editor?.chain().focus().toggleOrderedList().run()"
-        >
-          <Icon icon="mdi:format-list-numbered" />
-        </button>
-
-        <button
-          v-bind:class="{ 'btn-active': activeBlocks.blockquote }"
-          class="btn btn-sm btn-ghost"
-          title="Blockquote"
-          @click="editor?.chain().focus().toggleBlockquote().run()"
-        >
-          <Icon icon="mdi:format-quote-close" />
-        </button>
-
-        <button
-          v-bind:class="{ 'btn-active': activeBlocks.codeBlock }"
-          class="btn btn-sm btn-ghost"
-          title="Code Block"
-          @click="editor?.chain().focus().toggleCodeBlock().run()"
-        >
-          <Icon icon="mdi:code-braces" />
-        </button>
-
-        <div class="divider divider-horizontal mx-0" />
-
-        <!-- Link & Image -->
-        <button
-          class="btn btn-sm btn-ghost"
-          title="Add Link"
-          @click="openLinkDialog"
-        >
-          <Icon icon="mdi:link" />
-        </button>
-
-        <button
-          class="btn btn-sm btn-ghost"
-          title="Add Image"
-          @click="addImage"
-        >
-          <Icon icon="mdi:image" />
-        </button>
-
-        <div class="divider divider-horizontal mx-0" />
-
-        <!-- Undo/Redo -->
-        <button
-          v-bind:disabled="!editor?.can().undo()"
-          class="btn btn-sm btn-ghost"
-          title="Undo"
-          @click="editor?.chain().focus().undo().run()"
-        >
-          <Icon icon="mdi:undo" />
-        </button>
-
-        <button
-          v-bind:disabled="!editor?.can().redo()"
-          class="btn btn-sm btn-ghost"
-          title="Redo"
-          @click="editor?.chain().focus().redo().run()"
-        >
-          <Icon icon="mdi:redo" />
-        </button>
-      </template>
-    </div>
-
-    <!-- Link Input Modal -->
-    <div v-if="showLinkInput" class="modal modal-open">
-      <div class="modal-box">
-        <h3 class="font-bold text-lg">
-          Edit Link
-        </h3>
-        <input
-          v-model="linkUrl"
-          type="text"
-          placeholder="https://example.com"
-          class="input input-bordered w-full mt-4"
-        >
-        <div class="modal-action">
-          <button
-            class="btn btn-primary"
-            @click="setLink"
-          >
-            Save
-          </button>
-          <button
-            class="btn btn-error"
-            @click="removeLink"
-          >
-            Remove
-          </button>
-          <button
-            class="btn"
-            @click="showLinkInput = false"
-          >
-            Cancel
-          </button>
-        </div>
+      <div class="text-sm text-base-content/60 flex items-center ml-2">
+        {{ viewMode === 'edit' ? 'Editing markdown source' : 'Preview rendering' }}
       </div>
-      <form method="dialog" class="modal-backdrop">
-        <button @click="showLinkInput = false">
-          close
-        </button>
-      </form>
     </div>
 
-    <!-- Editor -->
+    <!-- Editor/Preview Area -->
     <div class="border border-t-0 border-base-300 rounded-b-lg overflow-hidden">
-      <!-- Editor wrapper with runic watermark background -->
       <div class="relative bg-base-100">
-        <!-- Runic watermark as actual element -->
-        <!-- walliþ nu, gaþankōz" -->
-        <!-- double consontant represented by single laguz -->
-        <!-- ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ -->
+        <!-- Runic watermark -->
+        <!-- walliþ nu, gaþankōz"-->                                                                                      
+        <!-- double consontant represented by single laguz --> 
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
           <div class="text-base-200 font-serif text-3xl font-light tracking-[0.3em]">
             ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ
           </div>
         </div>
 
-        <!-- WYSIWYG Mode: Rich text editor -->
-        <EditorContent
-          v-if="viewMode === 'wysiwyg' && editor"
-          v-bind:editor="(editor as Editor)"
-          class="ProseMirror prose max-w-none focus:outline-none p-4 min-h-96 bg-transparent relative z-10"
+        <!-- Edit Mode: Plain textarea -->
+        <textarea
+          v-if="viewMode === 'edit'"
+          name="markdown-editor"
+          :value="defaultContent"
+          class="textarea textarea-bordered w-full h-96 font-mono text-sm p-4 bg-transparent rounded-none border-0 focus:outline-none resize-none relative z-10 overflow-y-auto"
+          spellcheck="false"
+          placeholder="Start writing markdown..."
+          @input="handleMarkdownInput"
         />
 
-        <!-- Markdown Mode: Plain textarea -->
-        <textarea
+        <!-- Preview Mode: Rendered HTML -->
+        <div
           v-else
-          name="raw-markdown-textfield"
-          v-bind:value="defaultContent"
-          class="textarea textarea-bordered w-full min-h-96 font-mono text-sm p-4 bg-transparent rounded-none border-0 focus:outline-none resize-none relative z-10"
-          spellcheck="false"
-          @input="handleMarkdownInput"
+          class="prose max-w-none p-4 h-96 bg-transparent relative z-10 overflow-y-auto"
+          v-html="renderedHtml"
         />
       </div>
     </div>
@@ -437,81 +92,120 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-:deep(.ProseMirror) {
-  outline: none;
-
-  /* Heading styles */
-  h1, h2 {
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
-  }
-
-  h1 {
-    font-size: 1.4rem;
-    font-weight: bold;
-  }
-
-  h2 {
-    font-size: 1.2rem;
-    font-weight: bold;
-  }
-
-  h3, h4, h5, h6 {
-    font-weight: bold;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-  }
-
-  /* List styles */
-  ul, ol {
-    padding: 0 1rem;
-    margin: 1.25rem 1rem 1.25rem 0.4rem;
-  }
-
-  li {
-    margin: 0.25rem 0;
-  }
-
-  /* Blockquote */
-  blockquote {
-    border-left: 3px solid #999;
-    margin: 1.5rem 0;
-    padding-left: 1rem;
-  }
-
-  /* Code */
-  code {
-    background-color: #f1f1f1;
-    border-radius: 0.25rem;
-    padding: 0.25em 0.3em;
-    font-size: 0.85rem;
-  }
-
-  pre {
-    background: #222;
-    color: #fff;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    overflow-x: auto;
-    margin: 1rem 0;
-  }
-
-  pre code {
-    background: none;
-    color: inherit;
-    padding: 0;
-  }
+/* Prose styles for rendered markdown */
+:deep(.prose) {
+  color: inherit;
 }
 
-:deep(.ProseMirror:focus) {
-  outline: none;
+:deep(.prose h1) {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
-:deep(.ProseMirror p.is-editor-empty:first-child::before) {
-  color: #adb5bd;
-  content: attr(data-placeholder);
-  float: left;
-  height: 0;
-  pointer-events: none;
+:deep(.prose h2) {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+:deep(.prose h3) {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+:deep(.prose h4),
+:deep(.prose h5),
+:deep(.prose h6) {
+  font-weight: bold;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+:deep(.prose p) {
+  margin-bottom: 1rem;
+}
+
+:deep(.prose ul),
+:deep(.prose ol) {
+  padding-left: 1.5rem;
+  margin: 1rem 0;
+}
+
+:deep(.prose li) {
+  margin: 0.25rem 0;
+}
+
+:deep(.prose blockquote) {
+  border-left: 3px solid oklch(var(--bc) / 0.3);
+  margin: 1.5rem 0;
+  padding-left: 1rem;
+  color: oklch(var(--bc) / 0.7);
+}
+
+:deep(.prose code) {
+  background-color: oklch(var(--b2));
+  border-radius: 0.25rem;
+  padding: 0.15em 0.3em;
+  font-size: 0.875em;
+  font-family: ui-monospace, monospace;
+}
+
+:deep(.prose pre) {
+  background: oklch(var(--b3));
+  color: oklch(var(--bc));
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+:deep(.prose pre code) {
+  background: none;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+:deep(.prose a) {
+  color: oklch(var(--p));
+  text-decoration: underline;
+}
+
+:deep(.prose a:hover) {
+  color: oklch(var(--pf));
+}
+
+:deep(.prose img) {
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
+}
+
+:deep(.prose table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+:deep(.prose th),
+:deep(.prose td) {
+  border: 1px solid oklch(var(--bc) / 0.2);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+:deep(.prose th) {
+  background-color: oklch(var(--b2));
+  font-weight: bold;
+}
+
+:deep(.prose hr) {
+  border: none;
+  border-top: 1px solid oklch(var(--bc) / 0.2);
+  margin: 2rem 0;
 }
 </style>
