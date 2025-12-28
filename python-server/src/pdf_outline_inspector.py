@@ -29,20 +29,22 @@ def extract_outline(pdf_path: Path) -> list[dict[str, Any]]:
     outline_items = []
 
     with fitz.open(pdf_path) as doc:
-      toc = doc.get_toc()  # Returns [[level, title, page], ...]
+        toc = doc.get_toc()  # Returns [[level, title, page], ...]
 
-      if not toc:
-          _log.warning("PDF has no table of contents")
-          doc.close()
-          return outline_items
+        if not toc:
+            _log.warning("PDF has no table of contents")
+            doc.close()
+            return outline_items
 
-      for level, title, page in toc:
-          outline_items.append({
-              'title': title,
-              'page': page,  # PyMuPDF uses 1-indexed pages (matches Docling!)
-              'level': level - 1  # Convert to 0-indexed levels for consistency
-          })
-      return outline_items
+        for level, title, page in toc:
+            outline_items.append(
+                {
+                    "title": title,
+                    "page": page,  # PyMuPDF uses 1-indexed pages (matches Docling!)
+                    "level": level - 1,  # Convert to 0-indexed levels for consistency
+                }
+            )
+        return outline_items
 
 
 def get_pdf_page_count(pdf_path: Path) -> int:
@@ -52,8 +54,8 @@ def get_pdf_page_count(pdf_path: Path) -> int:
     This is a lightweight operation that only reads PDF metadata.
     """
     with fitz.open(pdf_path) as doc:
-      page_count = doc.page_count
-      return page_count
+        page_count = doc.page_count
+        return page_count
 
 
 def get_top_level_chapters(outline_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -69,16 +71,26 @@ def get_top_level_chapters(outline_items: list[dict[str, Any]]) -> list[dict[str
     Returns:
         List of chapter items sorted by page number, or empty list if none found
     """
-    chapters = [item for item in outline_items if item['level'] == 0 and item['page'] is not None]
+    chapters = [
+        item
+        for item in outline_items
+        if item["level"] == 0 and item["page"] is not None
+    ]
 
     if not chapters:
         _log.info("No top-level chapters found, trying level 1")
-        chapters = [item for item in outline_items if item['level'] == 1 and item['page'] is not None]
+        chapters = [
+            item
+            for item in outline_items
+            if item["level"] == 1 and item["page"] is not None
+        ]
 
-    return sorted(chapters, key=lambda x: x['page'])
+    return sorted(chapters, key=lambda x: x["page"])
 
 
-def analyze_outline_for_batching(outline_items: list[dict[str, Any]], total_pages: int, max_batch_size: int) -> list[tuple[int, int, str]]:
+def analyze_outline_for_batching(
+    outline_items: list[dict[str, Any]], total_pages: int, max_batch_size: int
+) -> list[tuple[int, int, str]]:
     """
     Analyze outline to create smart batch boundaries.
 
@@ -106,11 +118,11 @@ def analyze_outline_for_batching(outline_items: list[dict[str, Any]], total_page
     current_chapters = []
 
     for i, chapter in enumerate(chapters):
-        chapter_start = chapter['page']
+        chapter_start = chapter["page"]
 
         # Determine chapter end (start of next chapter or end of PDF)
         if i + 1 < len(chapters):
-            chapter_end = chapters[i + 1]['page'] - 1
+            chapter_end = chapters[i + 1]["page"] - 1
         else:
             chapter_end = total_pages
 
@@ -121,12 +133,14 @@ def analyze_outline_for_batching(outline_items: list[dict[str, Any]], total_page
             # Finalise any pending batch first
             if current_chapters:
                 prev_end = chapter_start - 1
-                desc = " + ".join(c['title'] for c in current_chapters)
+                desc = " + ".join(c["title"] for c in current_chapters)
                 batches.append((current_start, prev_end, desc))
                 current_chapters = []
 
             # Split large chapter into fixed-size batches
-            _log.info(f"Chapter '{chapter['title']}' is {chapter_size} pages, splitting into sub-batches")
+            _log.info(
+                f"Chapter '{chapter['title']}' is {chapter_size} pages, splitting into sub-batches"
+            )
             for sub_start in range(chapter_start, chapter_end + 1, max_batch_size):
                 sub_end = min(sub_start + max_batch_size - 1, chapter_end)
                 batches.append((sub_start, sub_end, f"{chapter['title']} (part)"))
@@ -135,12 +149,12 @@ def analyze_outline_for_batching(outline_items: list[dict[str, Any]], total_page
             continue
 
         # Check if adding this chapter would exceed max batch size
-        current_size = (chapter_end - current_start + 1)
+        current_size = chapter_end - current_start + 1
 
         if current_size > max_batch_size:
             # Finalise current batch without this chapter
             prev_end = chapter_start - 1
-            desc = " + ".join(c['title'] for c in current_chapters)
+            desc = " + ".join(c["title"] for c in current_chapters)
             batches.append((current_start, prev_end, desc))
 
             # Start new batch with this chapter
@@ -152,7 +166,7 @@ def analyze_outline_for_batching(outline_items: list[dict[str, Any]], total_page
 
     # Finalize last batch
     if current_chapters:
-        desc = " + ".join(c['title'] for c in current_chapters)
+        desc = " + ".join(c["title"] for c in current_chapters)
         batches.append((current_start, total_pages, desc))
 
     return batches
@@ -173,11 +187,7 @@ def inspect_pdf_outline(pdf_path: Path) -> dict[str, Any]:
     outline_items = extract_outline(pdf_path)
 
     if not outline_items:
-        return {
-            'has_outline': False,
-            'outline_items': [],
-            'chapters': []
-        }
+        return {"has_outline": False, "outline_items": [], "chapters": []}
 
     # Get total pages
     total_pages = get_pdf_page_count(pdf_path)
@@ -187,19 +197,17 @@ def inspect_pdf_outline(pdf_path: Path) -> dict[str, Any]:
     chapters = []
 
     for i, chapter in enumerate(top_level):
-        start = chapter['page']
-        end = top_level[i + 1]['page'] - 1 if i + 1 < len(top_level) else total_pages
+        start = chapter["page"]
+        end = top_level[i + 1]["page"] - 1 if i + 1 < len(top_level) else total_pages
         pages = end - start + 1
 
-        chapters.append({
-            'title': chapter['title'],
-            'start_page': start,
-            'end_page': end,
-            'num_pages': pages
-        })
+        chapters.append(
+            {
+                "title": chapter["title"],
+                "start_page": start,
+                "end_page": end,
+                "num_pages": pages,
+            }
+        )
 
-    return {
-        'has_outline': True,
-        'outline_items': outline_items,
-        'chapters': chapters
-    }
+    return {"has_outline": True, "outline_items": outline_items, "chapters": chapters}

@@ -15,9 +15,12 @@ class DocumentServiceImplementation:
         """Initialize the document service with database repository."""
         self.db = get_database()
         logger.info("Document service initialized with database repository")
+
     # TODO: figure out where the type of ctx is defined, we  don't use it in the loading service either
     async def store_document(
-        self, request: api.StoreDocumentRequest, ctx,
+        self,
+        request: api.StoreDocumentRequest,
+        ctx,
     ) -> api.StoreDocumentResponse:
         logger.info(
             f"Received StoreDocumentRequest for document: {request.document.name}",
@@ -30,10 +33,7 @@ class DocumentServiceImplementation:
         # Convert protobuf tags to dict format for database storage
         tags = []
         for tag in request.document.tags:
-            tags.append({
-                'name': tag.name,
-                'values': list(tag.values)
-            })
+            tags.append({"name": tag.name, "values": list(tag.values)})
 
         # Convert enum to string name for database storage
         doc_type = api.DocumentType.Name(request.document.type)
@@ -68,7 +68,9 @@ class DocumentServiceImplementation:
         )
 
     async def get_document(
-        self, request: api.GetDocumentRequest, ctx,
+        self,
+        request: api.GetDocumentRequest,
+        ctx,
     ) -> api.GetDocumentResponse:
         logger.info(f"Received GetDocumentRequest for ID: {request.id}")
 
@@ -83,26 +85,26 @@ class DocumentServiceImplementation:
 
         # Convert database document to protobuf Document
         document = api.Document()
-        document.id = doc_data['_id']
-        document.name = doc_data['name']
-        document.content = doc_data['content']
-        document.type = getattr(api, doc_data['type'], api.DOCUMENT_TYPE_UNSPECIFIED)
-        document.character_count = doc_data['character_count']
+        document.id = doc_data["_id"]
+        document.name = doc_data["name"]
+        document.content = doc_data["content"]
+        document.type = getattr(api, doc_data["type"], api.DOCUMENT_TYPE_UNSPECIFIED)
+        document.character_count = doc_data["character_count"]
 
         # Convert dict tags to protobuf tags
-        for tag_data in doc_data.get('tags', []):
+        for tag_data in doc_data.get("tags", []):
             tag = api.Tag()
-            tag.name = tag_data.get('name', '')
-            tag.values.extend(tag_data.get('values', []))
+            tag.name = tag_data.get("name", "")
+            tag.values.extend(tag_data.get("values", []))
             document.tags.append(tag)
 
         # Set timestamps
         created_timestamp = timestamp_pb2.Timestamp()
-        created_timestamp.FromDatetime(doc_data['created_at'])
+        created_timestamp.FromDatetime(doc_data["created_at"])
         document.created_at.CopyFrom(created_timestamp)
 
         updated_timestamp = timestamp_pb2.Timestamp()
-        updated_timestamp.FromDatetime(doc_data['updated_at'])
+        updated_timestamp.FromDatetime(doc_data["updated_at"])
         document.updated_at.CopyFrom(updated_timestamp)
 
         return api.GetDocumentResponse(
@@ -119,7 +121,9 @@ class DocumentServiceImplementation:
     # But then what about losing the history of a document? That sounds pretty meh
     # Using git for this seems heavy...
     async def update_document(
-        self, request: api.UpdateDocumentRequest, ctx,
+        self,
+        request: api.UpdateDocumentRequest,
+        ctx,
     ) -> api.UpdateDocumentResponse:
         logger.info(f"Received UpdateDocumentRequest for ID: {request.document.id}")
 
@@ -128,14 +132,14 @@ class DocumentServiceImplementation:
         if request.document.tags:
             tags = []
             for tag in request.document.tags:
-                tags.append({
-                    'name': tag.name,
-                    'values': list(tag.values)
-                })
+                tags.append({"name": tag.name, "values": list(tag.values)})
 
         # Convert enum to string name for database storage if provided
         doc_type = None
-        if request.document.type and request.document.type != api.DOCUMENT_TYPE_UNSPECIFIED:
+        if (
+            request.document.type
+            and request.document.type != api.DOCUMENT_TYPE_UNSPECIFIED
+        ):
             doc_type = api.DocumentType.Name(request.document.type)
 
         # Update document in database
@@ -155,26 +159,28 @@ class DocumentServiceImplementation:
 
         # Convert updated database document to protobuf Document
         updated_document = api.Document()
-        updated_document.id = doc_data['_id']
-        updated_document.name = doc_data['name']
-        updated_document.content = doc_data['content']
-        updated_document.type = getattr(api, doc_data['type'], api.DOCUMENT_TYPE_UNSPECIFIED)
-        updated_document.character_count = doc_data['character_count']
+        updated_document.id = doc_data["_id"]
+        updated_document.name = doc_data["name"]
+        updated_document.content = doc_data["content"]
+        updated_document.type = getattr(
+            api, doc_data["type"], api.DOCUMENT_TYPE_UNSPECIFIED
+        )
+        updated_document.character_count = doc_data["character_count"]
 
         # Convert dict tags to protobuf tags
-        for tag_data in doc_data.get('tags', []):
+        for tag_data in doc_data.get("tags", []):
             tag = api.Tag()
-            tag.name = tag_data.get('name', '')
-            tag.values.extend(tag_data.get('values', []))
+            tag.name = tag_data.get("name", "")
+            tag.values.extend(tag_data.get("values", []))
             updated_document.tags.append(tag)
 
         # Set timestamps
         created_timestamp = timestamp_pb2.Timestamp()
-        created_timestamp.FromDatetime(doc_data['created_at'])
+        created_timestamp.FromDatetime(doc_data["created_at"])
         updated_document.created_at.CopyFrom(created_timestamp)
 
         updated_timestamp = timestamp_pb2.Timestamp()
-        updated_timestamp.FromDatetime(doc_data['updated_at'])
+        updated_timestamp.FromDatetime(doc_data["updated_at"])
         updated_document.updated_at.CopyFrom(updated_timestamp)
 
         return api.UpdateDocumentResponse(
@@ -184,7 +190,9 @@ class DocumentServiceImplementation:
         )
 
     async def search_documents(
-        self, request: api.SearchDocumentsRequest, ctx,
+        self,
+        request: api.SearchDocumentsRequest,
+        ctx,
     ) -> api.SearchDocumentsResponse:
         logger.info("Received SearchDocumentsRequest")
 
@@ -194,13 +202,24 @@ class DocumentServiceImplementation:
         type_filter = None
         tag_filters = None
 
-        if request.HasField('filter'):
+        if request.HasField("filter"):
             # Extract search parameters from filter
-            name_query = request.filter.name_query if request.filter.HasField('name_query') else None
-            content_query = request.filter.content_query if request.filter.HasField('content_query') else None
+            name_query = (
+                request.filter.name_query
+                if request.filter.HasField("name_query")
+                else None
+            )
+            content_query = (
+                request.filter.content_query
+                if request.filter.HasField("content_query")
+                else None
+            )
 
             # Convert DocumentType enum to string for database query
-            if request.filter.HasField('type_filter') and request.filter.type_filter != api.DOCUMENT_TYPE_UNSPECIFIED:
+            if (
+                request.filter.HasField("type_filter")
+                and request.filter.type_filter != api.DOCUMENT_TYPE_UNSPECIFIED
+            ):
                 type_filter = api.DocumentType.Name(request.filter.type_filter)
 
             # TODO: Implement tag filter handling
@@ -231,26 +250,28 @@ class DocumentServiceImplementation:
         document_list_items = []
         for doc_data in documents:
             list_item = api.DocumentListItem()
-            list_item.id = doc_data['_id']
-            list_item.name = doc_data['name']
-            list_item.content_snippet = doc_data.get('content_snippet', '')
-            list_item.type = getattr(api, doc_data['type'], api.DOCUMENT_TYPE_UNSPECIFIED)
-            list_item.character_count = doc_data['character_count']
+            list_item.id = doc_data["_id"]
+            list_item.name = doc_data["name"]
+            list_item.content_snippet = doc_data.get("content_snippet", "")
+            list_item.type = getattr(
+                api, doc_data["type"], api.DOCUMENT_TYPE_UNSPECIFIED
+            )
+            list_item.character_count = doc_data["character_count"]
 
             # Set timestamps
             created_timestamp = timestamp_pb2.Timestamp()
-            created_timestamp.FromDatetime(doc_data['created_at'])
+            created_timestamp.FromDatetime(doc_data["created_at"])
             list_item.created_at.CopyFrom(created_timestamp)
 
             updated_timestamp = timestamp_pb2.Timestamp()
-            updated_timestamp.FromDatetime(doc_data['updated_at'])
+            updated_timestamp.FromDatetime(doc_data["updated_at"])
             list_item.updated_at.CopyFrom(updated_timestamp)
 
             # Add tags (tags are stored as dicts in the database)
-            for tag_data in doc_data.get('tags', []):
+            for tag_data in doc_data.get("tags", []):
                 tag = api.Tag()
-                tag.name = tag_data.get('name', '')
-                tag.values.extend(tag_data.get('values', []))
+                tag.name = tag_data.get("name", "")
+                tag.values.extend(tag_data.get("values", []))
                 list_item.tags.append(tag)
 
             document_list_items.append(list_item)
@@ -267,7 +288,9 @@ class DocumentServiceImplementation:
         )
 
     async def delete_document(
-        self, request: api.DeleteDocumentRequest, ctx,
+        self,
+        request: api.DeleteDocumentRequest,
+        ctx,
     ) -> api.DeleteDocumentResponse:
         logger.info(f"Received DeleteDocumentRequest for ID: {request.id}")
 

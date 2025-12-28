@@ -26,9 +26,14 @@ from docling.datamodel.base_models import ConversionStatus, InputFormat
 from docling.datamodel.pipeline_options import ThreadedPdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
-from pdf_outline_inspector import inspect_pdf_outline, analyze_outline_for_batching, get_pdf_page_count
+from pdf_outline_inspector import (
+    inspect_pdf_outline,
+    analyze_outline_for_batching,
+    get_pdf_page_count,
+)
 
 _log: logging.Logger = logging.getLogger(__name__)
+
 
 def convert_pdf_in_batches(
     pdf_path: Path,
@@ -36,7 +41,7 @@ def convert_pdf_in_batches(
     # define fallback value
     batch_size: int = 50,
     pipeline_options: ThreadedPdfPipelineOptions = None,
-    use_smart_batching: bool = True
+    use_smart_batching: bool = True,
 ) -> dict:
     """
     Convert a large PDF to markdown in batches to avoid OOM.
@@ -62,15 +67,17 @@ def convert_pdf_in_batches(
         _log.info("Attempting smart batching based on PDF outline...")
         try:
             outline_result = inspect_pdf_outline(pdf_path)
-            if outline_result['has_outline']:
+            if outline_result["has_outline"]:
                 batches = analyze_outline_for_batching(
-                    outline_result['outline_items'],
-                    total_pages,
-                    batch_size
+                    outline_result["outline_items"], total_pages, batch_size
                 )
                 if batches:
-                    _log.info(f"✓ Smart batching enabled: {len(batches)} chapter-based batches")
-                    _log.info(f"  Batch sizes range from {min(b[1]-b[0]+1 for b in batches)} to {max(b[1]-b[0]+1 for b in batches)} pages")
+                    _log.info(
+                        f"✓ Smart batching enabled: {len(batches)} chapter-based batches"
+                    )
+                    _log.info(
+                        f"  Batch sizes range from {min(b[1] - b[0] + 1 for b in batches)} to {max(b[1] - b[0] + 1 for b in batches)} pages"
+                    )
                 else:
                     _log.warning("Could not create smart batches from outline")
             else:
@@ -107,18 +114,18 @@ def convert_pdf_in_batches(
 
     # Statistics tracking
     stats: dict[str, int | list[Unknown]] = {
-        'total_pages': total_pages,
-        'processed_pages': 0,
-        'successful_batches': 0,
-        'failed_batches': 0,
-        'total_time': 0,
-        'batch_times': []
+        "total_pages": total_pages,
+        "processed_pages": 0,
+        "successful_batches": 0,
+        "failed_batches": 0,
+        "total_time": 0,
+        "batch_times": [],
     }
 
     overall_start: float = time.time()
 
     # Open output file once, append batches as we go
-    with open(output_path, 'w', encoding='utf-8') as output_file:
+    with open(output_path, "w", encoding="utf-8") as output_file:
         # Write document header
         output_file.write(f"# {pdf_path.name}\n\n")
         output_file.write(f"Converted: {datetime.datetime.now().isoformat()}\n\n")
@@ -133,7 +140,9 @@ def convert_pdf_in_batches(
             pages_in_batch: int = end_page - start_page + 1
 
             _log.info("=" * 60)
-            _log.info(f"BATCH {batch_num + 1}/{num_batches}: Pages {start_page}-{end_page} ({pages_in_batch} pages)")
+            _log.info(
+                f"BATCH {batch_num + 1}/{num_batches}: Pages {start_page}-{end_page} ({pages_in_batch} pages)"
+            )
             _log.info(f"  Content: {description}")
             _log.info("=" * 60)
 
@@ -143,14 +152,17 @@ def convert_pdf_in_batches(
                 # Convert ONLY this batch of pages
                 # The page_range parameter is KEY to limiting memory usage!
                 conv_result = doc_converter.convert(
-                    pdf_path,
-                    page_range=(start_page, end_page)
+                    pdf_path, page_range=(start_page, end_page)
                 )
 
                 if conv_result.status != ConversionStatus.SUCCESS:
-                    _log.warning(f"Batch {batch_num + 1} conversion status: {conv_result.status}")
-                    stats['failed_batches'] += 1
-                    output_file.write(f"\n<!-- BATCH {batch_num + 1} FAILED: {conv_result.status} -->\n\n")
+                    _log.warning(
+                        f"Batch {batch_num + 1} conversion status: {conv_result.status}"
+                    )
+                    stats["failed_batches"] += 1
+                    output_file.write(
+                        f"\n<!-- BATCH {batch_num + 1} FAILED: {conv_result.status} -->\n\n"
+                    )
                     output_file.flush()
                     continue
 
@@ -158,7 +170,9 @@ def convert_pdf_in_batches(
                 batch_markdown = conv_result.document.export_to_markdown()
 
                 # Write batch header with description
-                output_file.write(f"\n<!-- Batch {batch_num + 1}: Pages {start_page}-{end_page} - {description} -->\n\n")
+                output_file.write(
+                    f"\n<!-- Batch {batch_num + 1}: Pages {start_page}-{end_page} - {description} -->\n\n"
+                )
 
                 # Write batch content
                 output_file.write(batch_markdown)
@@ -170,11 +184,11 @@ def convert_pdf_in_batches(
                 # Flush to disk immediately
                 output_file.flush()
 
-                stats['processed_pages'] += pages_in_batch
-                stats['successful_batches'] += 1
+                stats["processed_pages"] += pages_in_batch
+                stats["successful_batches"] += 1
 
                 batch_time: float = time.time() - batch_start
-                stats['batch_times'].append(batch_time)
+                stats["batch_times"].append(batch_time)
 
                 _log.info(f"Batch {batch_num + 1} complete in {batch_time:.2f} seconds")
                 _log.info(f"Progress: {stats['processed_pages']}/{total_pages} pages")
@@ -188,13 +202,13 @@ def convert_pdf_in_batches(
 
             except Exception as e:
                 _log.error(f"Batch {batch_num + 1} failed with error: {e}")
-                stats['failed_batches'] += 1
+                stats["failed_batches"] += 1
                 output_file.write(f"\n<!-- BATCH {batch_num + 1} ERROR: {e} -->\n\n")
                 output_file.flush()
 
                 # Always try to free memory
                 gc.collect()
 
-    stats['total_time'] = time.time() - overall_start
+    stats["total_time"] = time.time() - overall_start
 
     return stats

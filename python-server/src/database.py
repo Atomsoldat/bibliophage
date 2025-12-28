@@ -112,21 +112,21 @@ class DocumentDatabase:
             The document_id of the stored document
         """
         document = {
-            '_id': document_id,
-            'name': name,
-            'system': system,
-            'type': doc_type,
-            'origin_path': origin_path,
-            'page_count': page_count,
-            'file_size': file_size,
-            'content': content,
-            'character_count': len(content),
-            'batch_count': batch_count,
-            'batch_config': batch_config,
-            'use_smart_batching': use_smart_batching,
-            'created_at': created_at,
-            'updated_at': created_at,
-            'tags': tags,
+            "_id": document_id,
+            "name": name,
+            "system": system,
+            "type": doc_type,
+            "origin_path": origin_path,
+            "page_count": page_count,
+            "file_size": file_size,
+            "content": content,
+            "character_count": len(content),
+            "batch_count": batch_count,
+            "batch_config": batch_config,
+            "use_smart_batching": use_smart_batching,
+            "created_at": created_at,
+            "updated_at": created_at,
+            "tags": tags,
         }
 
         await self.pdfs_collection.insert_one(document)
@@ -142,7 +142,7 @@ class DocumentDatabase:
         Returns:
             The document dictionary if found, None otherwise
         """
-        document = await self.pdfs_collection.find_one({'_id': document_id})
+        document = await self.pdfs_collection.find_one({"_id": document_id})
         return document
 
     # TODO: i think a tuple is not the best possible choice for returning the data
@@ -175,19 +175,21 @@ class DocumentDatabase:
         query = {}
 
         if name_query:
-            query['name'] = {'$regex': name_query, '$options': 'i'}
+            query["name"] = {"$regex": name_query, "$options": "i"}
         if system_filter:
-            query['system'] = system_filter
+            query["system"] = system_filter
         if type_filter:
-            query['type'] = type_filter
+            query["type"] = type_filter
         if tags:
-            query['tags'] = {'$all': tags}
+            query["tags"] = {"$all": tags}
 
         # Get total count
         total_count = await self.pdfs_collection.count_documents(query)
 
         # Get paginated results (exclude content field for performance)
-        cursor = self.pdfs_collection.find(query, {'content': 0}).sort('created_at', DESCENDING)
+        cursor = self.pdfs_collection.find(query, {"content": 0}).sort(
+            "created_at", DESCENDING
+        )
         cursor.skip(page_number * page_size).limit(page_size)
         documents = await cursor.to_list(length=page_size)
 
@@ -207,11 +209,10 @@ class DocumentDatabase:
         Returns:
             True if document was updated, False if not found
         """
-        updates['updated_at'] = datetime.now()
+        updates["updated_at"] = datetime.now()
 
         result = await self.pdfs_collection.update_one(
-            {'_id': document_id},
-            {'$set': updates}
+            {"_id": document_id}, {"$set": updates}
         )
 
         return result.modified_count > 0
@@ -246,15 +247,15 @@ class DocumentDatabase:
         content_snippet = content[:200] + "..." if len(content) > 200 else content
 
         document = {
-            '_id': document_id,
-            'name': name,
-            'content': content,
-            'content_snippet': content_snippet,
-            'type': doc_type,
-            'character_count': len(content),
-            'tags': tags,
-            'created_at': created_at,
-            'updated_at': created_at,
+            "_id": document_id,
+            "name": name,
+            "content": content,
+            "content_snippet": content_snippet,
+            "type": doc_type,
+            "character_count": len(content),
+            "tags": tags,
+            "created_at": created_at,
+            "updated_at": created_at,
         }
 
         await self.documents_collection.insert_one(document)
@@ -270,7 +271,7 @@ class DocumentDatabase:
         Returns:
             The document dictionary if found, None otherwise
         """
-        document = await self.documents_collection.find_one({'_id': document_id})
+        document = await self.documents_collection.find_one({"_id": document_id})
         return document
 
     async def update_document(
@@ -293,24 +294,26 @@ class DocumentDatabase:
         Returns:
             The updated document if found, None otherwise
         """
-        updates = {'updated_at': datetime.now()}
+        updates = {"updated_at": datetime.now()}
 
         if name is not None:
-            updates['name'] = name
+            updates["name"] = name
         if content is not None:
-            updates['content'] = content
-            updates['character_count'] = len(content)
+            updates["content"] = content
+            updates["character_count"] = len(content)
             # Update snippet when content changes
-            updates['content_snippet'] = content[:200] + "..." if len(content) > 200 else content
+            updates["content_snippet"] = (
+                content[:200] + "..." if len(content) > 200 else content
+            )
         if doc_type is not None:
-            updates['type'] = doc_type
+            updates["type"] = doc_type
         if tags is not None:
-            updates['tags'] = tags
+            updates["tags"] = tags
 
         result = await self.documents_collection.find_one_and_update(
-            {'_id': document_id},
-            {'$set': updates},
-            return_document=True  # Return the updated document
+            {"_id": document_id},
+            {"$set": updates},
+            return_document=True,  # Return the updated document
         )
 
         return result
@@ -340,13 +343,13 @@ class DocumentDatabase:
         query = {}
 
         if name_query:
-            query['name'] = {'$regex': name_query, '$options': 'i'}
+            query["name"] = {"$regex": name_query, "$options": "i"}
         if content_query:
-            query['content'] = {'$regex': content_query, '$options': 'i'}
+            query["content"] = {"$regex": content_query, "$options": "i"}
         if type_filter:
-            query['type'] = type_filter
+            query["type"] = type_filter
         if tags:
-            query['tags'] = {'$all': tags}
+            query["tags"] = {"$all": tags}
 
         # Get total count
         total_count = await self.documents_collection.count_documents(query)
@@ -354,8 +357,8 @@ class DocumentDatabase:
         # Get paginated results (excluding full content for list views)
         cursor = self.documents_collection.find(
             query,
-            {'content': 0}  # Exclude content field for performance
-        ).sort('created_at', DESCENDING)
+            {"content": 0},  # Exclude content field for performance
+        ).sort("created_at", DESCENDING)
         cursor.skip(page_number * page_size).limit(page_size)
         documents = await cursor.to_list(length=page_size)
 
@@ -370,7 +373,7 @@ class DocumentDatabase:
         Returns:
             True if document was deleted, False if not found
         """
-        result = await self.documents_collection.delete_one({'_id': document_id})
+        result = await self.documents_collection.delete_one({"_id": document_id})
         return result.deleted_count > 0
 
     # ========================================================================
@@ -420,9 +423,7 @@ def get_database() -> DocumentDatabase:
 
     if _database is None:
         settings = get_settings()
-        _mongo_client = AsyncMongoClient(
-            str(settings.database.doc_db_url)
-        )
+        _mongo_client = AsyncMongoClient(str(settings.database.doc_db_url))
         _database = DocumentDatabase(_mongo_client)
         logger.info("Database connection initialized (singleton)")
 

@@ -16,7 +16,11 @@ import bibliophage.v1alpha2.pdf_pb2 as api
 from config import get_settings
 from database import get_database
 from batch_size_calculator import calculate_batch_size
-from pdf_outline_inspector import inspect_pdf_outline, analyze_outline_for_batching, get_pdf_page_count
+from pdf_outline_inspector import (
+    inspect_pdf_outline,
+    analyze_outline_for_batching,
+    get_pdf_page_count,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +52,9 @@ class LoadingServiceImplementation:
         )
         self.pipeline_options.do_ocr = False
 
-        logger.info("Loading service initialized with Docling pipeline and database repository")
+        logger.info(
+            "Loading service initialized with Docling pipeline and database repository"
+        )
 
     async def load_pdf(self, request: api.LoadPdfRequest, ctx):
         """
@@ -89,7 +95,7 @@ class LoadingServiceImplementation:
                 logger.info("Calculating optimal batch size...")
                 batch_config = calculate_batch_size(memory_per_page_mb=67.8)
                 logger.info(f"Batch configuration: {batch_config}")
-                batch_size = batch_config['recommended_batch_size']
+                batch_size = batch_config["recommended_batch_size"]
 
                 # Get total page count
                 logger.info(f"Reading PDF metadata from {request.pdf.name}...")
@@ -105,17 +111,21 @@ class LoadingServiceImplementation:
                     logger.info("Attempting smart batching based on PDF outline...")
                     try:
                         outline_result = inspect_pdf_outline(tmp_path)
-                        if outline_result['has_outline']:
+                        if outline_result["has_outline"]:
                             batches = analyze_outline_for_batching(
-                                outline_result['outline_items'],
-                                total_pages,
-                                batch_size
+                                outline_result["outline_items"], total_pages, batch_size
                             )
                             if batches:
-                                logger.info(f"✓ Smart batching enabled: {len(batches)} chapter-based batches")
-                                logger.info(f"  Batch sizes range from {min(b[1]-b[0]+1 for b in batches)} to {max(b[1]-b[0]+1 for b in batches)} pages")
+                                logger.info(
+                                    f"✓ Smart batching enabled: {len(batches)} chapter-based batches"
+                                )
+                                logger.info(
+                                    f"  Batch sizes range from {min(b[1] - b[0] + 1 for b in batches)} to {max(b[1] - b[0] + 1 for b in batches)} pages"
+                                )
                             else:
-                                logger.warning("Could not create smart batches from outline")
+                                logger.warning(
+                                    "Could not create smart batches from outline"
+                                )
                         else:
                             logger.info("PDF has no outline/bookmarks")
                     except Exception as e:
@@ -123,7 +133,9 @@ class LoadingServiceImplementation:
 
                 # Fall back to fixed-size batching
                 if not batches:
-                    logger.info(f"Using fixed-size batching: {batch_size} pages per batch")
+                    logger.info(
+                        f"Using fixed-size batching: {batch_size} pages per batch"
+                    )
                     batches = []
                     for i in range(0, total_pages, batch_size):
                         start = i + 1
@@ -151,47 +163,56 @@ class LoadingServiceImplementation:
                 successful_batches = 0
                 failed_batches = 0
 
-                for batch_num, (start_page, end_page, description) in enumerate(batches):
+                for batch_num, (start_page, end_page, description) in enumerate(
+                    batches
+                ):
                     pages_in_batch = end_page - start_page + 1
 
                     logger.info("=" * 60)
-                    logger.info(f"BATCH {batch_num + 1}/{num_batches}: Pages {start_page}-{end_page} ({pages_in_batch} pages)")
+                    logger.info(
+                        f"BATCH {batch_num + 1}/{num_batches}: Pages {start_page}-{end_page} ({pages_in_batch} pages)"
+                    )
                     logger.info(f"  Content: {description}")
                     logger.info("=" * 60)
 
                     try:
                         # Convert this batch of pages
                         conv_result = doc_converter.convert(
-                            tmp_path,
-                            page_range=(start_page, end_page)
+                            tmp_path, page_range=(start_page, end_page)
                         )
 
                         if conv_result.status != ConversionStatus.SUCCESS:
-                            logger.warning(f"Batch {batch_num + 1} conversion status: {conv_result.status}")
+                            logger.warning(
+                                f"Batch {batch_num + 1} conversion status: {conv_result.status}"
+                            )
                             failed_batches += 1
-                            processed_batches.append({
-                                'batch_number': batch_num + 1,
-                                'start_page': start_page,
-                                'end_page': end_page,
-                                'description': description,
-                                'status': str(conv_result.status),
-                                'markdown': None,
-                                'success': False
-                            })
+                            processed_batches.append(
+                                {
+                                    "batch_number": batch_num + 1,
+                                    "start_page": start_page,
+                                    "end_page": end_page,
+                                    "description": description,
+                                    "status": str(conv_result.status),
+                                    "markdown": None,
+                                    "success": False,
+                                }
+                            )
                             continue
 
                         # Export batch to markdown
                         batch_markdown = conv_result.document.export_to_markdown()
 
-                        processed_batches.append({
-                            'batch_number': batch_num + 1,
-                            'start_page': start_page,
-                            'end_page': end_page,
-                            'description': description,
-                            'status': 'SUCCESS',
-                            'markdown': batch_markdown,
-                            'success': True
-                        })
+                        processed_batches.append(
+                            {
+                                "batch_number": batch_num + 1,
+                                "start_page": start_page,
+                                "end_page": end_page,
+                                "description": description,
+                                "status": "SUCCESS",
+                                "markdown": batch_markdown,
+                                "success": True,
+                            }
+                        )
 
                         successful_batches += 1
                         logger.info(f"Batch {batch_num + 1} complete")
@@ -204,25 +225,29 @@ class LoadingServiceImplementation:
                     except Exception as e:
                         logger.error(f"Batch {batch_num + 1} failed with error: {e}")
                         failed_batches += 1
-                        processed_batches.append({
-                            'batch_number': batch_num + 1,
-                            'start_page': start_page,
-                            'end_page': end_page,
-                            'description': description,
-                            'status': 'ERROR',
-                            'error': str(e),
-                            'success': False
-                        })
+                        processed_batches.append(
+                            {
+                                "batch_number": batch_num + 1,
+                                "start_page": start_page,
+                                "end_page": end_page,
+                                "description": description,
+                                "status": "ERROR",
+                                "error": str(e),
+                                "success": False,
+                            }
+                        )
                         gc.collect()
 
             # Concatenate markdown from all successful batches into single content string
             markdown_parts = []
             for batch in processed_batches:
-                if batch.get('success') and 'markdown' in batch:
-                    markdown_parts.append(batch['markdown'])
+                if batch.get("success") and "markdown" in batch:
+                    markdown_parts.append(batch["markdown"])
 
-            concatenated_content = '\n\n'.join(markdown_parts)
-            logger.info(f"Concatenated {len(markdown_parts)} batches into {len(concatenated_content)} characters of markdown")
+            concatenated_content = "\n\n".join(markdown_parts)
+            logger.info(
+                f"Concatenated {len(markdown_parts)} batches into {len(concatenated_content)} characters of markdown"
+            )
 
             # Store document using database repository
             document_id = str(uuid.uuid4())
@@ -271,56 +296,62 @@ class LoadingServiceImplementation:
             raise
 
     async def search_pdfs(
-        self, request: api.SearchPdfsRequest, ctx,
+        self,
+        request: api.SearchPdfsRequest,
+        ctx,
     ) -> api.SearchPdfsResponse:
         """Search for PDFs in FerretDB."""
 
         logger.info("Received SearchPdfsRequest")
 
-        try: 
-            mongodb_response: tuple[list[dict[str, Any]], int] = await self.db.search_pdfs(
+        try:
+            mongodb_response: tuple[
+                list[dict[str, Any]], int
+            ] = await self.db.search_pdfs(
                 # TODO: see the TODO about inconsistent naming in database.py
                 name_query=request.title_query,
                 system_filter=request.system_filter,
                 type_filter=request.type_filter,
                 # TODO: actually do something with the tags, this  code is buggy
-                #tags=request.tag_filters if request.tag_filters else [],
+                # tags=request.tag_filters if request.tag_filters else [],
                 # the parameters  default to 0 when unspecified
                 page_size=request.page_size if request.page_size > 0 else 50,
                 page_number=request.page_number,
             )
-            
+
             # we convert what FerretDB returns into what protobuf expects here
             # FerretDB prefixes the ID with an underscore, for example
             found_pdfs: list[PdfListItem] = []
-            
+
             for doc in mongodb_response[0]:
-              pdf_item = api.PdfListItem(
-                  id=doc.get('_id', ''),  # map _id → id
-                  name=doc.get('name', ''),
-                  system=doc.get('system', ''),
-                  type=doc.get('type', ''),
-                  page_count=doc.get('page_count', 0),
-                  origin_path=doc.get('origin_path', ''),
-                  file_size=doc.get('file_size', 0),
-                  # TODO: this is an old value which we are abusing here
-                  # we should refactor this in the future
-                  chunk_count=doc.get('batch_count', 0),  # Map batch_count → chunk_count
-              )
+                pdf_item = api.PdfListItem(
+                    id=doc.get("_id", ""),  # map _id → id
+                    name=doc.get("name", ""),
+                    system=doc.get("system", ""),
+                    type=doc.get("type", ""),
+                    page_count=doc.get("page_count", 0),
+                    origin_path=doc.get("origin_path", ""),
+                    file_size=doc.get("file_size", 0),
+                    # TODO: this is an old value which we are abusing here
+                    # we should refactor this in the future
+                    chunk_count=doc.get(
+                        "batch_count", 0
+                    ),  # Map batch_count → chunk_count
+                )
 
-              # Handle timestamps if present
-              if 'created_at' in doc:
-                  created_ts = timestamp_pb2.Timestamp()
-                  created_ts.FromDatetime(doc['created_at'])
-                  pdf_item.created_at.CopyFrom(created_ts)
-        
-              if 'updated_at' in doc:
-                  updated_ts = timestamp_pb2.Timestamp()
-                  updated_ts.FromDatetime(doc['updated_at'])
-                  pdf_item.updated_at.CopyFrom(updated_ts)
-                  # TODO: Handle tags
+                # Handle timestamps if present
+                if "created_at" in doc:
+                    created_ts = timestamp_pb2.Timestamp()
+                    created_ts.FromDatetime(doc["created_at"])
+                    pdf_item.created_at.CopyFrom(created_ts)
 
-              found_pdfs.append(pdf_item)
+                if "updated_at" in doc:
+                    updated_ts = timestamp_pb2.Timestamp()
+                    updated_ts.FromDatetime(doc["updated_at"])
+                    pdf_item.updated_at.CopyFrom(updated_ts)
+                    # TODO: Handle tags
+
+                found_pdfs.append(pdf_item)
 
             return api.SearchPdfsResponse(
                 success=True,
@@ -331,7 +362,7 @@ class LoadingServiceImplementation:
                 has_more=False,
             )
         except Exception as e:
-            exception_message= f"{type(e).__name__} occured during PDF search: {e}"
+            exception_message = f"{type(e).__name__} occured during PDF search: {e}"
             logger.error(exception_message)
             logger.error(traceback.format_exc())
 
@@ -344,9 +375,10 @@ class LoadingServiceImplementation:
                 has_more=False,
             )
 
-
     async def get_pdf(
-        self, request: api.GetPdfRequest, ctx,
+        self,
+        request: api.GetPdfRequest,
+        ctx,
     ) -> api.GetPdfResponse:
         """
         Retrieve a specific PDF by ID from FerretDB, including markdown content.
@@ -368,39 +400,39 @@ class LoadingServiceImplementation:
 
             # Convert database document to protobuf Pdf message
             pdf = api.Pdf(
-                id=doc.get('_id', ''),
-                name=doc.get('name', ''),
-                system=doc.get('system', ''),
-                type=doc.get('type', ''),
-                page_count=doc.get('page_count', 0),
-                origin_path=doc.get('origin_path', ''),
-                file_size=doc.get('file_size', 0),
-                chunk_count=doc.get('batch_count', 0),
+                id=doc.get("_id", ""),
+                name=doc.get("name", ""),
+                system=doc.get("system", ""),
+                type=doc.get("type", ""),
+                page_count=doc.get("page_count", 0),
+                origin_path=doc.get("origin_path", ""),
+                file_size=doc.get("file_size", 0),
+                chunk_count=doc.get("batch_count", 0),
             )
 
             # Handle timestamps
-            if 'created_at' in doc:
+            if "created_at" in doc:
                 created_ts = timestamp_pb2.Timestamp()
-                created_ts.FromDatetime(doc['created_at'])
+                created_ts.FromDatetime(doc["created_at"])
                 pdf.created_at.CopyFrom(created_ts)
 
-            if 'updated_at' in doc:
+            if "updated_at" in doc:
                 updated_ts = timestamp_pb2.Timestamp()
-                updated_ts.FromDatetime(doc['updated_at'])
+                updated_ts.FromDatetime(doc["updated_at"])
                 pdf.updated_at.CopyFrom(updated_ts)
 
             # Handle tags
-            if 'tags' in doc and doc['tags']:
-                for tag_dict in doc['tags']:
+            if "tags" in doc and doc["tags"]:
+                for tag_dict in doc["tags"]:
                     tag = api.Tag(
-                        name=tag_dict.get('name', ''),
-                        value=tag_dict.get('value', ''),
+                        name=tag_dict.get("name", ""),
+                        value=tag_dict.get("value", ""),
                     )
                     pdf.tags.append(tag)
 
             # Include markdown content if present
-            if 'content' in doc:
-                pdf.content = doc['content']
+            if "content" in doc:
+                pdf.content = doc["content"]
                 logger.info(f"Included {len(pdf.content)} characters of content")
 
             logger.info(f"Successfully retrieved PDF: {pdf.name} ({pdf.id})")

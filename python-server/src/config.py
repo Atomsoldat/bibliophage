@@ -16,7 +16,6 @@ from pydantic import Field, MongoDsn, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-
 class DatabaseConfig(BaseSettings):
     """Database connection configuration."""
 
@@ -85,7 +84,8 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
-    
+
+
 ## Python is interpreted, so the stuff using other stuff has to come later
 _settings: Settings | None = None
 
