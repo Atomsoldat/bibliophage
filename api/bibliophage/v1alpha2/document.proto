@@ -192,7 +192,7 @@ message SearchDocumentsResponse {
 
   // Array of matching document summaries (with snippets, not full content)
   // To retrieve full content, use GetDocument RPC with the document ID
-  repeated DocumentListItem documents = 3;
+  repeated DocumentListItem matches = 3;
 
   // Total number of results (for pagination)
   int32 total_count = 4;

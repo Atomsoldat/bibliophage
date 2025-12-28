@@ -1,7 +1,7 @@
 import datetime
 
-from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from bibliophage.v1alpha2 import common_pb2 as _common_pb2
+from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
@@ -143,20 +143,20 @@ class SearchDocumentsRequest(_message.Message):
     def __init__(self, filter: _Optional[_Union[DocumentFilter, _Mapping]] = ..., page_size: _Optional[int] = ..., page_number: _Optional[int] = ..., sort_order: _Optional[_Union[_common_pb2.SortOrder, str]] = ...) -> None: ...
 
 class SearchDocumentsResponse(_message.Message):
-    __slots__ = ("success", "message", "documents", "total_count", "page_number", "has_more")
+    __slots__ = ("success", "message", "matches", "total_count", "page_number", "has_more")
     SUCCESS_FIELD_NUMBER: _ClassVar[int]
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
-    DOCUMENTS_FIELD_NUMBER: _ClassVar[int]
+    MATCHES_FIELD_NUMBER: _ClassVar[int]
     TOTAL_COUNT_FIELD_NUMBER: _ClassVar[int]
     PAGE_NUMBER_FIELD_NUMBER: _ClassVar[int]
     HAS_MORE_FIELD_NUMBER: _ClassVar[int]
     success: bool
     message: str
-    documents: _containers.RepeatedCompositeFieldContainer[DocumentListItem]
+    matches: _containers.RepeatedCompositeFieldContainer[DocumentListItem]
     total_count: int
     page_number: int
     has_more: bool
-    def __init__(self, success: bool = ..., message: _Optional[str] = ..., documents: _Optional[_Iterable[_Union[DocumentListItem, _Mapping]]] = ..., total_count: _Optional[int] = ..., page_number: _Optional[int] = ..., has_more: bool = ...) -> None: ...
+    def __init__(self, success: bool = ..., message: _Optional[str] = ..., matches: _Optional[_Iterable[_Union[DocumentListItem, _Mapping]]] = ..., total_count: _Optional[int] = ..., page_number: _Optional[int] = ..., has_more: bool = ...) -> None: ...
 
 class DeleteDocumentRequest(_message.Message):
     __slots__ = ("id",)
