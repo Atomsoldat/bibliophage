@@ -14,6 +14,8 @@ const emit = defineEmits<{
   positionChange: [windowId: string, x: number, y: number]
   documentUpdate: [windowId: string, updates: { documentId?: string; title?: string; content?: string; isNew?: boolean }]
   bringToFront: [windowId: string]
+  save: [windowId: string]
+  discard: [windowId: string]
 }>()
 
 // Draggable window setup
@@ -50,6 +52,14 @@ function handleBringToFront() {
 
 function handleDocumentUpdate(field: 'title' | 'content' | 'documentId' | 'isNew', value: string | boolean) {
   emit('documentUpdate', props.window.id, { [field]: value })
+}
+
+function handleSave() {
+  emit('save', props.window.id)
+}
+
+function handleDiscard() {
+  emit('discard', props.window.id)
 }
 </script>
 
@@ -99,6 +109,24 @@ function handleDocumentUpdate(field: 'title' | 'content' | 'documentId' | 'isNew
         @update:document-id="(val) => handleDocumentUpdate('documentId', val)"
         icon="heroicons:document-text"
       />
+
+      <!-- Action Buttons -->
+      <div class="flex justify-between p-4 border-t border-base-300">
+        <button
+          type="button"
+          class="btn btn-primary btn-lg w-fit gap-2"
+          @click.stop="handleSave"
+        >
+          <p>Save</p>
+        </button>
+        <button
+          type="button"
+          class="btn btn-error btn-lg w-fit gap-2"
+          @click.stop="handleDiscard"
+        >
+          <p>Discard</p>
+        </button>
+      </div>
     </div>
   </div>
 </template>
