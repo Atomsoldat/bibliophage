@@ -8,7 +8,7 @@ import { Icon } from '@iconify/vue'
 import { onBeforeMount, ref } from 'vue'
 
 import { DocumentService } from '../bibliophage/v1alpha2/document_connect.ts'
-import { DocumentType, SearchDocumentsRequest } from '../bibliophage/v1alpha2/document_pb.ts'
+import { DocumentType, SearchDocumentsRequest, GetDocumentRequest, GetDocumentResponse } from '../bibliophage/v1alpha2/document_pb.ts'
 import { useAppConsole } from '../composables/useAppConsole'
 import { useConfig } from '../composables/useConfig'
 import { useEditorWindows } from '../composables/useEditorWindows'
@@ -69,7 +69,7 @@ async function handleSearchSubmit() {
 
     // Store the results
     entries.value = response.matches
-    log(`Success! Found ${response.documents.length} journal entries`, 'success')
+    log(`Success! Found ${response.matches.length} journal entries`, 'success')
   }
   catch (error) {
     log(`Error during document search: ${(error as Error).message}`, 'error')
@@ -115,16 +115,31 @@ function handleNewEntry() {
   log('Opened new journal entry', 'info')
 }
 
+async function fetchDocument(id: string): Promise<Document> {
+  if (!client.value) {
+    throw new Error('Client not initialized. Configuration may not be loaded yet.')
+  }
+
+  const request = new GetDocumentRequest({
+    id: id,
+  })
+  const response = await client.value.getDocument(request)
+
+  if (!response.document) {
+    throw new Error('API returned empty document response')
+  }
+
+  return response.document
+}
+
 async function handleEditEntry(entry: DocumentListItem) {
   try {
     log(`Opening: ${entry.name}`, 'info')
-
-    // the documents returned by the
-
-    // Open editor window with the document
+    const document = await fetchDocument(entry.id)
+    // Open editor window with the document's content
     openWindow({
       title: entry.name,
-      content: entry.content || '',
+      content: document.content || '',
       documentId: entry.id,
       isNew: false,
     })
