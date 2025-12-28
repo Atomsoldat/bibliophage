@@ -1,147 +1,137 @@
 <script setup lang="ts">
-import type { Client } from '@connectrpc/connect'
+import type { Document } from '../bibliophage/v1alpha2/document_pb.ts'
 
-import { createClient } from '@connectrpc/connect'
-import { createConnectTransport } from '@connectrpc/connect-web'
+import { Icon } from '@iconify/vue'
+import { onBeforeMount, ref } from 'vue'
 
-import { onMounted, ref } from 'vue'
-
-import { DocumentService } from '../bibliophage/v1alpha2/document_connect.ts'
-import { Document, DocumentType, StoreDocumentRequest } from '../bibliophage/v1alpha2/document_pb.ts'
-import TextEditorCard from '../components/TextEditorCard.vue'
+import { DocumentType } from '../bibliophage/v1alpha2/document_pb.ts'
 import { useAppConsole } from '../composables/useAppConsole'
-import { useConfig } from '../composables/useConfig'
+import { useDocumentApi } from '../composables/useDocumentApi'
+import { useEditorWindows } from '../composables/useEditorWindows'
 
-const { config, loadConfig } = useConfig()
 const { log } = useAppConsole()
+const api = useDocumentApi()
+const { openWindow } = useEditorWindows()
 
-// Client will be initialized after config loads
-// see https://connectrpc.com/docs/node/using-clients/#connect
-const client = ref<Client<typeof DocumentService> | null>(null)
+const documents = ref<Document[]>([])
+const loading = ref(false)
 
-// technically this is not necessary, because the editor just initialises itself with this
-// string, but apparently we  can end up  with desynchronised variables if we don't override the value
-// of a property with a default value in the child
-// see the warning here
-// https://vuejs.org/guide/components/v-model.html#under-the-hood
-// besides, we will probably want to pass some string into an editor, e.g.  when editing an existing note
-// so that is probably how we would do that
-const editorDefaultContent = ref('<p>ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ<p>')
-const editorContent = ref('Verschwindibus')
-
-// Template ref to access the TextEditorCard component instance
-const editorCardRef = ref<InstanceType<typeof TextEditorCard> | null>(null)
-
-const documentName = ref('i-should-change-for-each-document')
-
-onMounted(async () => {
-  // Load configuration
-  await loadConfig()
-
-  // Create client with loaded config
-  const transport = createConnectTransport({
-    baseUrl: config.value.backendHost,
-  })
-  client.value = createClient(DocumentService, transport)
+onBeforeMount(async () => {
+  try {
+    await api.initialise()
+    // Load journal entries on mount
+    await loadJournalEntries()
+  } catch (error) {
+    log(`Failed to initialize: ${(error as Error).message}`, 'error')
+  }
 })
 
-function buildDocumentStoreRequest(documentName: string, documentContent: string): StoreDocumentRequest {
-  // Create the document object
-  const document = new Document({
-    name: documentName,
-    content: documentContent,
-    type: DocumentType.NOTE, // Default to NOTE type
-    tags: [], // Empty tags for now
-  })
-
-  // Create the request with the document
-  const req = new StoreDocumentRequest({
-    document,
-  })
-
-  return req
-}
-
-// not part of the API... yet
-// function buildDocumentUpdateRequest(id: Int, stringData: string): DocumentUpdateRequest {
-//  const req = new DocumentUpdateRequest();
-//  req.documentName = documentName.value;
-//  req.id = 999;
-//  req.content = stringData;
-//
-//  return req;
-// }
-
-// if the document is new, send a DocumentStoreRequest
-// TODO: sed some kind of output / user feedback during this
-async function handleDocumentSave() {
-  if (!client.value) {
-    console.error('Client not initialized. Configuration may not be loaded yet.')
-    return
-  }
+async function loadJournalEntries() {
+  loading.value = true
 
   try {
-    log('Received save event. Saving editor content...', 'info')
-    // TODO: if we are editing an existing doc, send a DocumentUpdateRequest
-    const request = buildDocumentStoreRequest(documentName.value, editorContent.value)
+    log('Loading journal entries...', 'info')
+    const response = await api.searchDocuments({
+      typeFilter: DocumentType.NOTE
+    })
 
-    // TODO: do something with the response
-    // const response = await client.loadPDF(request);
-    const response = await client.value.storeDocument(request)
-  }
-  catch (error) {
-    // this should also do stuff
-    log(`Error during document save: ${(error as Error).message}`, 'error')
-  }
-  finally {
-    log('Succesfully saved editor content!', 'success')
+    if (response?.success && response.documents) {
+      documents.value = response.documents
+      log(`Found ${documents.value.length} journal entries`, 'success')
+    }
+  } catch (error) {
+    log(`Error loading journal entries: ${(error as Error).message}`, 'error')
+  } finally {
+    loading.value = false
   }
 }
 
-async function handleDocumentAbort() {
+function handleNewEntry() {
+  openWindow({
+    title: 'New Journal Entry',
+    content: '',
+    documentId: '',
+    isNew: true,
+  })
+  log('Opened new journal entry', 'info')
+}
+
+async function handleEditEntry(document: Document) {
   try {
-    log('Received abort event. Discarding editor content...', 'info')
-    // Reset the editor to the default content
-    editorCardRef.value?.resetEditor(editorDefaultContent.value)
-  }
-  catch (error) {
-    // what could happen here, that we would  want to catch?
-    log(`Error during document abort: ${(error as Error).message}`, 'error')
-  }
-  finally {
-    log('Succesfully discarded editor content!', 'success')
+    log(`Opening: ${document.name}`, 'info')
+
+    // Open editor window with the document
+    openWindow({
+      title: document.name,
+      content: document.content || '',
+      documentId: document.id,
+      isNew: false,
+    })
+
+    log(`Opened editor for: ${document.name}`, 'success')
+  } catch (error) {
+    log(`Error opening document: ${(error as Error).message}`, 'error')
   }
 }
 </script>
 
 <template>
   <div class="max-w-7xl mx-auto px-4">
-    <!-- mb for spacing underneath heading -->
-    <h1 class="text-4xl font-bold mb-8">
-      Journal
-    </h1>
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-4xl font-bold">
+        Journal
+      </h1>
+      <button
+        type="button"
+        class="btn btn-primary btn-lg gap-2"
+        @click="handleNewEntry"
+      >
+        <Icon icon="heroicons:plus" />
+        New Entry
+      </button>
+    </div>
 
-    <!-- TODO: Some kind of selector for notes -->
-    <!-- Tree Structure and sortable/searchable by name, date, category, ... -->
-    <!-- Drag and Drop Notes to establish hierarchies? Or is that too easy to mess up? Maybe have a button for that -->
+    <!-- Loading indicator -->
+    <div v-if="loading" class="flex justify-center items-center p-8">
+      <span class="loading loading-spinner loading-lg" />
+    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
-      <!-- v-model basically means -->
-      <!-- "The child component gets passed this variable -->
-      <!-- and when it modifies its copy, the parent copy is also modified" -->
-      <!-- https://vuejs.org/guide/components/v-model -->
-      <!-- for this to work, the child has to do some stuff as well, see -->
-      <!-- https://vuejs.org/api/sfc-script-setup.html#definemodel -->
-      <!-- directly putting an HTML string in here was annoying, hence variable -->
-      <!-- multiple v-model:variable pairs can be passed -->
-      <TextEditorCard
-        ref="editorCardRef"
-        v-model:content="editorContent"
-        v-model:title="documentName"
-        icon="heroicons:document-text"
-        @save="handleDocumentSave"
-        @abort="handleDocumentAbort"
-      />
+    <!-- Journal entries list -->
+    <div v-else-if="documents.length > 0" class="space-y-4">
+      <div
+        v-for="document in documents"
+        :key="document.id"
+        class="card bg-base-100 border border-base-300 hover:shadow-lg transition-shadow"
+      >
+        <div class="card-body">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <h2 class="card-title">{{ document.name }}</h2>
+              <p class="text-sm text-base-content/70 mt-1">
+                {{ document.content?.substring(0, 150) }}{{ document.content && document.content.length > 150 ? '...' : '' }}
+              </p>
+              <div class="flex gap-2 mt-2">
+                <span v-for="tag in document.tags" :key="tag" class="badge badge-sm">{{ tag }}</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn btn-sm btn-primary gap-1"
+              @click="handleEditEntry(document)"
+            >
+              <Icon icon="heroicons:pencil" />
+              Edit
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div v-else class="text-center p-12">
+      <Icon icon="heroicons:document-text" class="text-6xl text-base-content/30 mx-auto mb-4" />
+      <p class="text-lg text-base-content/70">No journal entries yet</p>
+      <p class="text-sm text-base-content/50 mt-2">Click "New Entry" to create your first journal entry</p>
     </div>
   </div>
 </template>
