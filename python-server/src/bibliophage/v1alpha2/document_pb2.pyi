@@ -118,23 +118,29 @@ class UpdateDocumentResponse(_message.Message):
     document: Document
     def __init__(self, success: bool = ..., message: _Optional[str] = ..., document: _Optional[_Union[Document, _Mapping]] = ...) -> None: ...
 
-class SearchDocumentsRequest(_message.Message):
-    __slots__ = ("name_query", "content_query", "type_filter", "tag_filters", "page_size", "page_number", "sort_order")
+class DocumentFilter(_message.Message):
+    __slots__ = ("name_query", "content_query", "type_filter", "tag_filters")
     NAME_QUERY_FIELD_NUMBER: _ClassVar[int]
     CONTENT_QUERY_FIELD_NUMBER: _ClassVar[int]
     TYPE_FILTER_FIELD_NUMBER: _ClassVar[int]
     TAG_FILTERS_FIELD_NUMBER: _ClassVar[int]
-    PAGE_SIZE_FIELD_NUMBER: _ClassVar[int]
-    PAGE_NUMBER_FIELD_NUMBER: _ClassVar[int]
-    SORT_ORDER_FIELD_NUMBER: _ClassVar[int]
     name_query: str
     content_query: str
     type_filter: DocumentType
     tag_filters: _containers.RepeatedCompositeFieldContainer[_common_pb2.TagFilter]
+    def __init__(self, name_query: _Optional[str] = ..., content_query: _Optional[str] = ..., type_filter: _Optional[_Union[DocumentType, str]] = ..., tag_filters: _Optional[_Iterable[_Union[_common_pb2.TagFilter, _Mapping]]] = ...) -> None: ...
+
+class SearchDocumentsRequest(_message.Message):
+    __slots__ = ("filter", "page_size", "page_number", "sort_order")
+    FILTER_FIELD_NUMBER: _ClassVar[int]
+    PAGE_SIZE_FIELD_NUMBER: _ClassVar[int]
+    PAGE_NUMBER_FIELD_NUMBER: _ClassVar[int]
+    SORT_ORDER_FIELD_NUMBER: _ClassVar[int]
+    filter: DocumentFilter
     page_size: int
     page_number: int
     sort_order: _common_pb2.SortOrder
-    def __init__(self, name_query: _Optional[str] = ..., content_query: _Optional[str] = ..., type_filter: _Optional[_Union[DocumentType, str]] = ..., tag_filters: _Optional[_Iterable[_Union[_common_pb2.TagFilter, _Mapping]]] = ..., page_size: _Optional[int] = ..., page_number: _Optional[int] = ..., sort_order: _Optional[_Union[_common_pb2.SortOrder, str]] = ...) -> None: ...
+    def __init__(self, filter: _Optional[_Union[DocumentFilter, _Mapping]] = ..., page_size: _Optional[int] = ..., page_number: _Optional[int] = ..., sort_order: _Optional[_Union[_common_pb2.SortOrder, str]] = ...) -> None: ...
 
 class SearchDocumentsResponse(_message.Message):
     __slots__ = ("success", "message", "documents", "total_count", "page_number", "has_more")

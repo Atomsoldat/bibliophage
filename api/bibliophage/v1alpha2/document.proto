@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package bibliophage.v1alpha2;
 
-import "google/protobuf/timestamp.proto";
 import "bibliophage/v1alpha2/common.proto";
+import "google/protobuf/timestamp.proto";
 
 // Service definitions - the API endpoints
 service DocumentService {
@@ -151,11 +151,9 @@ message UpdateDocumentResponse {
   Document document = 3;
 }
 
-
-// SearchDocumentsRequest - Search for documents by various criteria
-// TODO: The PDF API object class probably wants similar search parameters
-// we should make those search parameters a shared message
-message SearchDocumentsRequest {
+// DocumentFilter - Reusable filter criteria for document searches
+// This can be used across different search endpoints and services
+message DocumentFilter {
   // Search by name (partial match, case-insensitive)
   optional string name_query = 1;
 
@@ -169,13 +167,19 @@ message SearchDocumentsRequest {
   // Example: [{"name": "genre", "value": "fantasy"}, {"name": "tone", "value": "dark"}]
   // would match documents that have both genre=fantasy AND tone=dark
   repeated TagFilter tag_filters = 4;
+}
+
+// SearchDocumentsRequest - Search for documents by various criteria
+message SearchDocumentsRequest {
+  // Filter criteria (all fields are optional)
+  optional DocumentFilter filter = 1;
 
   // Pagination
-  int32 page_size = 5; // Max results to return (default: 50)
-  int32 page_number = 6; // Which page of results (0-indexed)
+  int32 page_size = 2; // Max results to return (default: 50)
+  int32 page_number = 3; // Which page of results (0-indexed)
 
-  // Sorting (UPDATED_AT_ASC/DESC can be added to common.proto if needed)
-  SortOrder sort_order = 7;
+  // Sorting
+  SortOrder sort_order = 4;
 }
 
 // SearchDocumentsResponse - Results of document search

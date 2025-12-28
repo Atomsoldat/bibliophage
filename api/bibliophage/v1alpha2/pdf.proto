@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package bibliophage.v1alpha2;
 
-import "google/protobuf/timestamp.proto";
 import "bibliophage/v1alpha2/common.proto";
+import "google/protobuf/timestamp.proto";
 
 // Service definitions - the API endpoints
 service PdfService {

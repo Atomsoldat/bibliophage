@@ -579,13 +579,12 @@ export class UpdateDocumentResponse extends Message<UpdateDocumentResponse> {
 }
 
 /**
- * SearchDocumentsRequest - Search for documents by various criteria
- * TODO: The PDF API object class probably wants similar search parameters
- * we should make those search parameters a shared message
+ * DocumentFilter - Reusable filter criteria for document searches
+ * This can be used across different search endpoints and services
  *
- * @generated from message bibliophage.v1alpha2.SearchDocumentsRequest
+ * @generated from message bibliophage.v1alpha2.DocumentFilter
  */
-export class SearchDocumentsRequest extends Message<SearchDocumentsRequest> {
+export class DocumentFilter extends Message<DocumentFilter> {
   /**
    * Search by name (partial match, case-insensitive)
    *
@@ -616,26 +615,70 @@ export class SearchDocumentsRequest extends Message<SearchDocumentsRequest> {
    */
   tagFilters: TagFilter[] = [];
 
+  constructor(data?: PartialMessage<DocumentFilter>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha2.DocumentFilter";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "name_query", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 2, name: "content_query", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 3, name: "type_filter", kind: "enum", T: proto3.getEnumType(DocumentType), opt: true },
+    { no: 4, name: "tag_filters", kind: "message", T: TagFilter, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DocumentFilter {
+    return new DocumentFilter().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DocumentFilter {
+    return new DocumentFilter().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DocumentFilter {
+    return new DocumentFilter().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DocumentFilter | PlainMessage<DocumentFilter> | undefined, b: DocumentFilter | PlainMessage<DocumentFilter> | undefined): boolean {
+    return proto3.util.equals(DocumentFilter, a, b);
+  }
+}
+
+/**
+ * SearchDocumentsRequest - Search for documents by various criteria
+ *
+ * @generated from message bibliophage.v1alpha2.SearchDocumentsRequest
+ */
+export class SearchDocumentsRequest extends Message<SearchDocumentsRequest> {
+  /**
+   * Filter criteria (all fields are optional)
+   *
+   * @generated from field: optional bibliophage.v1alpha2.DocumentFilter filter = 1;
+   */
+  filter?: DocumentFilter;
+
   /**
    * Pagination
    *
    * Max results to return (default: 50)
    *
-   * @generated from field: int32 page_size = 5;
+   * @generated from field: int32 page_size = 2;
    */
   pageSize = 0;
 
   /**
    * Which page of results (0-indexed)
    *
-   * @generated from field: int32 page_number = 6;
+   * @generated from field: int32 page_number = 3;
    */
   pageNumber = 0;
 
   /**
-   * Sorting (UPDATED_AT_ASC/DESC can be added to common.proto if needed)
+   * Sorting
    *
-   * @generated from field: bibliophage.v1alpha2.SortOrder sort_order = 7;
+   * @generated from field: bibliophage.v1alpha2.SortOrder sort_order = 4;
    */
   sortOrder = SortOrder.SORT_ORDER_UNSPECIFIED;
 
@@ -647,13 +690,10 @@ export class SearchDocumentsRequest extends Message<SearchDocumentsRequest> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "bibliophage.v1alpha2.SearchDocumentsRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "name_query", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 2, name: "content_query", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 3, name: "type_filter", kind: "enum", T: proto3.getEnumType(DocumentType), opt: true },
-    { no: 4, name: "tag_filters", kind: "message", T: TagFilter, repeated: true },
-    { no: 5, name: "page_size", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 6, name: "page_number", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 7, name: "sort_order", kind: "enum", T: proto3.getEnumType(SortOrder) },
+    { no: 1, name: "filter", kind: "message", T: DocumentFilter, opt: true },
+    { no: 2, name: "page_size", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 3, name: "page_number", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 4, name: "sort_order", kind: "enum", T: proto3.getEnumType(SortOrder) },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SearchDocumentsRequest {

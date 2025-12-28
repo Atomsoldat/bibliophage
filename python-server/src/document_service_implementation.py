@@ -27,12 +27,23 @@ class DocumentServiceImplementation:
         document_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc)
 
+        # Convert protobuf tags to dict format for database storage
+        tags = []
+        for tag in request.document.tags:
+            tags.append({
+                'name': tag.name,
+                'values': list(tag.values)
+            })
+
+        # Convert enum to string name for database storage
+        doc_type = api.DocumentType.Name(request.document.type)
+
         await self.db.store_document(
             document_id=document_id,
             name=request.document.name,
             content=request.document.content,
-            doc_type=request.document.type,
-            tags=list(request.document.tags) if request.document.tags else [],
+            doc_type=doc_type,
+            tags=tags,
             created_at=now,
         )
 
@@ -75,9 +86,15 @@ class DocumentServiceImplementation:
         document.id = doc_data['_id']
         document.name = doc_data['name']
         document.content = doc_data['content']
-        document.type = doc_data['type']
+        document.type = getattr(api, doc_data['type'], api.DOCUMENT_TYPE_UNSPECIFIED)
         document.character_count = doc_data['character_count']
-        document.tags.extend(doc_data.get('tags', []))
+
+        # Convert dict tags to protobuf tags
+        for tag_data in doc_data.get('tags', []):
+            tag = api.Tag()
+            tag.name = tag_data.get('name', '')
+            tag.values.extend(tag_data.get('values', []))
+            document.tags.append(tag)
 
         # Set timestamps
         created_timestamp = timestamp_pb2.Timestamp()
@@ -106,13 +123,28 @@ class DocumentServiceImplementation:
     ) -> api.UpdateDocumentResponse:
         logger.info(f"Received UpdateDocumentRequest for ID: {request.document.id}")
 
+        # Convert protobuf tags to dict format for database storage if provided
+        tags = None
+        if request.document.tags:
+            tags = []
+            for tag in request.document.tags:
+                tags.append({
+                    'name': tag.name,
+                    'values': list(tag.values)
+                })
+
+        # Convert enum to string name for database storage if provided
+        doc_type = None
+        if request.document.type and request.document.type != api.DOCUMENT_TYPE_UNSPECIFIED:
+            doc_type = api.DocumentType.Name(request.document.type)
+
         # Update document in database
         doc_data = await self.db.update_document(
             document_id=request.document.id,
             name=request.document.name if request.document.name else None,
             content=request.document.content if request.document.content else None,
-            doc_type=request.document.type if request.document.type else None,
-            tags=list(request.document.tags) if request.document.tags else None,
+            doc_type=doc_type,
+            tags=tags,
         )
 
         if doc_data is None:
@@ -126,9 +158,15 @@ class DocumentServiceImplementation:
         updated_document.id = doc_data['_id']
         updated_document.name = doc_data['name']
         updated_document.content = doc_data['content']
-        updated_document.type = doc_data['type']
+        updated_document.type = getattr(api, doc_data['type'], api.DOCUMENT_TYPE_UNSPECIFIED)
         updated_document.character_count = doc_data['character_count']
-        updated_document.tags.extend(doc_data.get('tags', []))
+
+        # Convert dict tags to protobuf tags
+        for tag_data in doc_data.get('tags', []):
+            tag = api.Tag()
+            tag.name = tag_data.get('name', '')
+            tag.values.extend(tag_data.get('values', []))
+            updated_document.tags.append(tag)
 
         # Set timestamps
         created_timestamp = timestamp_pb2.Timestamp()
@@ -150,26 +188,82 @@ class DocumentServiceImplementation:
     ) -> api.SearchDocumentsResponse:
         logger.info("Received SearchDocumentsRequest")
 
-        # TODO: Implement actual document search
-        # When implementing, create DocumentListItem instances with snippets:
-        # snippet = full_content[:200] + "..." if len(full_content) > 200 else full_content
-        # list_item = api.DocumentListItem(
-        #     id=doc.id,
-        #     name=doc.name,
-        #     content_snippet=snippet,
-        #     type=doc.type,
-        #     created_at=doc.created_at,
-        #     updated_at=doc.updated_at,
-        #     tags=doc.tags,
-        #     character_count=doc.character_count
-        # )
+        # Extract filter parameters if filter is provided
+        name_query = None
+        content_query = None
+        type_filter = None
+        tag_filters = None
+
+        if request.HasField('filter'):
+            # Extract search parameters from filter
+            name_query = request.filter.name_query if request.filter.HasField('name_query') else None
+            content_query = request.filter.content_query if request.filter.HasField('content_query') else None
+
+            # Convert DocumentType enum to string for database query
+            if request.filter.HasField('type_filter') and request.filter.type_filter != api.DOCUMENT_TYPE_UNSPECIFIED:
+                type_filter = api.DocumentType.Name(request.filter.type_filter)
+
+            # TODO: Implement tag filter handling
+            # The request.filter.tag_filters is a list of TagFilter objects (name + value)
+            # These need to be converted to match the Tag structure in the database (name + values array)
+            # Build a MongoDB query that filters documents where tags match the specified filters
+            # Consider using $elemMatch for matching tags with specific name/value combinations
+            # For multiple tag filters, all must match (AND logic)
+
+            # For now, search without tag filtering
+            # Replace with proper tag query from request.filter.tag_filters
+
+        # Set page size with a reasonable default
+        page_size = request.page_size if request.page_size > 0 else 50
+        page_number = request.page_number if request.page_number >= 0 else 0
+
+        # Call database search method
+        documents, total_count = await self.db.search_documents(
+            name_query=name_query,
+            content_query=content_query,
+            type_filter=type_filter,
+            tags=tag_filters,
+            page_size=page_size,
+            page_number=page_number,
+        )
+
+        # Convert database documents to DocumentListItem protobuf objects
+        document_list_items = []
+        for doc_data in documents:
+            list_item = api.DocumentListItem()
+            list_item.id = doc_data['_id']
+            list_item.name = doc_data['name']
+            list_item.content_snippet = doc_data.get('content_snippet', '')
+            list_item.type = getattr(api, doc_data['type'], api.DOCUMENT_TYPE_UNSPECIFIED)
+            list_item.character_count = doc_data['character_count']
+
+            # Set timestamps
+            created_timestamp = timestamp_pb2.Timestamp()
+            created_timestamp.FromDatetime(doc_data['created_at'])
+            list_item.created_at.CopyFrom(created_timestamp)
+
+            updated_timestamp = timestamp_pb2.Timestamp()
+            updated_timestamp.FromDatetime(doc_data['updated_at'])
+            list_item.updated_at.CopyFrom(updated_timestamp)
+
+            # Add tags (tags are stored as dicts in the database)
+            for tag_data in doc_data.get('tags', []):
+                tag = api.Tag()
+                tag.name = tag_data.get('name', '')
+                tag.values.extend(tag_data.get('values', []))
+                list_item.tags.append(tag)
+
+            document_list_items.append(list_item)
+
+        # Calculate if there are more results
+        has_more = (page_number + 1) * page_size < total_count
         return api.SearchDocumentsResponse(
-            success=False,
-            message="Search not yet implemented",
-            documents=[],  # This will be a list of DocumentListItem, not Document
-            total_count=0,
-            page_number=request.page_number,
-            has_more=False,
+            success=True,
+            message=f"Found {total_count} document(s)",
+            documents=document_list_items,
+            total_count=total_count,
+            page_number=page_number,
+            has_more=has_more,
         )
 
     async def delete_document(
