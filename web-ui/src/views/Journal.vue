@@ -1,50 +1,107 @@
 <script setup lang="ts">
+import type { Client } from '@connectrpc/connect'
 import type { Document } from '../bibliophage/v1alpha2/document_pb.ts'
 
+import { createClient } from '@connectrpc/connect'
+import { createConnectTransport } from '@connectrpc/connect-web'
 import { Icon } from '@iconify/vue'
 import { onBeforeMount, ref } from 'vue'
 
-import { DocumentType } from '../bibliophage/v1alpha2/document_pb.ts'
+import { DocumentService } from '../bibliophage/v1alpha2/document_connect.ts'
+import { DocumentType, SearchDocumentsRequest } from '../bibliophage/v1alpha2/document_pb.ts'
 import { useAppConsole } from '../composables/useAppConsole'
-import { useDocumentApi } from '../composables/useDocumentApi'
+import { useConfig } from '../composables/useConfig'
 import { useEditorWindows } from '../composables/useEditorWindows'
+import { useJournalRefresh } from '../composables/useJournalRefresh'
 
+const { config, loadConfig } = useConfig()
 const { log } = useAppConsole()
-const api = useDocumentApi()
 const { openWindow } = useEditorWindows()
+const { onRefreshTriggered } = useJournalRefresh()
+
+// Client will be initialized after config loads
+const client = ref<Client<typeof DocumentService> | null>(null)
 
 const documents = ref<Document[]>([])
 const loading = ref(false)
 
 onBeforeMount(async () => {
-  try {
-    await api.initialise()
-    // Load journal entries on mount
-    await loadJournalEntries()
-  } catch (error) {
-    log(`Failed to initialize: ${(error as Error).message}`, 'error')
-  }
+  // Load configuration first
+  await loadConfig()
+
+  // Create client with loaded config
+  const transport = createConnectTransport({
+    baseUrl: config.value.backendHost,
+  })
+  client.value = createClient(DocumentService, transport)
+
+  // Send initial search to populate table
+  handleSearchSubmit()
+
+  // Watch for refresh triggers from other components (e.g., after save in GlobalEditorWindows)
+  onRefreshTriggered(() => {
+    handleSearchSubmit()
+  })
 })
 
-async function loadJournalEntries() {
+function buildSearchDocumentsRequest(): SearchDocumentsRequest {
+  // Create the request to search for NOTE type documents
+  const req = new SearchDocumentsRequest({
+    typeFilter: DocumentType.NOTE
+  })
+
+  return req
+}
+
+async function handleSearchSubmit() {
+  if (!client.value) {
+    log('Error: Client not initialized. Configuration may not be loaded yet.', 'error')
+    return
+  }
+
   loading.value = true
 
   try {
-    log('Loading journal entries...', 'info')
-    const response = await api.searchDocuments({
-      typeFilter: DocumentType.NOTE
-    })
+    const request = buildSearchDocumentsRequest()
+    log('Searching for journal entries...', 'info')
 
-    if (response?.success && response.documents) {
-      documents.value = response.documents
-      log(`Found ${documents.value.length} journal entries`, 'success')
-    }
-  } catch (error) {
-    log(`Error loading journal entries: ${(error as Error).message}`, 'error')
-  } finally {
+    const response = await client.value.searchDocuments(request)
+
+    // Store the results
+    documents.value = response.documents
+    log(`Success! Found ${response.documents.length} journal entries`, 'success')
+  }
+  catch (error) {
+    log(`Error during document search: ${(error as Error).message}`, 'error')
+  }
+  finally {
     loading.value = false
   }
 }
+
+/**
+ * Format timestamp for display
+ */
+function formatDate(timestamp: any): string {
+  if (!timestamp) return 'N/A'
+  try {
+    const date = timestamp.toDate()
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date)
+  } catch {
+    return 'N/A'
+  }
+}
+
+// Expose handleSearchSubmit so it can be called by other components
+defineExpose({
+  refresh: handleSearchSubmit
+})
 
 function handleNewEntry() {
   openWindow({
@@ -91,40 +148,77 @@ async function handleEditEntry(document: Document) {
       </button>
     </div>
 
+    <!-- Refresh Button -->
+    <form @submit.prevent="handleSearchSubmit" class="mb-4">
+      <button
+        type="submit"
+        class="btn btn-accent btn-lg w-full gap-2"
+        v-bind:disabled="loading"
+      >
+        <Icon v-if="!loading" icon="heroicons:arrow-path" class="text-xl" />
+        <span v-if="loading" class="loading loading-spinner" />
+        Refresh
+      </button>
+    </form>
+
     <!-- Loading indicator -->
-    <div v-if="loading" class="flex justify-center items-center p-8">
+    <div v-if="loading && documents.length === 0" class="flex justify-center items-center p-8">
       <span class="loading loading-spinner loading-lg" />
     </div>
 
-    <!-- Journal entries list -->
-    <div v-else-if="documents.length > 0" class="space-y-4">
-      <div
-        v-for="document in documents"
-        :key="document.id"
-        class="card bg-base-100 border border-base-300 hover:shadow-lg transition-shadow"
-      >
-        <div class="card-body">
-          <div class="flex justify-between items-start">
-            <div class="flex-1">
-              <h2 class="card-title">{{ document.name }}</h2>
-              <p class="text-sm text-base-content/70 mt-1">
-                {{ document.content?.substring(0, 150) }}{{ document.content && document.content.length > 150 ? '...' : '' }}
-              </p>
-              <div class="flex gap-2 mt-2">
-                <span v-for="tag in document.tags" :key="tag" class="badge badge-sm">{{ tag }}</span>
+    <!-- Journal entries table -->
+    <div v-else-if="documents.length > 0" class="overflow-x-auto">
+      <table class="table table-zebra">
+        <thead>
+          <tr>
+            <th>Index</th>
+            <th>Name</th>
+            <th>ID</th>
+            <th>Tags</th>
+            <th>Created</th>
+            <th>Updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(document, index) in documents" :key="document.id" class="hover">
+            <th>{{ index }}</th>
+            <td>
+              <div class="font-semibold">{{ document.name }}</div>
+              <div class="text-sm text-base-content/70 truncate max-w-md">
+                {{ document.content?.substring(0, 100) }}{{ document.content && document.content.length > 100 ? '...' : '' }}
               </div>
-            </div>
-            <button
-              type="button"
-              class="btn btn-sm btn-primary gap-1"
-              @click="handleEditEntry(document)"
-            >
-              <Icon icon="heroicons:pencil" />
-              Edit
-            </button>
-          </div>
-        </div>
-      </div>
+            </td>
+            <td class="text-xs font-mono">{{ document.id }}</td>
+            <td>
+              <div class="flex gap-1 flex-wrap">
+                <span v-for="tag in document.tags" :key="tag" class="badge badge-sm badge-outline">
+                  {{ tag }}
+                </span>
+                <span v-if="document.tags.length === 0" class="text-sm text-base-content/50">
+                  -
+                </span>
+              </div>
+            </td>
+            <td>
+              <span class="text-sm">{{ formatDate(document.createdAt) }}</span>
+            </td>
+            <td>
+              <span class="text-sm">{{ formatDate(document.updatedAt) }}</span>
+            </td>
+            <td>
+              <button
+                type="button"
+                class="btn btn-sm btn-primary gap-1"
+                @click="handleEditEntry(document)"
+              >
+                <Icon icon="heroicons:pencil" />
+                Edit
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Empty state -->

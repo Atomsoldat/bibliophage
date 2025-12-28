@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { useEditorWindows } from '../composables/useEditorWindows'
 import { useDocumentApi } from '../composables/useDocumentApi'
 import { useAppConsole } from '../composables/useAppConsole'
+import { useJournalRefresh } from '../composables/useJournalRefresh'
 import TextEditorWindow from './TextEditorWindow.vue'
 
 const {
@@ -17,6 +18,7 @@ const {
 
 const api = useDocumentApi()
 const { log } = useAppConsole()
+const { triggerRefresh } = useJournalRefresh()
 
 // Initialize API on component mount
 onMounted(async () => {
@@ -47,6 +49,8 @@ async function handleSave(windowId: string) {
           isNew: false
         })
         log(`Document created: ${response.document.id}`, 'success')
+        // Trigger journal list refresh to fetch new document from backend
+        triggerRefresh()
       }
     } else {
       const response = await api.updateDocument({
@@ -56,6 +60,8 @@ async function handleSave(windowId: string) {
       })
       if (response?.success) {
         log('Document updated', 'success')
+        // Trigger journal list refresh to fetch updated document from backend
+        triggerRefresh()
       }
     }
   } catch (error) {
