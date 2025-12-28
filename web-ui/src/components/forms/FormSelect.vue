@@ -18,9 +18,9 @@ defineEmits<{
       <span class="label-text font-semibold">{{ label }}</span>
     </label>
     <select
-      :value="modelValue"
-      @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
+      v-bind:value="modelValue"
       class="select select-bordered"
+      @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
     >
       <slot />
     </select>

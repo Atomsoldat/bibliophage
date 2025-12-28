@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { useDraggable } from '@vueuse/core'
-import { useTemplateRef, computed, watch } from 'vue'
-import TextEditorCard from '../components/TextEditorCard.vue'
 import type { EditorWindowConfig } from '../composables/useEditorWindows'
+import { useDraggable } from '@vueuse/core'
+import { computed, useTemplateRef, watch } from 'vue'
+import TextEditorCard from '../components/TextEditorCard.vue'
 
 const props = defineProps<{
   window: EditorWindowConfig
@@ -12,7 +12,7 @@ const emit = defineEmits<{
   close: [windowId: string]
   minimize: [windowId: string]
   positionChange: [windowId: string, x: number, y: number]
-  documentUpdate: [windowId: string, updates: { documentId?: string; title?: string; content?: string; isNew?: boolean }]
+  documentUpdate: [windowId: string, updates: { documentId?: string, title?: string, content?: string, isNew?: boolean }]
   bringToFront: [windowId: string]
   save: [windowId: string]
   discard: [windowId: string]
@@ -66,7 +66,7 @@ function handleDiscard() {
 <template>
   <div
     ref="floatingEditorWindow"
-    :style="windowStyle"
+    v-bind:style="windowStyle"
     class="w-[800px] max-w-[90vw]"
     @mousedown="handleBringToFront"
   >
@@ -81,15 +81,15 @@ function handleDiscard() {
       <div class="flex gap-2 flex-shrink-0">
         <button
           class="btn btn-sm"
+          v-bind:title="window.isMinimized ? 'Restore' : 'Minimize'"
           @click.stop="handleMinimize"
-          :title="window.isMinimized ? 'Restore' : 'Minimize'"
         >
           {{ window.isMinimized ? 'Restore' : 'Minimize' }}
         </button>
         <button
           class="btn btn-sm btn-error"
-          @click.stop="handleClose"
           title="Close"
+          @click.stop="handleClose"
         >
           Close
         </button>
@@ -99,15 +99,15 @@ function handleDiscard() {
     <!-- Editor Content -->
     <div v-if="!window.isMinimized" class="w-full bg-base-100 border border-base-300 rounded-b-lg shadow-xl">
       <TextEditorCard
-        :content="window.content"
-        :title="window.title"
-        :is-new="window.isNew"
-        :document-id="window.documentId"
+        v-bind:content="window.content"
+        v-bind:title="window.title"
+        v-bind:is-new="window.isNew"
+        v-bind:document-id="window.documentId"
+        icon="heroicons:document-text"
         @update:content="(val) => handleDocumentUpdate('content', val)"
         @update:title="(val) => handleDocumentUpdate('title', val)"
         @update:is-new="(val) => handleDocumentUpdate('isNew', val)"
         @update:document-id="(val) => handleDocumentUpdate('documentId', val)"
-        icon="heroicons:document-text"
       />
 
       <!-- Action Buttons -->

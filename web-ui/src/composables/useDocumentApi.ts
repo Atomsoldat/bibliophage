@@ -1,21 +1,23 @@
 import type { Client } from '@connectrpc/connect'
 
-import { createClient } from '@connectrpc/connect'
-import { createConnectTransport } from '@connectrpc/connect-web'
-import { ref } from 'vue'
-
-import { DocumentService } from '../bibliophage/v1alpha2/document_connect'
-import {
-  Document,
-  DeleteDocumentRequest,
+import type {
   DeleteDocumentResponse,
-  GetDocumentRequest,
   GetDocumentResponse,
-  SearchDocumentsRequest,
   SearchDocumentsResponse,
-  StoreDocumentRequest,
   StoreDocumentResponse,
   UpdateDocumentResponse,
+} from '../bibliophage/v1alpha2/document_pb'
+import { createClient } from '@connectrpc/connect'
+import { createConnectTransport } from '@connectrpc/connect-web'
+
+import { ref } from 'vue'
+import { DocumentService } from '../bibliophage/v1alpha2/document_connect'
+import {
+  DeleteDocumentRequest,
+  Document,
+  GetDocumentRequest,
+  SearchDocumentsRequest,
+  StoreDocumentRequest,
   UpdateDocumentRequest,
 } from '../bibliophage/v1alpha2/document_pb'
 import { useConfig } from './useConfig'

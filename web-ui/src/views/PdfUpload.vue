@@ -238,9 +238,9 @@ async function handleFormSubmit() {
 
         <!-- Chunking Parameters -->
         <BaseCard title="Chunking Parameters" icon="heroicons:adjustments-horizontal">
-          <FormField v-model="chunkSize" label="Chunk Size (100-2000)" type="number" :min="100" :max="2000" />
+          <FormField v-model="chunkSize" label="Chunk Size (100-2000)" type="number" v-bind:min="100" v-bind:max="2000" />
 
-          <FormField v-model="chunkOverlap" label="Chunk Overlap (0-500)" type="number" :min="0" :max="500" />
+          <FormField v-model="chunkOverlap" label="Chunk Overlap (0-500)" type="number" v-bind:min="0" v-bind:max="500" />
         </BaseCard>
       </div>
 

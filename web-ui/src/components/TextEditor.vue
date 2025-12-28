@@ -13,7 +13,8 @@ const viewMode = ref<ViewMode>('edit')
 const renderedHtml = computed(() => {
   try {
     return marked.parse(defaultContent.value)
-  } catch (error) {
+  }
+  catch (error) {
     return `<p class="text-error">Error rendering markdown: ${(error as Error).message}</p>`
   }
 })
@@ -44,7 +45,7 @@ defineExpose({
       <!-- View Mode Toggle -->
       <button
         class="btn btn-sm btn-primary"
-        :title="viewMode === 'edit' ? 'Switch to preview' : 'Switch to edit'"
+        v-bind:title="viewMode === 'edit' ? 'Switch to preview' : 'Switch to edit'"
         @click="toggleViewMode"
       >
         <Icon v-if="viewMode === 'edit'" icon="mdi:eye" />
@@ -61,8 +62,8 @@ defineExpose({
     <div class="border border-t-0 border-base-300 rounded-b-lg overflow-hidden">
       <div class="relative bg-base-100">
         <!-- Runic watermark -->
-        <!-- walliþ nu, gaþankōz"-->                                                                                      
-        <!-- double consontant represented by single laguz --> 
+        <!-- walliþ nu, gaþankōz" -->
+        <!-- double consontant represented by single laguz -->
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
           <div class="text-base-200 font-serif text-3xl font-light tracking-[0.3em]">
             ᚹᚨᛚᛁᚦᚾᚢᚷᚨᚦᚨᚾᚲᛟᛉ
@@ -73,7 +74,7 @@ defineExpose({
         <textarea
           v-if="viewMode === 'edit'"
           name="markdown-editor"
-          :value="defaultContent"
+          v-bind:value="defaultContent"
           class="textarea textarea-bordered w-full h-96 font-mono text-sm p-4 bg-transparent rounded-none border-0 focus:outline-none resize-none relative z-10 overflow-y-auto"
           spellcheck="false"
           placeholder="Start writing markdown..."

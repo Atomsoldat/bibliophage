@@ -36,7 +36,7 @@ const CASCADE_OFFSET = 30
  * openWindow({ title: 'My Document', content: 'Hello world!' })
  */
 export function useEditorWindows() {
-  function calculatePosition(index: number): { x: number; y: number } {
+  function calculatePosition(index: number): { x: number, y: number } {
     const offset = index * CASCADE_OFFSET
     return {
       x: INITIAL_OFFSET.x + offset,
@@ -112,10 +112,14 @@ export function useEditorWindows() {
   }): void {
     const window = windows.value.find(w => w.id === windowId)
     if (window) {
-      if (updates.documentId !== undefined) window.documentId = updates.documentId
-      if (updates.title !== undefined) window.title = updates.title
-      if (updates.content !== undefined) window.content = updates.content
-      if (updates.isNew !== undefined) window.isNew = updates.isNew
+      if (updates.documentId !== undefined)
+        window.documentId = updates.documentId
+      if (updates.title !== undefined)
+        window.title = updates.title
+      if (updates.content !== undefined)
+        window.content = updates.content
+      if (updates.isNew !== undefined)
+        window.isNew = updates.isNew
     }
   }
 
