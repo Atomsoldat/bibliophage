@@ -112,7 +112,8 @@ async function handleEditDocument(pdf: PdfListItem) {
     })
 
     log(`Opened editor for: ${response.pdf.name} (${response.pdf.content?.length || 0} characters)`, 'success')
-  } catch (error) {
+  }
+  catch (error) {
     log(`Error fetching PDF: ${(error as Error).message}`, 'error')
   }
 }

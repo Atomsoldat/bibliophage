@@ -47,7 +47,7 @@ onBeforeMount(async () => {
 function buildSearchDocumentsRequest(): SearchDocumentsRequest {
   // Create the request to search for NOTE type documents
   const req = new SearchDocumentsRequest({
-    typeFilter: DocumentType.NOTE
+    typeFilter: DocumentType.NOTE,
   })
 
   return req
@@ -83,7 +83,8 @@ async function handleSearchSubmit() {
  * Format timestamp for display
  */
 function formatDate(timestamp: any): string {
-  if (!timestamp) return 'N/A'
+  if (!timestamp)
+    return 'N/A'
   try {
     const date = timestamp.toDate()
     return new Intl.DateTimeFormat('en-US', {
@@ -91,16 +92,17 @@ function formatDate(timestamp: any): string {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     }).format(date)
-  } catch {
+  }
+  catch {
     return 'N/A'
   }
 }
 
 // Expose handleSearchSubmit so it can be called by other components
 defineExpose({
-  refresh: handleSearchSubmit
+  refresh: handleSearchSubmit,
 })
 
 function handleNewEntry() {
@@ -126,7 +128,8 @@ async function handleEditEntry(document: Document) {
     })
 
     log(`Opened editor for: ${document.name}`, 'success')
-  } catch (error) {
+  }
+  catch (error) {
     log(`Error opening document: ${(error as Error).message}`, 'error')
   }
 }
@@ -149,7 +152,7 @@ async function handleEditEntry(document: Document) {
     </div>
 
     <!-- Refresh Button -->
-    <form @submit.prevent="handleSearchSubmit" class="mb-4">
+    <form class="mb-4" @submit.prevent="handleSearchSubmit">
       <button
         type="submit"
         class="btn btn-accent btn-lg w-full gap-2"
@@ -181,18 +184,22 @@ async function handleEditEntry(document: Document) {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(document, index) in documents" :key="document.id" class="hover">
+          <tr v-for="(document, index) in documents" v-bind:key="document.id" class="hover">
             <th>{{ index }}</th>
             <td>
-              <div class="font-semibold">{{ document.name }}</div>
+              <div class="font-semibold">
+                {{ document.name }}
+              </div>
               <div class="text-sm text-base-content/70 truncate max-w-md">
                 {{ document.content?.substring(0, 100) }}{{ document.content && document.content.length > 100 ? '...' : '' }}
               </div>
             </td>
-            <td class="text-xs font-mono">{{ document.id }}</td>
+            <td class="text-xs font-mono">
+              {{ document.id }}
+            </td>
             <td>
               <div class="flex gap-1 flex-wrap">
-                <span v-for="tag in document.tags" :key="tag" class="badge badge-sm badge-outline">
+                <span v-for="tag in document.tags" v-bind:key="tag" class="badge badge-sm badge-outline">
                   {{ tag }}
                 </span>
                 <span v-if="document.tags.length === 0" class="text-sm text-base-content/50">
@@ -224,8 +231,12 @@ async function handleEditEntry(document: Document) {
     <!-- Empty state -->
     <div v-else class="text-center p-12">
       <Icon icon="heroicons:document-text" class="text-6xl text-base-content/30 mx-auto mb-4" />
-      <p class="text-lg text-base-content/70">No journal entries yet</p>
-      <p class="text-sm text-base-content/50 mt-2">Click "New Entry" to create your first journal entry</p>
+      <p class="text-lg text-base-content/70">
+        No journal entries yet
+      </p>
+      <p class="text-sm text-base-content/50 mt-2">
+        Click "New Entry" to create your first journal entry
+      </p>
     </div>
   </div>
 </template>

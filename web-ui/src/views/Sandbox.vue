@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useEditorWindows } from '../composables/useEditorWindows'
 import { ref } from 'vue'
+import { useEditorWindows } from '../composables/useEditorWindows'
 
 const { openWindow, windows, closeAll } = useEditorWindows()
 
@@ -134,8 +134,8 @@ function createMultipleWindows() {
             </p>
             <button
               class="btn btn-error"
+              v-bind:disabled="windows.length === 0"
               @click="closeAll"
-              :disabled="windows.length === 0"
             >
               Close All Windows
             </button>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { useEditorWindows } from '../composables/useEditorWindows'
-import { useDocumentApi } from '../composables/useDocumentApi'
 import { useAppConsole } from '../composables/useAppConsole'
+import { useDocumentApi } from '../composables/useDocumentApi'
+import { useEditorWindows } from '../composables/useEditorWindows'
 import { useJournalRefresh } from '../composables/useJournalRefresh'
 import TextEditorWindow from './TextEditorWindow.vue'
 
@@ -25,7 +25,8 @@ onMounted(async () => {
   try {
     await api.initialise()
     console.log('[GlobalEditorWindows] API initialized successfully')
-  } catch (error) {
+  }
+  catch (error) {
     log(`Failed to initialize API: ${(error as Error).message}`, 'error')
   }
 })
@@ -41,22 +42,23 @@ async function handleSave(windowId: string) {
     if (window.isNew) {
       const response = await api.storeDocument({
         name: window.title,
-        content: window.content
+        content: window.content,
       })
       if (response?.success && response.document) {
         updateDocument(windowId, {
           documentId: response.document.id,
-          isNew: false
+          isNew: false,
         })
         log(`Document created: ${response.document.id}`, 'success')
         // Trigger journal list refresh to fetch new document from backend
         triggerRefresh()
       }
-    } else {
+    }
+    else {
       const response = await api.updateDocument({
         id: window.documentId,
         name: window.title,
-        content: window.content
+        content: window.content,
       })
       if (response?.success) {
         log('Document updated', 'success')
@@ -64,7 +66,8 @@ async function handleSave(windowId: string) {
         triggerRefresh()
       }
     }
-  } catch (error) {
+  }
+  catch (error) {
     log(`Error while saving document: ${(error as Error).message}`, 'error')
   }
 }
@@ -80,8 +83,8 @@ function handleDiscard(windowId: string) {
   <div class="global-editor-windows">
     <TextEditorWindow
       v-for="window in windows"
-      :key="window.id"
-      :window="window"
+      v-bind:key="window.id"
+      v-bind:window="window"
       @close="closeWindow"
       @minimize="toggleMinimize"
       @position-change="updatePosition"
