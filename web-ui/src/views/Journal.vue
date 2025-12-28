@@ -137,10 +137,13 @@ async function handleEditEntry(entry: DocumentListItem) {
   try {
     log(`Opening: ${entry.name}`, 'info')
     const document = await fetchDocument(entry.id)
+    if (!document.content) {
+      throw new Error('API returned document with empty content, refusing to edit out of caution')
+    }
     // Open editor window with the document's content
     openWindow({
       title: entry.name,
-      content: document.content || '',
+      content: document.content,
       documentId: entry.id,
       isNew: false,
     })
