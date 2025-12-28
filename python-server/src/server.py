@@ -33,6 +33,7 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown: close database connection
     from database import close_database
+
     await close_database()
 
 

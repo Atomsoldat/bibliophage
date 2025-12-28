@@ -32,7 +32,7 @@ def calculate_batch_size(
     overhead_gb: float = 0.5,
     safety_margin: float = 0.8,
     min_batch_size: int = 1,
-    max_batch_size: int = 500
+    max_batch_size: int = 500,
 ) -> dict:
     """
     Calculate optimal batch size for Docling PDF processing.
@@ -79,16 +79,20 @@ def calculate_batch_size(
 
     # Clamp to [min_batch_size, max_batch_size]
     safe_max_batch_size = int(safe_max_pages)
-    recommended_batch_size: int = max( min( max_batch_size, safe_max_batch_size), min_batch_size )
+    recommended_batch_size: int = max(
+        min(max_batch_size, safe_max_batch_size), min_batch_size
+    )
 
     # Calculate expected peak memory
-    peak_memory_gb: float = overhead_gb + (recommended_batch_size * memory_per_page_mb / 1024)
+    peak_memory_gb: float = overhead_gb + (
+        recommended_batch_size * memory_per_page_mb / 1024
+    )
 
     return {
-        'recommended_batch_size': recommended_batch_size,
-        'peak_memory_gb': round(peak_memory_gb, 2),
-        'available_ram_gb': round(available_ram_gb, 2),
-        'memory_per_page_mb': memory_per_page_mb,
-        'usable_ram_gb': round(usable_gb, 2),
-        'safety_margin': safety_margin,
+        "recommended_batch_size": recommended_batch_size,
+        "peak_memory_gb": round(peak_memory_gb, 2),
+        "available_ram_gb": round(available_ram_gb, 2),
+        "memory_per_page_mb": memory_per_page_mb,
+        "usable_ram_gb": round(usable_gb, 2),
+        "safety_margin": safety_margin,
     }
