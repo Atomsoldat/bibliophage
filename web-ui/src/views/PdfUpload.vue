@@ -11,6 +11,8 @@ import { onMounted, ref } from 'vue'
 import { PdfService } from '../bibliophage/v1alpha2/pdf_connect.ts'
 import { ChunkingConfig, LoadPdfRequest, Pdf } from '../bibliophage/v1alpha2/pdf_pb.ts'
 import BaseCard from '../components/BaseCard.vue'
+import FormField from '../components/forms/FormField.vue'
+import FormSelect from '../components/forms/FormSelect.vue'
 import { useAppConsole } from '../composables/useAppConsole'
 import { useConfig } from '../composables/useConfig'
 
@@ -198,72 +200,47 @@ async function handleFormSubmit() {
             <input type="file" accept=".pdf" class="file-input file-input-bordered" @change="handleFileSelect">
           </div>
 
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">PDF Name</span>
-            </label>
-            <input v-model="pdfName" type="text" class="input input-bordered">
-          </div>
+          <FormField v-model="pdfName" label="PDF Name" type="text" />
         </BaseCard>
 
         <!-- Metadata -->
         <BaseCard title="Metadata" icon="heroicons:tag">
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">RPG System</span>
-            </label>
-            <select v-model="rpgSystem" class="select select-bordered">
-              <option value="DND_35">
-                D&D 3.5
-              </option>
-              <option value="PATHFINDER_1E">
-                Pathfinder 1e
-              </option>
-              <option value="PATHFINDER_2E">
-                Pathfinder 2e
-              </option>
-            </select>
-          </div>
+          <FormSelect v-model="rpgSystem" label="RPG System">
+            <option value="DND_35">
+              D&D 3.5
+            </option>
+            <option value="PATHFINDER_1E">
+              Pathfinder 1e
+            </option>
+            <option value="PATHFINDER_2E">
+              Pathfinder 2e
+            </option>
+          </FormSelect>
 
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">Publication Type</span>
-            </label>
-            <select v-model="publicationType" class="select select-bordered">
-              <option value="CORE_RULEBOOK">
-                Core Rulebook
-              </option>
-              <option value="BESTIARY">
-                Bestiary
-              </option>
-              <option value="SUPPLEMENT">
-                Supplement
-              </option>
-              <option value="ADVENTURE">
-                Adventure
-              </option>
-              <option value="SETTING">
-                Setting
-              </option>
-            </select>
-          </div>
+          <FormSelect v-model="publicationType" label="Publication Type">
+            <option value="CORE_RULEBOOK">
+              Core Rulebook
+            </option>
+            <option value="BESTIARY">
+              Bestiary
+            </option>
+            <option value="SUPPLEMENT">
+              Supplement
+            </option>
+            <option value="ADVENTURE">
+              Adventure
+            </option>
+            <option value="SETTING">
+              Setting
+            </option>
+          </FormSelect>
         </BaseCard>
 
         <!-- Chunking Parameters -->
         <BaseCard title="Chunking Parameters" icon="heroicons:adjustments-horizontal">
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">Chunk Size (100-2000)</span>
-            </label>
-            <input v-model="chunkSize" type="number" v-bind:min="100" v-bind:max="2000" class="input input-bordered">
-          </div>
+          <FormField v-model="chunkSize" label="Chunk Size (100-2000)" type="number" :min="100" :max="2000" />
 
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">Chunk Overlap (0-500)</span>
-            </label>
-            <input v-model="chunkOverlap" type="number" v-bind:min="0" v-bind:max="500" class="input input-bordered">
-          </div>
+          <FormField v-model="chunkOverlap" label="Chunk Overlap (0-500)" type="number" :min="0" :max="500" />
         </BaseCard>
       </div>
 
