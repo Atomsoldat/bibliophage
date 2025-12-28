@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { EditorWindowConfig } from '../composables/useEditorWindows'
 import { useDraggable } from '@vueuse/core'
-import { computed, useTemplateRef, watch } from 'vue'
+import { computed, ref, useTemplateRef, watch } from 'vue'
 import TextEditorCard from '../components/TextEditorCard.vue'
 
 const props = defineProps<{
@@ -61,6 +61,16 @@ function handleSave() {
 function handleDiscard() {
   emit('discard', props.window.id)
 }
+
+// Template ref to access the TextEditorCard component
+const editorCardRef = ref<InstanceType<typeof TextEditorCard> | null>(null)
+
+// Expose methods that parent components can call
+defineExpose({
+  switchToPreview() {
+    editorCardRef.value?.switchToPreview()
+  },
+})
 </script>
 
 <template>
@@ -99,6 +109,7 @@ function handleDiscard() {
     <!-- Editor Content -->
     <div v-if="!window.isMinimized" class="w-full bg-base-100 border border-base-300 rounded-b-lg shadow-xl">
       <TextEditorCard
+        ref="editorCardRef"
         v-bind:content="window.content"
         v-bind:title="window.title"
         v-bind:is-new="window.isNew"

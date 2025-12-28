@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useAppConsole } from '../composables/useAppConsole'
 import { useDocumentApi } from '../composables/useDocumentApi'
 import { useEditorWindows } from '../composables/useEditorWindows'
@@ -19,6 +19,18 @@ const {
 const api = useDocumentApi()
 const { log } = useAppConsole()
 const { triggerRefresh } = useJournalRefresh()
+
+// Store refs to editor window components
+const editorWindowRefs = ref<Map<string, InstanceType<typeof TextEditorWindow>>>(new Map())
+
+function setEditorWindowRef(windowId: string, el: any) {
+  if (el) {
+    editorWindowRefs.value.set(windowId, el)
+  }
+  else {
+    editorWindowRefs.value.delete(windowId)
+  }
+}
 
 // Initialize API on component mount
 onMounted(async () => {
@@ -52,6 +64,8 @@ async function handleSave(windowId: string) {
         log(`Document created: ${response.document.id}`, 'success')
         // Trigger journal list refresh to fetch new document from backend
         triggerRefresh()
+        // Switch to preview mode after successful save
+        editorWindowRefs.value.get(windowId)?.switchToPreview()
       }
     }
     else {
@@ -64,6 +78,8 @@ async function handleSave(windowId: string) {
         log('Document updated', 'success')
         // Trigger journal list refresh to fetch updated document from backend
         triggerRefresh()
+        // Switch to preview mode after successful save
+        editorWindowRefs.value.get(windowId)?.switchToPreview()
       }
     }
   }
@@ -84,6 +100,7 @@ function handleDiscard(windowId: string) {
     <TextEditorWindow
       v-for="window in windows"
       v-bind:key="window.id"
+      v-bind:ref="(el) => setEditorWindowRef(window.id, el)"
       v-bind:window="window"
       @close="closeWindow"
       @minimize="toggleMinimize"

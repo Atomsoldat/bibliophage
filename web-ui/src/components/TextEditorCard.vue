@@ -38,6 +38,10 @@ defineExpose({
   resetEditor(content?: string) {
     textEditorRef.value?.resetContent(content)
   },
+  // Switch to preview mode
+  switchToPreview() {
+    textEditorRef.value?.setViewMode('preview')
+  },
 })
 </script>
 

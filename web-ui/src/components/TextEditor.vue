@@ -35,6 +35,9 @@ defineExpose({
   resetContent(passedContent?: string) {
     defaultContent.value = passedContent ?? ''
   },
+  setViewMode(mode: ViewMode) {
+    viewMode.value = mode
+  },
 })
 </script>
 
