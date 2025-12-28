@@ -8,7 +8,7 @@ import { Icon } from '@iconify/vue'
 import { onBeforeMount, ref } from 'vue'
 
 import { DocumentService } from '../bibliophage/v1alpha2/document_connect.ts'
-import { DocumentType, SearchDocumentsRequest, GetDocumentRequest, GetDocumentResponse } from '../bibliophage/v1alpha2/document_pb.ts'
+import { DocumentType, SearchDocumentsRequest, GetDocumentRequest, GetDocumentResponse, DeleteDocumentRequest } from '../bibliophage/v1alpha2/document_pb.ts'
 import { useAppConsole } from '../composables/useAppConsole'
 import { useConfig } from '../composables/useConfig'
 import { useEditorWindows } from '../composables/useEditorWindows'
@@ -24,6 +24,7 @@ const client = ref<Client<typeof DocumentService> | null>(null)
 
 const entries = ref<DocumentListItem[]>([])
 const loading = ref(false)
+const selectedIds = ref<Set<string>>(new Set())
 
 onBeforeMount(async () => {
   // Load configuration first
@@ -150,6 +151,70 @@ async function handleEditEntry(entry: DocumentListItem) {
     log(`Error opening document: ${(error as Error).message}`, 'error')
   }
 }
+
+function toggleSelection(id: string) {
+  if (selectedIds.value.has(id)) {
+    selectedIds.value.delete(id)
+  }
+  else {
+    selectedIds.value.add(id)
+  }
+}
+
+function toggleSelectAll() {
+  if (selectedIds.value.size === entries.value.length) {
+    // Deselect all
+    selectedIds.value.clear()
+  }
+  else {
+    // Select all
+    selectedIds.value = new Set(entries.value.map(entry => entry.id))
+  }
+}
+
+async function handleBulkDelete() {
+  if (!client.value) {
+    log('Error: Client not initialized.', 'error')
+    return
+  }
+
+  if (selectedIds.value.size === 0) {
+    log('No entries selected for deletion', 'warning')
+    return
+  }
+
+  const count = selectedIds.value.size
+  const confirmed = confirm(`Are you sure you want to delete ${count} selected ${count === 1 ? 'entry' : 'entries'}?`)
+
+  if (!confirmed) {
+    return
+  }
+
+  loading.value = true
+
+  try {
+    const deletePromises = Array.from(selectedIds.value).map(async (id) => {
+      const request = new DeleteDocumentRequest({ id })
+      return client.value!.deleteDocument(request)
+    })
+
+    await Promise.all(deletePromises)
+
+    log(`Successfully deleted ${count} ${count === 1 ? 'entry' : 'entries'}`, 'success')
+
+    // Clear selections
+    selectedIds.value.clear()
+
+    // Refresh the list
+    await handleSearchSubmit()
+  }
+  catch (error) {
+    log(`Error deleting entries: ${(error as Error).message}`, 'error')
+  }
+  finally {
+    loading.value = false
+  }
+}
 </script>
 
 <template>
@@ -168,18 +233,31 @@ async function handleEditEntry(entry: DocumentListItem) {
       </button>
     </div>
 
-    <!-- Refresh Button -->
-    <form class="mb-4" @submit.prevent="handleSearchSubmit">
+    <!-- Action Buttons -->
+    <div class="flex gap-4 mb-4">
+      <form class="flex-1" @submit.prevent="handleSearchSubmit">
+        <button
+          type="submit"
+          class="btn btn-accent btn-lg w-full gap-2"
+          v-bind:disabled="loading"
+        >
+          <Icon v-if="!loading" icon="heroicons:arrow-path" class="text-xl" />
+          <span v-if="loading" class="loading loading-spinner" />
+          Refresh
+        </button>
+      </form>
+
       <button
-        type="submit"
-        class="btn btn-accent btn-lg w-full gap-2"
+        v-if="selectedIds.size > 0"
+        type="button"
+        class="btn btn-error btn-lg gap-2"
+        @click="handleBulkDelete"
         v-bind:disabled="loading"
       >
-        <Icon v-if="!loading" icon="heroicons:arrow-path" class="text-xl" />
-        <span v-if="loading" class="loading loading-spinner" />
-        Refresh
+        <Icon icon="heroicons:trash" class="text-xl" />
+        Delete ({{ selectedIds.size }})
       </button>
-    </form>
+    </div>
 
     <!-- Loading indicator -->
     <div v-if="loading && entries.length === 0" class="flex justify-center items-center p-8">
@@ -191,6 +269,14 @@ async function handleEditEntry(entry: DocumentListItem) {
       <table class="table table-zebra">
         <thead>
           <tr>
+            <th>
+              <input
+                type="checkbox"
+                class="checkbox"
+                v-bind:checked="entries.length > 0 && selectedIds.size === entries.length"
+                @change="toggleSelectAll"
+              />
+            </th>
             <th>Index</th>
             <th>Name</th>
             <th>ID</th>
@@ -202,6 +288,14 @@ async function handleEditEntry(entry: DocumentListItem) {
         </thead>
         <tbody>
           <tr v-for="(entry, index) in entries" v-bind:key="entry.id" class="hover">
+            <td>
+              <input
+                type="checkbox"
+                class="checkbox"
+                v-bind:checked="selectedIds.has(entry.id)"
+                @change="toggleSelection(entry.id)"
+              />
+            </td>
             <th>{{ index }}</th>
             <td>
               <div class="font-semibold">
