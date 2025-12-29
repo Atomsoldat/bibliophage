@@ -241,7 +241,7 @@ async function handleBulkDelete() {
       <form class="flex-1" @submit.prevent="handleSearchSubmit">
         <button
           type="submit"
-          class="btn btn-accent btn-lg w-full gap-2"
+          class="btn btn-accent btn-lg gap-2"
           v-bind:disabled="loading"
         >
           <Icon v-if="!loading" icon="heroicons:arrow-path" class="text-xl" />
