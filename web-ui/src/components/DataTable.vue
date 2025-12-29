@@ -227,34 +227,35 @@ function handleRowClick(row: T, index: number) {
               </button>
               <div
                 tabindex="0"
-                class="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-64 border border-base-300"
+                class="dropdown-content fixed z-50 shadow-lg bg-base-100 rounded-box w-64 border border-base-300 max-h-[32rem] flex flex-col"
               >
-                <div class="px-2 py-1 text-xs font-semibold text-base-content/60 border-b border-base-300 mb-1">
+                <div class="px-4 py-2 text-xs font-semibold text-base-content/60 border-b border-base-300 shrink-0">
                   Column Visibility
                 </div>
 
-                <!-- Column visibility checkboxes -->
-                <label
-                  v-for="column in columns"
-                  :key="column.key"
-                  class="label cursor-pointer justify-start gap-2 px-2 hover:bg-base-200 rounded"
-                >
-                  <input
-                    type="checkbox"
-                    class="checkbox checkbox-sm"
-                    :checked="isColumnVisible(column.key)"
-                    :disabled="column.required"
-                    @change="toggleColumn(column.key)"
-                  />
-                  <span class="label-text flex-1" :class="{ 'text-base-content/40': column.required }">
-                    {{ column.label }}
-                  </span>
-                  <span v-if="column.required" class="badge badge-xs">Required</span>
-                </label>
+                <!-- Column visibility checkboxes (scrollable) -->
+                <div class="overflow-y-auto flex-1 py-1 flex flex-col">
+                  <label
+                    v-for="column in columns"
+                    :key="column.key"
+                    class="label cursor-pointer justify-start gap-2 px-4 hover:bg-base-200 rounded-none"
+                  >
+                    <input
+                      type="checkbox"
+                      class="checkbox checkbox-sm"
+                      :checked="isColumnVisible(column.key)"
+                      :disabled="column.required"
+                      @change="toggleColumn(column.key)"
+                    />
+                    <span class="label-text flex-1" :class="{ 'text-base-content/40': column.required }">
+                      {{ column.label }}
+                    </span>
+                    <span v-if="column.required" class="badge badge-xs">Required</span>
+                  </label>
+                </div>
 
                 <!-- Stats and reset button -->
-                <div class="divider my-1" />
-                <div class="px-2 flex justify-between items-center">
+                <div class="border-t border-base-300 px-4 py-2 flex justify-between items-center shrink-0">
                   <span class="text-xs text-base-content/60">
                     {{ visibilityStats.visible }} / {{ visibilityStats.total }} visible
                   </span>
