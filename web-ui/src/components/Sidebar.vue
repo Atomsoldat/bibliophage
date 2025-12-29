@@ -7,13 +7,13 @@ import { Icon } from '@iconify/vue'
     <!-- Navigation icons -->
     <router-link to="/">
       <button class="btn btn-ghost btn-square">
-        <Icon icon="heroicons:home" class="text-3xl" />
+        <Icon icon="game-icons:ancient-sword" class="text-3xl" />
       </button>
     </router-link>
 
     <router-link to="/pdf-upload">
       <button class="btn btn-ghost btn-square">
-        <Icon icon="heroicons:document" class="text-3xl" />
+        <Icon icon="game-icons:spell-book" class="text-3xl" />
       </button>
     </router-link>
 
@@ -32,7 +32,7 @@ import { Icon } from '@iconify/vue'
 
     <router-link to="/sandbox">
       <button class="btn btn-ghost btn-square">
-        <Icon icon="game-icons:plastic-duck" class="text-3xl" />
+        <Icon icon="game-icons:sand-castle" class="text-3xl" />
       </button>
     </router-link>
     <div class="flex-1" />
