@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import type { Client } from '@connectrpc/connect'
 import type { Document, DocumentListItem } from '../bibliophage/v1alpha2/document_pb.ts'
+import type { TableColumn } from '../components/DataTable.vue'
 
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { Icon } from '@iconify/vue'
-import { onBeforeMount, ref } from 'vue'
+import { computed, onBeforeMount, ref } from 'vue'
 
+import DataTable from '../components/DataTable.vue'
 import { DocumentService } from '../bibliophage/v1alpha2/document_connect.ts'
 import { DocumentType, SearchDocumentsRequest, GetDocumentRequest, GetDocumentResponse, DeleteDocumentRequest } from '../bibliophage/v1alpha2/document_pb.ts'
 import { useAppConsole } from '../composables/useAppConsole'
@@ -25,6 +27,44 @@ const client = ref<Client<typeof DocumentService> | null>(null)
 const entries = ref<DocumentListItem[]>([])
 const loading = ref(false)
 const selectedIds = ref<Set<string>>(new Set())
+
+/**
+ * Define table columns for journal entries
+ */
+const columns = computed<TableColumn<DocumentListItem>[]>(() => [
+  {
+    key: 'index',
+    label: 'Index',
+    formatter: (_value, _row, index) => index,
+  },
+  {
+    key: 'name',
+    label: 'Name',
+  },
+  {
+    key: 'id',
+    label: 'ID',
+    cellClass: 'text-xs font-mono',
+  },
+  {
+    key: 'tags',
+    label: 'Tags',
+  },
+  {
+    key: 'createdAt',
+    label: 'Created',
+    formatter: (value) => formatDate(value),
+  },
+  {
+    key: 'updatedAt',
+    label: 'Updated',
+    formatter: (value) => formatDate(value),
+  },
+  {
+    key: 'actions',
+    label: 'Actions',
+  },
+])
 
 onBeforeMount(async () => {
   // Load configuration first
@@ -155,26 +195,6 @@ async function handleEditEntry(entry: DocumentListItem) {
   }
 }
 
-function toggleSelection(id: string) {
-  if (selectedIds.value.has(id)) {
-    selectedIds.value.delete(id)
-  }
-  else {
-    selectedIds.value.add(id)
-  }
-}
-
-function toggleSelectAll() {
-  if (selectedIds.value.size === entries.value.length) {
-    // Deselect all
-    selectedIds.value.clear()
-  }
-  else {
-    // Select all
-    selectedIds.value = new Set(entries.value.map(entry => entry.id))
-  }
-}
-
 async function handleBulkDelete() {
   if (!client.value) {
     log('Error: Client not initialized.', 'error')
@@ -262,95 +282,51 @@ async function handleBulkDelete() {
       </button>
     </div>
 
-    <!-- Loading indicator -->
-    <div v-if="loading && entries.length === 0" class="flex justify-center items-center p-8">
-      <span class="loading loading-spinner loading-lg" />
-    </div>
-
     <!-- Journal entries table -->
-    <div v-else-if="entries.length > 0" class="overflow-x-auto">
-      <table class="table table-zebra">
-        <thead>
-          <tr>
-            <th>
-              <input
-                type="checkbox"
-                class="checkbox"
-                v-bind:checked="entries.length > 0 && selectedIds.size === entries.length"
-                @change="toggleSelectAll"
-              />
-            </th>
-            <th>Index</th>
-            <th>Name</th>
-            <th>ID</th>
-            <th>Tags</th>
-            <th>Created</th>
-            <th>Updated</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(entry, index) in entries" v-bind:key="entry.id" class="hover">
-            <td>
-              <input
-                type="checkbox"
-                class="checkbox"
-                v-bind:checked="selectedIds.has(entry.id)"
-                @change="toggleSelection(entry.id)"
-              />
-            </td>
-            <th>{{ index }}</th>
-            <td>
-              <div class="font-semibold">
-                {{ entry.name }}
-              </div>
-              <div class="text-sm text-base-content/70 truncate max-w-md">
-                {{ entry.content?.substring(0, 100) }}{{ entry.content && entry.content.length > 100 ? '...' : '' }}
-              </div>
-            </td>
-            <td class="text-xs font-mono">
-              {{ entry.id }}
-            </td>
-            <td>
-              <div class="flex gap-1 flex-wrap">
-                <span v-for="tag in entry.tags" v-bind:key="tag" class="badge badge-sm badge-outline">
-                  {{ tag }}
-                </span>
-                <span v-if="entry.tags.length === 0" class="text-sm text-base-content/50">
-                  -
-                </span>
-              </div>
-            </td>
-            <td>
-              <span class="text-sm">{{ formatDate(entry.createdAt) }}</span>
-            </td>
-            <td>
-              <span class="text-sm">{{ formatDate(entry.updatedAt) }}</span>
-            </td>
-            <td>
-              <button
-                type="button"
-                class="btn btn-sm btn-primary gap-1"
-                @click="handleEditEntry(entry)"
-              >
-                <Icon icon="heroicons:pencil" />
-                Edit
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      v-model="selectedIds"
+      :data="entries"
+      :columns="columns"
+      :loading="loading"
+      :selectable="true"
+      row-key="id"
+      empty-message="No journal entries yet"
+      empty-description="Click 'New Entry' to create your first journal entry"
+      @row-click="handleEditEntry"
+    >
+      <!-- Custom rendering for Name column with preview -->
+      <template #cell-name="{ row }">
+        <div class="font-semibold">
+          {{ row.name }}
+        </div>
+        <div class="text-sm text-base-content/70 truncate max-w-md">
+          {{ row.content?.substring(0, 100) }}{{ row.content && row.content.length > 100 ? '...' : '' }}
+        </div>
+      </template>
 
-    <!-- Empty state -->
-    <div v-else class="text-center p-12">
-      <Icon icon="heroicons:document-text" class="text-6xl text-base-content/30 mx-auto mb-4" />
-      <p class="text-lg text-base-content/70">
-        No journal entries yet
-      </p>
-      <p class="text-sm text-base-content/50 mt-2">
-        Click "New Entry" to create your first journal entry
-      </p>
-    </div>
+      <!-- Custom rendering for Tags column with badges -->
+      <template #cell-tags="{ row }">
+        <div class="flex gap-1 flex-wrap">
+          <span v-for="tag in row.tags" v-bind:key="tag" class="badge badge-sm badge-outline">
+            {{ tag }}
+          </span>
+          <span v-if="row.tags.length === 0" class="text-sm text-base-content/50">
+            -
+          </span>
+        </div>
+      </template>
+
+      <!-- Custom rendering for Actions column with Edit button -->
+      <template #cell-actions="{ row }">
+        <button
+          type="button"
+          class="btn btn-sm btn-primary gap-1"
+          @click.stop="handleEditEntry(row)"
+        >
+          <Icon icon="heroicons:pencil" />
+          Edit
+        </button>
+      </template>
+    </DataTable>
   </div>
 </template>
