@@ -70,10 +70,12 @@ const columns = computed<TableColumn<PdfListItem>[]>(() => [
     key: 'index',
     label: 'Index',
     formatter: (_value, _row, index) => index,
+    required: true,
   },
   {
     key: 'name',
     label: 'Name',
+    required: true,
   },
   {
     key: 'id',
@@ -122,6 +124,7 @@ const columns = computed<TableColumn<PdfListItem>[]>(() => [
   {
     key: 'actions',
     label: 'Actions',
+    required: true,
   },
 ])
 
@@ -241,18 +244,19 @@ async function handleEditDocument(pdf: PdfListItem) {
     </button>
   </form>
 
-  <!-- TODO: Make Table Columns adjustable (show or hide, possibly width?) -->
-    <div>
-      <DataTable
-        :data="pdfs"
-        :columns="columns"
-        :loading="loading"
-        row-key="id"
-        empty-message="No PDFs found"
-        empty-description="Upload a PDF to get started"
-        empty-icon="heroicons:document"
-        @row-click="handleEditDocument"
-      >
+  <div>
+    <DataTable
+      :data="pdfs"
+      :columns="columns"
+      :loading="loading"
+      :enable-column-visibility="true"
+      table-id="document-list"
+      row-key="id"
+      empty-message="No PDFs found"
+      empty-description="Upload a PDF to get started"
+      empty-icon="heroicons:document"
+      @row-click="handleEditDocument"
+    >
         <!-- Custom rendering for Actions column with Edit button -->
         <template #cell-actions="{ row }">
           <button
