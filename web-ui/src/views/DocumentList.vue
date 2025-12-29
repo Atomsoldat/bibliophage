@@ -28,9 +28,42 @@ const pdfs = ref<PdfListItem[]>([])
 const loading = ref(false)
 
 /**
+ * Format file size in bytes to human-readable format (KB, MB, GB)
+ */
+function formatFileSize(bytes: number | bigint): string {
+  if (bytes === 0 || bytes === 0n) return '0 B'
+
+  const numBytes = typeof bytes === 'bigint' ? Number(bytes) : bytes
+  const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
+  const kibibyte = 1024
+  const magnitude = Math.floor(Math.log(numBytes) / Math.log(kibibyte))
+
+  return `${(numBytes / Math.pow(kibibyte, magnitude)).toFixed(2)} ${units[magnitude]}`
+}
+
+/**
+ * Format timestamp for display
+ */
+function formatDate(timestamp: any): string {
+  if (!timestamp)
+    return 'N/A'
+  try {
+    const date = timestamp.toDate()
+    return new Intl.DateTimeFormat('de-DE', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date)
+  }
+  catch {
+    return 'N/A'
+  }
+}
+
+/**
  * Define table columns for PDF list
- * TODO: Format dates in human readable format
- * TODO: Format file sizes in human readable units (KB, MB, GB)
  */
 const columns = computed<TableColumn<PdfListItem>[]>(() => [
   {
@@ -66,14 +99,17 @@ const columns = computed<TableColumn<PdfListItem>[]>(() => [
   {
     key: 'createdAt',
     label: 'Created',
+    formatter: (value) => formatDate(value),
   },
   {
     key: 'updatedAt',
     label: 'Updated',
+    formatter: (value) => formatDate(value),
   },
   {
     key: 'fileSize',
     label: 'Size',
+    formatter: (value) => formatFileSize(value),
   },
   {
     key: 'chunkCount',
@@ -205,7 +241,6 @@ async function handleEditDocument(pdf: PdfListItem) {
     </button>
   </form>
 
-  <!-- TODO: I think this should be open by default, at least until we have more document types -->
   <!-- TODO: Make Table Columns adjustable (show or hide, possibly width?) -->
     <div>
       <DataTable
