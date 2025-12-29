@@ -196,7 +196,7 @@ async function handleEditDocument(pdf: PdfListItem) {
   <form @submit.prevent="handleSearchSubmit">
     <button
       type="search"
-      class="btn btn-accent btn-lg w-full gap-2"
+      class="btn btn-accent btn-lg gap-2"
       v-bind:disabled="loading"
     >
       <Icon v-if="!loading" icon="game-icons:magnifying-glass" class="text-xl" />
