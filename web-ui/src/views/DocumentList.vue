@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import type { Client } from '@connectrpc/connect'
 import type { PdfListItem } from '../bibliophage/v1alpha2/pdf_pb.ts'
+import type { TableColumn } from '../components/DataTable.vue'
 
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { Icon } from '@iconify/vue'
-import { onBeforeMount, ref } from 'vue'
+import { computed, onBeforeMount, ref } from 'vue'
 
+import DataTable from '../components/DataTable.vue'
 import { SortOrder } from '../bibliophage/v1alpha2/common_pb.ts'
 import { PdfService } from '../bibliophage/v1alpha2/pdf_connect.ts'
 import { SearchPdfsRequest } from '../bibliophage/v1alpha2/pdf_pb.ts'
@@ -24,6 +26,68 @@ const client = ref<Client<typeof PdfService> | null>(null)
 
 const pdfs = ref<PdfListItem[]>([])
 const loading = ref(false)
+
+/**
+ * Define table columns for PDF list
+ * TODO: Format dates in human readable format
+ * TODO: Format file sizes in human readable units (KB, MB, GB)
+ */
+const columns = computed<TableColumn<PdfListItem>[]>(() => [
+  {
+    key: 'index',
+    label: 'Index',
+    formatter: (_value, _row, index) => index,
+  },
+  {
+    key: 'name',
+    label: 'Name',
+  },
+  {
+    key: 'id',
+    label: 'ID',
+    cellClass: 'text-xs font-mono',
+  },
+  {
+    key: 'system',
+    label: 'System',
+  },
+  {
+    key: 'type',
+    label: 'Type',
+  },
+  {
+    key: 'pageCount',
+    label: 'Page Count',
+  },
+  {
+    key: 'originPath',
+    label: 'Origin Path',
+  },
+  {
+    key: 'createdAt',
+    label: 'Created',
+  },
+  {
+    key: 'updatedAt',
+    label: 'Updated',
+  },
+  {
+    key: 'fileSize',
+    label: 'Size',
+  },
+  {
+    key: 'chunkCount',
+    label: 'Chunk Count',
+  },
+  {
+    key: 'tags',
+    label: 'Tags',
+  },
+  {
+    key: 'actions',
+    label: 'Actions',
+  },
+])
 
 onBeforeMount(async () => {
   // Load configuration first
@@ -143,69 +207,28 @@ async function handleEditDocument(pdf: PdfListItem) {
 
   <!-- TODO: I think this should be open by default, at least until we have more document types -->
   <!-- TODO: Make Table Columns adjustable (show or hide, possibly width?) -->
-  <details class="collapse bg-base-100 border-base-300 border">
-    <summary class="collapse-title font-bold">
-      PDFs
-    </summary>
-    <div class="collapse-content text-sm">
-      <div class="overflow-x-auto">
-        <table class="table table-s">
-          <thead>
-            <tr>
-              <th>Index</th>
-              <th>Name</th>
-              <th>ID</th>
-              <th>System</th>
-              <th>Type</th>
-              <th>Page Count</th>
-              <th>Origin Path</th>
-              <th>Created</th>
-              <th>Updated</th>
-              <th>Size</th>
-              <th>Chunk Count</th>
-              <th>Tags</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- https://vuejs.org/guide/essentials/list -->
-            <!-- https://vuejs.org/guide/essentials/list#maintaining-state-with-key -->
-            <tr v-for="(item, index) in pdfs" v-bind:key="index">
-              <th>{{ index }}</th>
-              <td>{{ item.name }}</td>
-              <td>{{ item.id }}</td>
-              <td>{{ item.system }}</td>
-              <td>{{ item.type }}</td>
-              <td>{{ item.pageCount }}</td>
-              <td>{{ item.originPath }}</td>
-              <!-- TODO: use human readable units -->
-              <td>{{ item.createdAt }}</td>
-              <td>{{ item.updatedAt }}</td>
-              <!-- TODO: use human readable units -->
-              <td>{{ item.fileSize }}</td>
-              <td>{{ item.chunkCount }}</td>
-              <td>{{ item.tags }}</td>
-              <td>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-primary gap-1"
-                  @click="handleEditDocument(item)"
-                >
-                  <Icon icon="heroicons:pencil" />
-                  Edit
-                </button>
-              </td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr>
-              <th />
-              <th>Name</th>
-              <th>Role</th>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+    <div>
+      <DataTable
+        :data="pdfs"
+        :columns="columns"
+        :loading="loading"
+        row-key="id"
+        empty-message="No PDFs found"
+        empty-description="Upload a PDF to get started"
+        empty-icon="heroicons:document"
+        @row-click="handleEditDocument"
+      >
+        <!-- Custom rendering for Actions column with Edit button -->
+        <template #cell-actions="{ row }">
+          <button
+            type="button"
+            class="btn btn-sm btn-primary gap-1"
+            @click.stop="handleEditDocument(row)"
+          >
+            <Icon icon="heroicons:pencil" />
+            Edit
+          </button>
+        </template>
+      </DataTable>
     </div>
-  </details>
 </template>
