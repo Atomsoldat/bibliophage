@@ -1,6 +1,7 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
 import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
+import { useColumnVisibility } from '../composables/useColumnVisibility'
 
 /**
  * Column definition for the data table
@@ -16,6 +17,8 @@ export interface TableColumn<T = any> {
   cellClass?: string
   /** Optional CSS classes for the column header */
   headerClass?: string
+  /** Mark column as required (always visible, cannot be hidden) */
+  required?: boolean
 }
 
 /**
@@ -38,6 +41,10 @@ interface Props {
   emptyDescription?: string
   /** Icon to display in empty state */
   emptyIcon?: string
+  /** Enable column visibility controls */
+  enableColumnVisibility?: boolean
+  /** Unique identifier for this table instance (for localStorage key) */
+  tableId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -47,6 +54,8 @@ const props = withDefaults(defineProps<Props>(), {
   emptyMessage: 'No data available',
   emptyDescription: 'There are no items to display',
   emptyIcon: 'heroicons:document-text',
+  enableColumnVisibility: false,
+  tableId: 'default',
 })
 
 /**
@@ -122,6 +131,56 @@ const isAllSelected = computed(() => {
 })
 
 /**
+ * Column visibility management (conditionally initialized)
+ */
+const columnVisibility = props.enableColumnVisibility
+  ? useColumnVisibility(computed(() => props.columns), props.tableId)
+  : null
+
+/**
+ * Columns to display (filtered by visibility when feature is enabled)
+ */
+const displayColumns = computed(() => {
+  return props.enableColumnVisibility && columnVisibility
+    ? columnVisibility.visibleColumns.value
+    : props.columns
+})
+
+/**
+ * Check if a column is visible
+ */
+function isColumnVisible(key: string): boolean {
+  return columnVisibility?.isColumnVisible(key) ?? true
+}
+
+/**
+ * Toggle column visibility
+ */
+function toggleColumn(key: string): void {
+  columnVisibility?.toggleColumn(key)
+}
+
+/**
+ * Get visibility statistics
+ */
+const visibilityStats = computed(() => {
+  return columnVisibility?.visibilityStats.value ?? {
+    total: props.columns.length,
+    visible: props.columns.length,
+    required: 0,
+    hideable: props.columns.length,
+    hidden: 0,
+  }
+})
+
+/**
+ * Reset all columns to default visibility
+ */
+function resetToDefaults(): void {
+  columnVisibility?.resetToDefaults()
+}
+
+/**
  * Handle row click event
  */
 function handleRowClick(row: T, index: number) {
@@ -149,11 +208,66 @@ function handleRowClick(row: T, index: number) {
             />
           </th>
           <th
-            v-for="column in columns"
+            v-for="column in displayColumns"
             :key="column.key"
             :class="column.headerClass"
           >
             {{ column.label }}
+          </th>
+          <!-- Column visibility dropdown -->
+          <th v-if="enableColumnVisibility" class="w-12">
+            <div class="dropdown dropdown-end">
+              <button
+                type="button"
+                tabindex="0"
+                class="btn btn-ghost btn-sm btn-circle"
+                title="Show/hide columns"
+              >
+                <Icon icon="heroicons:view-columns" class="text-lg" />
+              </button>
+              <div
+                tabindex="0"
+                class="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-64 border border-base-300"
+              >
+                <div class="px-2 py-1 text-xs font-semibold text-base-content/60 border-b border-base-300 mb-1">
+                  Column Visibility
+                </div>
+
+                <!-- Column visibility checkboxes -->
+                <label
+                  v-for="column in columns"
+                  :key="column.key"
+                  class="label cursor-pointer justify-start gap-2 px-2 hover:bg-base-200 rounded"
+                >
+                  <input
+                    type="checkbox"
+                    class="checkbox checkbox-sm"
+                    :checked="isColumnVisible(column.key)"
+                    :disabled="column.required"
+                    @change="toggleColumn(column.key)"
+                  />
+                  <span class="label-text flex-1" :class="{ 'text-base-content/40': column.required }">
+                    {{ column.label }}
+                  </span>
+                  <span v-if="column.required" class="badge badge-xs">Required</span>
+                </label>
+
+                <!-- Stats and reset button -->
+                <div class="divider my-1" />
+                <div class="px-2 flex justify-between items-center">
+                  <span class="text-xs text-base-content/60">
+                    {{ visibilityStats.visible }} / {{ visibilityStats.total }} visible
+                  </span>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-xs"
+                    @click="resetToDefaults"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+            </div>
           </th>
         </tr>
       </thead>
@@ -173,7 +287,7 @@ function handleRowClick(row: T, index: number) {
             />
           </td>
           <td
-            v-for="column in columns"
+            v-for="column in displayColumns"
             :key="column.key"
             :class="column.cellClass"
           >
@@ -187,6 +301,8 @@ function handleRowClick(row: T, index: number) {
               {{ formatCell(row, column, index) }}
             </slot>
           </td>
+          <!-- Empty cell to align with header's dropdown column -->
+          <td v-if="enableColumnVisibility" />
         </tr>
       </tbody>
     </table>

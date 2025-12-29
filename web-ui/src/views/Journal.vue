@@ -36,10 +36,12 @@ const columns = computed<TableColumn<DocumentListItem>[]>(() => [
     key: 'index',
     label: 'Index',
     formatter: (_value, _row, index) => index,
+    required: true,
   },
   {
     key: 'name',
     label: 'Name',
+    required: true,
   },
   {
     key: 'id',
@@ -63,6 +65,7 @@ const columns = computed<TableColumn<DocumentListItem>[]>(() => [
   {
     key: 'actions',
     label: 'Actions',
+    required: true,
   },
 ])
 
@@ -289,6 +292,8 @@ async function handleBulkDelete() {
       :columns="columns"
       :loading="loading"
       :selectable="true"
+      :enable-column-visibility="true"
+      table-id="journal"
       row-key="id"
       empty-message="No journal entries yet"
       empty-description="Click 'New Entry' to create your first journal entry"
