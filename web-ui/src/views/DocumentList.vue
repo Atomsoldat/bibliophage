@@ -258,6 +258,8 @@ async function handleEditDocument(pdf: PdfListItem) {
       :columns="columns"
       :loading="loading"
       :enable-column-visibility="true"
+      :selectable="true"
+      :select-on-row-click="false"
       table-id="document-list"
       row-key="id"
       empty-message="No PDFs found"
