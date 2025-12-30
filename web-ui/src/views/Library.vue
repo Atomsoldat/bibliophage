@@ -6,7 +6,7 @@ import type { TableColumn } from '../components/DataTable.vue'
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { Icon } from '@iconify/vue'
-import { computed, onBeforeMount, ref } from 'vue'
+import { computed, onBeforeMount, ref, watch } from 'vue'
 
 import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
 import { PdfService } from '../bibliophage/v1alpha3/pdf_connect.ts'
@@ -28,12 +28,26 @@ const pdfs = ref<PdfListItem[]>([])
 const loading = ref(false)
 
 // Search filter parameters
-// TODO: Make these selectable via the web UI (dropdowns, checkboxes, etc.)
 const titleQuery = ref('')
-const systemFilters = ref<string[]>(['PATHFINDER_1E']) // Filter by systems (ANY match)
+const systemFiltersInput = ref('') // User input for systems (comma-separated)
+const systemFilters = ref<string[]>([]) // Parsed array of system filters
 const typeFilter = ref('')
 const pageSize = ref(20)
 const pageNumber = ref(0)
+
+// Watch systemFiltersInput and parse it into systemFilters array
+watch(systemFiltersInput, (newValue) => {
+  if (!newValue.trim()) {
+    systemFilters.value = []
+    return
+  }
+
+  // Split by comma, trim whitespace, and filter out empty strings
+  systemFilters.value = newValue
+    .split(',')
+    .map(s => s.trim())
+    .filter(s => s.length > 0)
+})
 
 /**
  * Format file size in bytes to human-readable format (KB, MB, GB)
@@ -157,7 +171,7 @@ function buildSearchPdfsRequest(): SearchPdfsRequest {
     titleQuery: titleQuery.value,
     systemFilters: systemFilters.value,
     typeFilter: typeFilter.value,
-    tagFilters: [],
+    tagFilters: [], // Tag filtering not implemented yet
     pageSize: pageSize.value,
     pageNumber: pageNumber.value,
     sortOrder: SortOrder.NAME_ASC,
@@ -241,16 +255,49 @@ async function handleEditDocument(pdf: PdfListItem) {
     </p>
   </div>
 
-  <form @submit.prevent="handleSearchSubmit">
-    <button
-      type="search"
-      class="btn btn-accent btn-lg gap-2"
-      v-bind:disabled="loading"
-    >
-      <Icon v-if="!loading" icon="game-icons:magnifying-glass" class="text-xl" />
-      <span v-if="loading" class="loading loading-spinner" />
-      Search
-    </button>
+  <form @submit.prevent="handleSearchSubmit" class="card bg-base-200 shadow-xl p-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <!-- Name Search Input -->
+      <div class="form-control">
+        <label class="label" for="title-search">
+          <span class="label-text">Document Name</span>
+        </label>
+        <input
+          id="title-search"
+          v-model="titleQuery"
+          type="text"
+          placeholder="Search by name..."
+          class="input input-bordered w-full"
+        />
+      </div>
+
+      <!-- System Filters Input -->
+      <div class="form-control">
+        <label class="label" for="system-search">
+          <span class="label-text">Systems (comma-separated)</span>
+        </label>
+        <input
+          id="system-search"
+          v-model="systemFiltersInput"
+          type="text"
+          placeholder="e.g., Pathfinder 1e, Call of Cthulhu"
+          class="input input-bordered w-full"
+        />
+      </div>
+    </div>
+
+    <!-- Search Button -->
+    <div class="flex justify-end">
+      <button
+        type="submit"
+        class="btn btn-accent btn-lg gap-2"
+        v-bind:disabled="loading"
+      >
+        <Icon v-if="!loading" icon="game-icons:magnifying-glass" class="text-xl" />
+        <span v-if="loading" class="loading loading-spinner" />
+        Search
+      </button>
+    </div>
   </form>
 
   <div>
