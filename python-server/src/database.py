@@ -233,14 +233,16 @@ class DocumentDatabase:
             # Each filter checks: tag.name == name AND value in tag.values
             tag_conditions = []
             for tag_filter in tag_filters:
-                tag_conditions.append({
-                    "tags": {
-                        "$elemMatch": {
-                            "name": tag_filter["name"],
-                            "values": tag_filter["value"],
+                tag_conditions.append(
+                    {
+                        "tags": {
+                            "$elemMatch": {
+                                "name": tag_filter["name"],
+                                "values": tag_filter["value"],
+                            }
                         }
                     }
-                })
+                )
             if tag_conditions:
                 query["$and"] = tag_conditions
 

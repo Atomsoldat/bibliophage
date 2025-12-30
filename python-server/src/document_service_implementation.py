@@ -55,7 +55,9 @@ class DocumentServiceImplementation:
                 "file_size": request.document.metadata.file_size,
             }
             if request.document.metadata.HasField("publication_type"):
-                metadata["publication_type"] = request.document.metadata.publication_type
+                metadata["publication_type"] = (
+                    request.document.metadata.publication_type
+                )
             if request.document.metadata.HasField("pdf"):
                 metadata["pdf"] = {
                     "loading_batch_count": request.document.metadata.pdf.loading_batch_count,
@@ -124,7 +126,9 @@ class DocumentServiceImplementation:
 
         # Convert source_type string to enum
         source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
-        document.source_type = getattr(api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED)
+        document.source_type = getattr(
+            api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED
+        )
 
         # Convert metadata if present
         if "metadata" in doc_data:
@@ -136,8 +140,12 @@ class DocumentServiceImplementation:
 
             if "pdf" in doc_data["metadata"]:
                 pdf_data = api.PdfData()
-                pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get("loading_batch_count", 0)
-                pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get("vector_chunk_count", 0)
+                pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
+                    "loading_batch_count", 0
+                )
+                pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get(
+                    "vector_chunk_count", 0
+                )
                 pdf_data.page_count = doc_data["metadata"]["pdf"].get("page_count", 0)
                 metadata.pdf.CopyFrom(pdf_data)
 
@@ -219,7 +227,9 @@ class DocumentServiceImplementation:
                 "file_size": request.document.metadata.file_size,
             }
             if request.document.metadata.HasField("publication_type"):
-                metadata["publication_type"] = request.document.metadata.publication_type
+                metadata["publication_type"] = (
+                    request.document.metadata.publication_type
+                )
             if request.document.metadata.HasField("pdf"):
                 metadata["pdf"] = {
                     "loading_batch_count": request.document.metadata.pdf.loading_batch_count,
@@ -260,7 +270,9 @@ class DocumentServiceImplementation:
 
         # Convert source_type string to enum
         source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
-        updated_document.source_type = getattr(api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED)
+        updated_document.source_type = getattr(
+            api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED
+        )
 
         # Convert metadata if present
         if "metadata" in doc_data:
@@ -272,8 +284,12 @@ class DocumentServiceImplementation:
 
             if "pdf" in doc_data["metadata"]:
                 pdf_data = api.PdfData()
-                pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get("loading_batch_count", 0)
-                pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get("vector_chunk_count", 0)
+                pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
+                    "loading_batch_count", 0
+                )
+                pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get(
+                    "vector_chunk_count", 0
+                )
                 pdf_data.page_count = doc_data["metadata"]["pdf"].get("page_count", 0)
                 metadata.pdf.CopyFrom(pdf_data)
 
@@ -343,10 +359,12 @@ class DocumentServiceImplementation:
             if request.filter.tag_filters:
                 tag_filters = []
                 for tag_filter in request.filter.tag_filters:
-                    tag_filters.append({
-                        "name": tag_filter.name,
-                        "value": tag_filter.value,
-                    })
+                    tag_filters.append(
+                        {
+                            "name": tag_filter.name,
+                            "value": tag_filter.value,
+                        }
+                    )
 
         # Set page size with a reasonable default
         page_size = request.page_size if request.page_size > 0 else 50
@@ -380,7 +398,9 @@ class DocumentServiceImplementation:
 
             # Convert source_type string to enum
             source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
-            list_item.source_type = getattr(api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED)
+            list_item.source_type = getattr(
+                api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED
+            )
 
             # Convert metadata if present
             if "metadata" in doc_data:
@@ -392,9 +412,15 @@ class DocumentServiceImplementation:
 
                 if "pdf" in doc_data["metadata"]:
                     pdf_data = api.PdfData()
-                    pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get("loading_batch_count", 0)
-                    pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get("vector_chunk_count", 0)
-                    pdf_data.page_count = doc_data["metadata"]["pdf"].get("page_count", 0)
+                    pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
+                        "loading_batch_count", 0
+                    )
+                    pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get(
+                        "vector_chunk_count", 0
+                    )
+                    pdf_data.page_count = doc_data["metadata"]["pdf"].get(
+                        "page_count", 0
+                    )
                     metadata.pdf.CopyFrom(pdf_data)
 
                 list_item.metadata.CopyFrom(metadata)

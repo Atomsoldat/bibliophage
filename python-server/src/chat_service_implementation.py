@@ -102,7 +102,9 @@ class ChatServiceImplementation:
                         id=doc_data["_id"],
                         name=doc_data["name"],
                         content=doc_data["content"],
-                        source_type=doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED"),
+                        source_type=doc_data.get(
+                            "source_type", "SOURCE_TYPE_UNSPECIFIED"
+                        ),
                         document_type=doc_data["type"],
                     )
                 )
