@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from google.protobuf import timestamp_pb2
 
-import bibliophage.v1alpha2.document_pb2 as api
+import bibliophage.v1alpha3.document_pb2 as api
 from database import get_database
 
 logger = logging.getLogger(__name__)
@@ -30,6 +30,13 @@ class DocumentServiceImplementation:
         document_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc)
 
+        # Validate systems array (must have at least one value)
+        if not request.document.systems:
+            return api.StoreDocumentResponse(
+                success=False,
+                message="Document must belong to at least one system",
+            )
+
         # Convert protobuf tags to dict format for database storage
         tags = []
         for tag in request.document.tags:
@@ -38,19 +45,34 @@ class DocumentServiceImplementation:
         # Convert enum to string name for database storage
         doc_type = api.DocumentType.Name(request.document.type)
 
-        # Convert source_type enum to string if provided
-        source_type = None
-        if request.document.source_type != api.SOURCE_TYPE_UNSPECIFIED:
-            source_type = api.SourceType.Name(request.document.source_type)
+        # Convert source_type enum to string
+        source_type = api.SourceType.Name(request.document.source_type)
+
+        # Convert metadata if provided
+        metadata = None
+        if request.document.HasField("metadata"):
+            metadata = {
+                "file_size": request.document.metadata.file_size,
+            }
+            if request.document.metadata.HasField("publication_type"):
+                metadata["publication_type"] = request.document.metadata.publication_type
+            if request.document.metadata.HasField("pdf"):
+                metadata["pdf"] = {
+                    "loading_batch_count": request.document.metadata.pdf.loading_batch_count,
+                    "vector_chunk_count": request.document.metadata.pdf.vector_chunk_count,
+                    "page_count": request.document.metadata.pdf.page_count,
+                }
 
         await self.db.store_document(
             document_id=document_id,
             name=request.document.name,
+            systems=list(request.document.systems),
+            source_type=source_type,
             content=request.document.content,
             doc_type=doc_type,
             tags=tags,
             created_at=now,
-            source_type=source_type,
+            metadata=metadata,
         )
 
         # Create response with stored document metadata
@@ -97,9 +119,29 @@ class DocumentServiceImplementation:
         document.type = getattr(api, doc_data["type"], api.DOCUMENT_TYPE_UNSPECIFIED)
         document.character_count = doc_data["character_count"]
 
-        # Convert source_type string to enum (default to UNSPECIFIED if not present)
+        # Add systems array
+        document.systems.extend(doc_data.get("systems", []))
+
+        # Convert source_type string to enum
         source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
         document.source_type = getattr(api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED)
+
+        # Convert metadata if present
+        if "metadata" in doc_data:
+            metadata = api.Metadata()
+            metadata.file_size = doc_data["metadata"].get("file_size", 0)
+
+            if "publication_type" in doc_data["metadata"]:
+                metadata.publication_type = doc_data["metadata"]["publication_type"]
+
+            if "pdf" in doc_data["metadata"]:
+                pdf_data = api.PdfData()
+                pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get("loading_batch_count", 0)
+                pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get("vector_chunk_count", 0)
+                pdf_data.page_count = doc_data["metadata"]["pdf"].get("page_count", 0)
+                metadata.pdf.CopyFrom(pdf_data)
+
+            document.metadata.CopyFrom(metadata)
 
         # Convert dict tags to protobuf tags
         for tag_data in doc_data.get("tags", []):
@@ -137,6 +179,16 @@ class DocumentServiceImplementation:
     ) -> api.UpdateDocumentResponse:
         logger.info(f"Received UpdateDocumentRequest for ID: {request.document.id}")
 
+        # Validate systems array if provided (must have at least one value)
+        systems = None
+        if request.document.systems:
+            if len(request.document.systems) == 0:
+                return api.UpdateDocumentResponse(
+                    success=False,
+                    message="Document must belong to at least one system",
+                )
+            systems = list(request.document.systems)
+
         # Convert protobuf tags to dict format for database storage if provided
         tags = None
         if request.document.tags:
@@ -160,14 +212,31 @@ class DocumentServiceImplementation:
         ):
             source_type = api.SourceType.Name(request.document.source_type)
 
+        # Convert metadata if provided
+        metadata = None
+        if request.document.HasField("metadata"):
+            metadata = {
+                "file_size": request.document.metadata.file_size,
+            }
+            if request.document.metadata.HasField("publication_type"):
+                metadata["publication_type"] = request.document.metadata.publication_type
+            if request.document.metadata.HasField("pdf"):
+                metadata["pdf"] = {
+                    "loading_batch_count": request.document.metadata.pdf.loading_batch_count,
+                    "vector_chunk_count": request.document.metadata.pdf.vector_chunk_count,
+                    "page_count": request.document.metadata.pdf.page_count,
+                }
+
         # Update document in database
         doc_data = await self.db.update_document(
             document_id=request.document.id,
             name=request.document.name if request.document.name else None,
+            systems=systems,
+            source_type=source_type,
             content=request.document.content if request.document.content else None,
             doc_type=doc_type,
             tags=tags,
-            source_type=source_type,
+            metadata=metadata,
         )
 
         if doc_data is None:
@@ -186,9 +255,29 @@ class DocumentServiceImplementation:
         )
         updated_document.character_count = doc_data["character_count"]
 
-        # Convert source_type string to enum (default to UNSPECIFIED if not present)
+        # Add systems array
+        updated_document.systems.extend(doc_data.get("systems", []))
+
+        # Convert source_type string to enum
         source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
         updated_document.source_type = getattr(api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED)
+
+        # Convert metadata if present
+        if "metadata" in doc_data:
+            metadata = api.Metadata()
+            metadata.file_size = doc_data["metadata"].get("file_size", 0)
+
+            if "publication_type" in doc_data["metadata"]:
+                metadata.publication_type = doc_data["metadata"]["publication_type"]
+
+            if "pdf" in doc_data["metadata"]:
+                pdf_data = api.PdfData()
+                pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get("loading_batch_count", 0)
+                pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get("vector_chunk_count", 0)
+                pdf_data.page_count = doc_data["metadata"]["pdf"].get("page_count", 0)
+                metadata.pdf.CopyFrom(pdf_data)
+
+            updated_document.metadata.CopyFrom(metadata)
 
         # Convert dict tags to protobuf tags
         for tag_data in doc_data.get("tags", []):
@@ -223,6 +312,7 @@ class DocumentServiceImplementation:
         name_query = None
         content_query = None
         type_filter = None
+        system_filters = None
         tag_filters = None
 
         if request.HasField("filter"):
@@ -245,15 +335,18 @@ class DocumentServiceImplementation:
             ):
                 type_filter = api.DocumentType.Name(request.filter.type_filter)
 
-            # TODO: Implement tag filter handling
-            # The request.filter.tag_filters is a list of TagFilter objects (name + value)
-            # These need to be converted to match the Tag structure in the database (name + values array)
-            # Build a MongoDB query that filters documents where tags match the specified filters
-            # Consider using $elemMatch for matching tags with specific name/value combinations
-            # For multiple tag filters, all must match (AND logic)
+            # Extract system filters (matches ANY)
+            if request.filter.system_filters:
+                system_filters = list(request.filter.system_filters)
 
-            # For now, search without tag filtering
-            # Replace with proper tag query from request.filter.tag_filters
+            # Extract tag filters (must match ALL)
+            if request.filter.tag_filters:
+                tag_filters = []
+                for tag_filter in request.filter.tag_filters:
+                    tag_filters.append({
+                        "name": tag_filter.name,
+                        "value": tag_filter.value,
+                    })
 
         # Set page size with a reasonable default
         page_size = request.page_size if request.page_size > 0 else 50
@@ -264,7 +357,8 @@ class DocumentServiceImplementation:
             name_query=name_query,
             content_query=content_query,
             type_filter=type_filter,
-            tags=tag_filters,
+            system_filters=system_filters,
+            tag_filters=tag_filters,
             page_size=page_size,
             page_number=page_number,
         )
@@ -281,9 +375,29 @@ class DocumentServiceImplementation:
             )
             list_item.character_count = doc_data["character_count"]
 
-            # Convert source_type string to enum (default to UNSPECIFIED if not present)
+            # Add systems array
+            list_item.systems.extend(doc_data.get("systems", []))
+
+            # Convert source_type string to enum
             source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
             list_item.source_type = getattr(api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED)
+
+            # Convert metadata if present
+            if "metadata" in doc_data:
+                metadata = api.Metadata()
+                metadata.file_size = doc_data["metadata"].get("file_size", 0)
+
+                if "publication_type" in doc_data["metadata"]:
+                    metadata.publication_type = doc_data["metadata"]["publication_type"]
+
+                if "pdf" in doc_data["metadata"]:
+                    pdf_data = api.PdfData()
+                    pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get("loading_batch_count", 0)
+                    pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get("vector_chunk_count", 0)
+                    pdf_data.page_count = doc_data["metadata"]["pdf"].get("page_count", 0)
+                    metadata.pdf.CopyFrom(pdf_data)
+
+                list_item.metadata.CopyFrom(metadata)
 
             # Set timestamps
             created_timestamp = timestamp_pb2.Timestamp()
