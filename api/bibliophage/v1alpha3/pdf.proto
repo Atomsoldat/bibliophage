@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package bibliophage.v1alpha2;
+package bibliophage.v1alpha3;
 
-import "bibliophage/v1alpha2/common.proto";
+import "bibliophage/v1alpha3/common.proto";
 import "google/protobuf/timestamp.proto";
 
 // Service definitions - the API endpoints
@@ -25,8 +25,13 @@ message Pdf {
   // Human-readable name (e.g., "Monster Manual", "Player's Handbook")
   string name = 2;
 
-  // Which RPG system this belongs to (e.g., "Call of Cthulhu", "Pathfinder 1e")
-  string system = 3;
+  // Which RPG system(s) this belongs to
+  // Examples:
+  //   Single system: ["Call of Cthulhu"]
+  //   Multi-system: ["D&D 3.5e", "Pathfinder 1e"]
+  //   System-agnostic: ["Generic"]
+  // Must contain at least one value
+  repeated string systems = 3;
 
   // Type of publication (e.g., "Core Rulebook", "Adventure", "Supplement")
   string type = 4;
@@ -34,20 +39,20 @@ message Pdf {
   // Number of pages in the PDF
   int32 page_count = 5;
 
-  // Original filesystem path (where it was loaded from)
-  string origin_path = 6;
-
   // When this PDF was first loaded into the system
-  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp created_at = 6;
 
   // When this PDF was last updated
-  google.protobuf.Timestamp updated_at = 8;
+  google.protobuf.Timestamp updated_at = 7;
 
   // File size in bytes
-  int64 file_size = 9;
+  int64 file_size = 8;
 
-  // Number of chunks this PDF was split into
-  int32 chunk_count = 10;
+  // Number of batches processed by Docling (usually corresponds to chapters/sections)
+  int32 batch_count = 9;
+
+  // Number of text chunks created for vector embeddings
+  int32 vector_chunk_count = 10;
 
   // Structured tags for organization (name + multiple values)
   repeated Tag tags = 11;
@@ -69,8 +74,8 @@ message PdfListItem {
   // Human-readable name
   string name = 2;
 
-  // Which RPG system this belongs to
-  string system = 3;
+  // Which RPG system(s) this belongs to (see Pdf message for examples)
+  repeated string systems = 3;
 
   // Type of publication
   string type = 4;
@@ -78,20 +83,20 @@ message PdfListItem {
   // Number of pages in the PDF
   int32 page_count = 5;
 
-  // Original filesystem path (where it was loaded from)
-  string origin_path = 6;
-
   // When this PDF was first loaded into the system
-  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp created_at = 6;
 
   // When this PDF was last updated
-  google.protobuf.Timestamp updated_at = 8;
+  google.protobuf.Timestamp updated_at = 7;
 
   // File size in bytes
-  int64 file_size = 9;
+  int64 file_size = 8;
 
-  // Number of chunks this PDF was split into
-  int32 chunk_count = 10;
+  // Number of batches processed by Docling
+  int32 batch_count = 9;
+
+  // Number of text chunks created for vector embeddings
+  int32 vector_chunk_count = 10;
 
   // Structured tags for organization
   repeated Tag tags = 11;
@@ -135,12 +140,14 @@ message LoadPdfResponse {
 }
 
 // SearchPdfsRequest - Search for PDFs by various criteria
+// TODO: we should turn these search parameters into a generic message, so that it can be reused
 message SearchPdfsRequest {
   // Search by title (partial match, case-insensitive)
   optional string title_query = 1;
 
-  // Filter by system (exact match)
-  optional string system_filter = 2;
+  // Filter by systems (returns PDFs where systems array contains ANY of these values)
+  // Example: ["Call of Cthulhu", "Pathfinder 1e", "Generic"] returns CoC + Pathfinder + generic PDFs
+  repeated string system_filters = 2;
 
   // Filter by type (exact match)
   optional string type_filter = 3;
@@ -149,12 +156,12 @@ message SearchPdfsRequest {
   // Example: [{"name": "genre", "value": "fantasy"}, {"name": "campaign", "value": "storm-kings-thunder"}]
   repeated TagFilter tag_filters = 4;
 
-  // Pagination
-  int32 page_size = 5; // Max results to return (default: 50)
-  int32 page_number = 6; // Which page of results (0-indexed)
+  // Pagination (optional, server applies defaults if not specified)
+  optional int32 page_size = 5; // Max results to return (default: 50)
+  optional int32 page_number = 6; // Which page of results (0-indexed, default: 0)
 
-  // Sorting (PAGE_COUNT_ASC/DESC can be added to common.proto if needed)
-  SortOrder sort_order = 7;
+  // Sorting
+  optional SortOrder sort_order = 7;
 }
 
 // SearchPdfsResponse - Results of PDF search
