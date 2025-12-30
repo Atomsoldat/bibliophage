@@ -6,7 +6,7 @@
   "packageManager": "yarn@4.11.0",
   "scripts": {
     "dev": "NODE_OPTIONS=--no-experimental-webstorage vite",
-    "api": "protoc --proto_path=../api --es_out ./src --es_opt target=ts --connect-es_out ./src --connect-es_opt target=ts ../api/bibliophage/v1alpha2/*.proto",
+    "api": "protoc --proto_path=../api --es_out ./src --es_opt target=ts --connect-es_out ./src --connect-es_opt target=ts ../api/bibliophage/v1alpha3/*.proto",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "knip": "knip",

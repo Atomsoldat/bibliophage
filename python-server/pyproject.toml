@@ -63,7 +63,7 @@ cmd = [
     "--connect-python_out=./src",
     "--python_out=./src",
     "--pyi_out=./src",
-    "../api/bibliophage/v1alpha2/*.proto"
+    "../api/bibliophage/v1alpha3/*.proto"
 ]
 description = "Generate protobuf code"
 
@@ -72,7 +72,8 @@ cmd = [
     "touch",
     "src/bibliophage/__init__.py",
     "src/bibliophage/v1alpha1/__init__.py",
-    "src/bibliophage/v1alpha2/__init__.py"
+    "src/bibliophage/v1alpha2/__init__.py",
+    "src/bibliophage/v1alpha3/__init__.py",
 ]
 description = "Create __init__.py files"
 
