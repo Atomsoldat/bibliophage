@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package bibliophage.v1alpha3;
+
+import "google/protobuf/timestamp.proto";
+
+// Service definition with server-streaming RPC for chat
+service ChatService {
+  // Stream chat responses token-by-token from the LLM
+  rpc StreamChat(ChatRequest) returns (stream ChatResponseChunk);
+}
+
+// Request for chat streaming
+message ChatRequest {
+  // User's message/question
+  string message = 1;
+
+  // Optional: Document IDs to use as context
+  repeated string context_document_ids = 2;
+
+  // Optional: System prompt override
+  optional string system_prompt = 3;
+
+  // Optional: Conversation history for multi-turn chat
+  repeated ChatMessage conversation_history = 4;
+}
+
+// Single message in conversation
+message ChatMessage {
+  // Role: "user" or "assistant"
+  string role = 1;
+
+  // Message content
+  string content = 2;
+
+  // When this message was sent
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+// Streaming chunk response
+message ChatResponseChunk {
+  // Type of chunk
+  ChunkType type = 1;
+
+  // Content of the chunk (token, error message, etc.)
+  string content = 2;
+
+  // Metadata (only populated for METADATA chunks)
+  optional ChunkMetadata metadata = 3;
+}
+
+// Type of streaming chunk
+enum ChunkType {
+  CHUNK_TYPE_UNSPECIFIED = 0;
+  TOKEN = 1;           // Incremental token from LLM
+  METADATA = 2;        // Metadata about the response (model, context docs, etc.)
+  ERROR = 3;           // Error occurred during streaming
+  DONE = 4;            // Stream complete
+}
+
+// Metadata about the chat response
+message ChunkMetadata {
+  // Model used for generation
+  string model = 1;
+
+  // Documents used as context (with authority info)
+  repeated ContextDocumentInfo context_documents = 2;
+}
+
+// Information about a context document
+message ContextDocumentInfo {
+  // Document ID
+  string id = 1;
+
+  // Document name
+  string name = 2;
+
+  // Authority weight
+  float authority = 3;
+}
