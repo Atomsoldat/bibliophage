@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
 import { Icon } from '@iconify/vue'
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useColumnVisibility } from '../composables/useColumnVisibility'
 
 /**
@@ -184,6 +184,49 @@ function resetToDefaults(): void {
 }
 
 /**
+ * State for controlling column visibility dropdown
+ */
+const isDropdownOpen = ref(false)
+
+/**
+ * Toggle the column visibility dropdown
+ */
+function toggleDropdown() {
+  isDropdownOpen.value = !isDropdownOpen.value
+}
+
+/**
+ * Close the column visibility dropdown
+ */
+function closeDropdown() {
+  isDropdownOpen.value = false
+}
+
+/**
+ * Handle clicks outside the dropdown to close it
+ */
+function handleClickOutside(event: MouseEvent) {
+  // Close dropdown when clicking outside
+  if (isDropdownOpen.value) {
+    isDropdownOpen.value = false
+  }
+}
+
+/**
+ * Setup click-outside listener
+ */
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+/**
+ * Cleanup click-outside listener
+ */
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
+/**
  * Handle row click event
  */
 function handleRowClick(row: T, index: number) {
@@ -224,18 +267,19 @@ function handleRowClick(row: T, index: number) {
           </th>
           <!-- Column visibility dropdown -->
           <th v-if="enableColumnVisibility" class="w-12">
-            <div class="dropdown dropdown-end">
+            <div class="relative">
               <button
                 type="button"
-                tabindex="0"
                 class="btn btn-ghost btn-sm btn-circle"
                 title="Show/hide columns"
+                @click.stop="toggleDropdown"
               >
                 <Icon icon="heroicons:view-columns" class="text-lg" />
               </button>
               <div
-                tabindex="0"
-                class="dropdown-content fixed z-50 shadow-lg bg-base-100 rounded-box w-64 border border-base-300 max-h-[32rem] flex flex-col"
+                v-show="isDropdownOpen"
+                class="absolute right-0 top-full mt-1 z-50 shadow-lg bg-base-100 rounded-box w-64 border border-base-300 max-h-[32rem] flex flex-col"
+                @click.stop
               >
                 <div class="px-4 py-2 text-xs font-semibold text-base-content/60 border-b border-base-300 shrink-0">
                   Column Visibility
