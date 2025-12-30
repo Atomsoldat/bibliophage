@@ -33,25 +33,25 @@ curl -v \
 
 Basic Search (All PDFs)
 ```bash
-  curl -X POST http://localhost:8000/bibliophage.v1alpha2.PdfService/SearchPdfs \
+  curl -X POST http://localhost:8000/bibliophage.v1alpha3.PdfService/SearchPdfs \
     -H "Content-Type: application/json" \
     -d '{}'
 ```
 
 Search by Title
 ```bash
-  curl -X POST http://localhost:8000/bibliophage.v1alpha2.PdfService/SearchPdfs \
+  curl -X POST http://localhost:8000/bibliophage.v1alpha3.PdfService/SearchPdfs \
     -H "Content-Type: application/json" \
     -d '{
       "titleQuery": "Player"
     }'
 ```
 
-Search by System
+Search by Systems (v1alpha3 uses systemFilters array)
 ```bash
-  curl -X POST http://localhost:8000/bibliophage.v1alpha2.PdfService/SearchPdfs \
+  curl -X POST http://localhost:8000/bibliophage.v1alpha3.PdfService/SearchPdfs \
     -H "Content-Type: application/json" \
     -d '{
-      "systemFilter": "PATHFINDER_1E"
+      "systemFilters": ["PATHFINDER_1E"]
     }'
 ```
