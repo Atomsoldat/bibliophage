@@ -90,6 +90,10 @@ const columns = computed<TableColumn<DocumentListItem>[]>(() => [
     required: true,
   },
   {
+    key: 'systems',
+    label: 'System',
+  },
+  {
     key: 'type',
     label: 'Document Type',
     formatter: value => formatDocumentType(value),
@@ -426,6 +430,18 @@ async function handleBulkDelete() {
       </div>
       <div class="text-sm text-base-content/70 truncate max-w-md">
         {{ row.content?.substring(0, 100) }}{{ row.content && row.content.length > 100 ? '...' : '' }}
+      </div>
+    </template>
+
+    <!-- Custom rendering for Systems column with badges -->
+    <template #cell-systems="{ row }">
+      <div class="flex gap-1 flex-wrap">
+        <span v-for="system in row.systems" v-bind:key="system" class="badge badge-sm badge-primary">
+          {{ system }}
+        </span>
+        <span v-if="row.systems.length === 0" class="text-sm text-base-content/50">
+          -
+        </span>
       </div>
     </template>
 
