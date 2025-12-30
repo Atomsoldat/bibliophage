@@ -3,6 +3,8 @@
 - DOC_DB_URL: MongoDB/FerretDB connection string for document storage (required)
 - EMBEDDING_MODEL_NAME: HuggingFace model for embeddings (optional, default: BAAI/bge-large-en-v1.5)
 - LOG_LEVEL: Logging level (optional, default: INFO)
+- OLLAMA_URL: Ollama API URL (optional, default: http://localhost:11435)
+- OLLAMA_DEFAULT_MODEL: Default Ollama model (optional, default: mistral)
 """
 
 
@@ -71,12 +73,34 @@ class LogConfig(BaseSettings):
     )
 
 
+class OllamaConfig(BaseSettings):
+    """Ollama LLM configuration."""
+
+    ollama_url: str = Field(
+        default="http://localhost:11435",
+        description="Ollama API URL",
+    )
+
+    ollama_default_model: str = Field(
+        default="mistral",
+        description="Default Ollama model",
+    )
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+
 class Settings(BaseSettings):
     """Application settings - aggregates all configuration."""
 
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
     log: LogConfig = Field(default_factory=LogConfig)
+    ollama: OllamaConfig = Field(default_factory=OllamaConfig)
 
     model_config = SettingsConfigDict(
         env_file=".env",

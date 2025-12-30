@@ -6,6 +6,9 @@ dc_resource('postgres-pgvector', labels=['databases'])
 dc_resource('postgres-documentdb', labels=['databases'])
 dc_resource('ferretdb', labels=['databases'])
 
+# Configure LLM service
+dc_resource('ollama', labels=['llm'])
+
 local_resource(
     'backend',
     serve_cmd='cd python-server && pixi run dev',
@@ -24,6 +27,9 @@ local_resource(
         # Database connections (12-factor: config from environment)
         'VECTOR_DB_URL': 'postgresql+psycopg://pgvector:pgvector_dev@localhost:5432/pgvector',
         'DOC_DB_URL': 'mongodb://postgres:ferretdb_dev@localhost:27017/',
+        # Ollama configuration
+        'OLLAMA_URL': 'http://localhost:11435',
+        'OLLAMA_DEFAULT_MODEL': 'mistral',
         # Optional: override defaults
         # 'EMBEDDING_MODEL_NAME': 'BAAI/bge-large-en-v1.5',
         # 'LOG_LEVEL': 'INFO',
@@ -67,6 +73,17 @@ local_resource(
     auto_init=False,  # Don't run automatically on startup
     trigger_mode=TRIGGER_MODE_MANUAL,
     labels=['tools'],
+)
+
+local_resource(
+    'ollama-pull-model',
+    cmd='docker exec bibliophage-ollama ollama pull $MODEL',
+    auto_init=False,
+    trigger_mode=TRIGGER_MODE_MANUAL,
+    labels=['llm'],
+    env={
+        'MODEL': 'mistral',  # Default model, can be overridden
+    },
 )
 
 local_resource(
