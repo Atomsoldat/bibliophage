@@ -193,9 +193,7 @@ class LLMClient:
                 "bullet_points": "Provide a summary as bullet points of key information.",
             }
 
-            instruction = style_instructions.get(
-                style, style_instructions["concise"]
-            )
+            instruction = style_instructions.get(style, style_instructions["concise"])
 
             if max_length:
                 instruction += f" Keep it under {max_length} words."
@@ -204,9 +202,7 @@ class LLMClient:
                 SystemMessage(
                     content="You are a helpful assistant that summarises text."
                 ),
-                HumanMessage(
-                    content=f"{instruction}\n\nText to summarise:\n{content}"
-                ),
+                HumanMessage(content=f"{instruction}\n\nText to summarise:\n{content}"),
             ]
 
             response = await self.chat_model.ainvoke(messages)

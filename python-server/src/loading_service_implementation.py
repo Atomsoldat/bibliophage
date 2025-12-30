@@ -122,9 +122,9 @@ class LoadingServiceImplementation:
                 "file_sise": len(pdf_bytes),
                 "publication_type": request.pdf.type,
                 "pdf": {
-                    "loading_batch_count": len(processing_result['processed_batches']),
+                    "loading_batch_count": len(processing_result["processed_batches"]),
                     "vector_chunk_count": vector_chunk_count,
-                    "page_count": processing_result['total_pages'],
+                    "page_count": processing_result["total_pages"],
                 },
             }
 
@@ -133,7 +133,7 @@ class LoadingServiceImplementation:
                 name=request.pdf.name,
                 systems=list(request.pdf.systems),
                 source_type=source_type,
-                content=processing_result['content'],
+                content=processing_result["content"],
                 doc_type=doc_type,
                 tags=tags,
                 created_at=now,
@@ -144,8 +144,8 @@ class LoadingServiceImplementation:
             stored_pdf = pdf_api.Pdf()
             stored_pdf.CopyFrom(request.pdf)
             stored_pdf.id = document_id
-            stored_pdf.page_count = processing_result['total_pages']
-            stored_pdf.batch_count = len(processing_result['processed_batches'])
+            stored_pdf.page_count = processing_result["total_pages"]
+            stored_pdf.batch_count = len(processing_result["processed_batches"])
             stored_pdf.vector_chunk_count = vector_chunk_count
             stored_pdf.file_size = len(pdf_bytes)
 
@@ -184,26 +184,38 @@ class LoadingServiceImplementation:
             if request.tag_filters:
                 tag_filters = []
                 for tag_filter in request.tag_filters:
-                    tag_filters.append({
-                        "name": tag_filter.name,
-                        "value": tag_filter.value,
-                    })
+                    tag_filters.append(
+                        {
+                            "name": tag_filter.name,
+                            "value": tag_filter.value,
+                        }
+                    )
 
             # Extract system filters
-            system_filters = list(request.system_filters) if request.system_filters else None
+            system_filters = (
+                list(request.system_filters) if request.system_filters else None
+            )
 
             # Search documents collection
             documents, total_count = await self.db.search_documents(
-                name_query=request.title_query if request.HasField("title_query") else None,
+                name_query=request.title_query
+                if request.HasField("title_query")
+                else None,
                 system_filters=system_filters,
-                type_filter=request.type_filter if request.HasField("type_filter") else None,
+                type_filter=request.type_filter
+                if request.HasField("type_filter")
+                else None,
                 tag_filters=tag_filters,
                 page_size=request.page_size if request.page_size > 0 else 50,
                 page_number=request.page_number if request.page_number >= 0 else 0,
             )
 
             # Filter to only include PDF-sourced documents (those with metadata.pdf)
-            pdf_documents = [doc for doc in documents if "metadata" in doc and "pdf" in doc.get("metadata", {})]
+            pdf_documents = [
+                doc
+                for doc in documents
+                if "metadata" in doc and "pdf" in doc.get("metadata", {})
+            ]
 
             # Convert database documents to PdfListItem protobuf objects
             found_pdfs = []
@@ -212,10 +224,16 @@ class LoadingServiceImplementation:
                     id=doc.get("_id", ""),
                     name=doc.get("name", ""),
                     type=doc.get("metadata", {}).get("publication_type", ""),
-                    page_count=doc.get("metadata", {}).get("pdf", {}).get("page_count", 0),
+                    page_count=doc.get("metadata", {})
+                    .get("pdf", {})
+                    .get("page_count", 0),
                     file_size=doc.get("metadata", {}).get("file_size", 0),
-                    batch_count=doc.get("metadata", {}).get("pdf", {}).get("loading_batch_count", 0),
-                    vector_chunk_count=doc.get("metadata", {}).get("pdf", {}).get("vector_chunk_count", 0),
+                    batch_count=doc.get("metadata", {})
+                    .get("pdf", {})
+                    .get("loading_batch_count", 0),
+                    vector_chunk_count=doc.get("metadata", {})
+                    .get("pdf", {})
+                    .get("vector_chunk_count", 0),
                 )
 
                 # Add systems array
@@ -306,8 +324,12 @@ class LoadingServiceImplementation:
                 type=doc.get("metadata", {}).get("publication_type", ""),
                 page_count=doc.get("metadata", {}).get("pdf", {}).get("page_count", 0),
                 file_size=doc.get("metadata", {}).get("file_size", 0),
-                batch_count=doc.get("metadata", {}).get("pdf", {}).get("loading_batch_count", 0),
-                vector_chunk_count=doc.get("metadata", {}).get("pdf", {}).get("vector_chunk_count", 0),
+                batch_count=doc.get("metadata", {})
+                .get("pdf", {})
+                .get("loading_batch_count", 0),
+                vector_chunk_count=doc.get("metadata", {})
+                .get("pdf", {})
+                .get("vector_chunk_count", 0),
             )
 
             # Add systems array

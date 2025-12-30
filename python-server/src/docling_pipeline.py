@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class BatchInfo(TypedDict):
     """Information about a processed batch."""
+
     batch_number: int
     start_page: int
     end_page: int
@@ -39,6 +40,7 @@ class BatchInfo(TypedDict):
 
 class PdfProcessingResult(TypedDict):
     """Result of PDF processing."""
+
     content: str
     total_pages: int
     processed_batches: list[BatchInfo]
