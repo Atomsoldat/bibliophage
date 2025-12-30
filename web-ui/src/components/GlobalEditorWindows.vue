@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useAppConsole } from '../composables/useAppConsole'
 import { useDocumentApi } from '../composables/useDocumentApi'
 import { useEditorWindows } from '../composables/useEditorWindows'
 import { useJournalRefresh } from '../composables/useJournalRefresh'
+import { useLogger } from '../composables/useLogger'
 import TextEditorWindow from './TextEditorWindow.vue'
 
 const {
@@ -17,7 +17,7 @@ const {
 } = useEditorWindows()
 
 const api = useDocumentApi()
-const { log } = useAppConsole()
+const logger = useLogger()
 const { triggerRefresh } = useJournalRefresh()
 
 // Store refs to editor window components
@@ -39,14 +39,14 @@ onMounted(async () => {
     console.log('[GlobalEditorWindows] API initialized successfully')
   }
   catch (error) {
-    log(`Failed to initialize API: ${(error as Error).message}`, 'error')
+    logger.error(`Failed to initialize API: ${(error as Error).message}`)
   }
 })
 
 async function handleSave(windowId: string) {
   const window = getWindow(windowId)
   if (!window) {
-    log('Window not found', 'error')
+    logger.error('Window not found')
     return
   }
 
@@ -61,7 +61,7 @@ async function handleSave(windowId: string) {
           documentId: response.document.id,
           isNew: false,
         })
-        log(`Document created: ${response.document.id}`, 'success')
+        logger.success(`Document created: ${response.document.id}`)
         // Trigger journal list refresh to fetch new document from backend
         triggerRefresh()
         // Switch to preview mode after successful save
@@ -75,7 +75,7 @@ async function handleSave(windowId: string) {
         content: window.content,
       })
       if (response?.success) {
-        log('Document updated', 'success')
+        logger.success('Document updated')
         // Trigger journal list refresh to fetch updated document from backend
         triggerRefresh()
         // Switch to preview mode after successful save
@@ -84,14 +84,14 @@ async function handleSave(windowId: string) {
     }
   }
   catch (error) {
-    log(`Error while saving document: ${(error as Error).message}`, 'error')
+    logger.error(`Error while saving document: ${(error as Error).message}`)
   }
 }
 
 function handleDiscard(windowId: string) {
   // TODO: Add confirmation dialog for unsaved changes
   closeWindow(windowId)
-  log('Document discarded', 'info')
+  logger.info('Document discarded')
 }
 </script>
 

@@ -12,12 +12,12 @@ import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
 import { PdfService } from '../bibliophage/v1alpha3/pdf_connect.ts'
 import { SearchPdfsRequest } from '../bibliophage/v1alpha3/pdf_pb.ts'
 import DataTable from '../components/DataTable.vue'
-import { useAppConsole } from '../composables/useAppConsole.ts'
 import { useConfig } from '../composables/useConfig.ts'
 import { useEditorWindows } from '../composables/useEditorWindows.ts'
+import { useLogger } from '../composables/useLogger.ts'
 
 const { config, loadConfig } = useConfig()
-const { log } = useAppConsole()
+const logger = useLogger()
 const { openWindow } = useEditorWindows()
 
 // Client will be initialized after config loads
@@ -168,7 +168,7 @@ function buildSearchPdfsRequest(): SearchPdfsRequest {
 
 async function handleSearchSubmit() {
   if (!client.value) {
-    log('Error: Client not initialized. Configuration may not be loaded yet.', 'error')
+    logger.error('Error: Client not initialized. Configuration may not be loaded yet.')
     return
   }
 
@@ -176,17 +176,17 @@ async function handleSearchSubmit() {
 
   try {
     const request = buildSearchPdfsRequest()
-    log('Searching for PDFs...', 'info')
+    logger.info('Searching for PDFs...')
 
     const response = await client.value.searchPdfs(request)
 
     // Store the results
     pdfs.value = response.pdfs
-    log(`Success! Found ${response.totalCount} PDFs`, 'success')
-    log(`Returned ${response.pdfs.length} results on page ${response.pageNumber}`, 'info')
+    logger.success(`Success! Found ${response.totalCount} PDFs`)
+    logger.info(`Returned ${response.pdfs.length} results on page ${response.pageNumber}`)
   }
   catch (error) {
-    log(`Error during PDF search: ${(error as Error).message}`, 'error')
+    logger.error(`Error during PDF search: ${(error as Error).message}`)
   }
   finally {
     loading.value = false
@@ -196,12 +196,12 @@ async function handleSearchSubmit() {
 // Open a global editor window for the selected document
 async function handleEditDocument(pdf: PdfListItem) {
   if (!client.value) {
-    log('Error: Client not initialized', 'error')
+    logger.error('Error: Client not initialized')
     return
   }
 
   try {
-    log(`Fetching content for: ${pdf.name}`, 'info')
+    logger.info(`Fetching content for: ${pdf.name}`)
 
     // Import the necessary types
     const { GetPdfRequest } = await import('../bibliophage/v1alpha3/pdf_pb.ts')
@@ -211,7 +211,7 @@ async function handleEditDocument(pdf: PdfListItem) {
     const response = await client.value.getPdf(request)
 
     if (!response.success || !response.pdf) {
-      log(`Failed to fetch PDF: ${response.message}`, 'error')
+      logger.error(`Failed to fetch PDF: ${response.message}`)
       return
     }
 
@@ -223,10 +223,10 @@ async function handleEditDocument(pdf: PdfListItem) {
       isNew: false,
     })
 
-    log(`Opened editor for: ${response.pdf.name} (${response.pdf.content?.length || 0} characters)`, 'success')
+    logger.success(`Opened editor for: ${response.pdf.name} (${response.pdf.content?.length || 0} characters)`)
   }
   catch (error) {
-    log(`Error fetching PDF: ${(error as Error).message}`, 'error')
+    logger.error(`Error fetching PDF: ${(error as Error).message}`)
   }
 }
 </script>
