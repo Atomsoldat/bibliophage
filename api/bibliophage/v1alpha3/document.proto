@@ -1,0 +1,239 @@
+syntax = "proto3";
+
+package bibliophage.v1alpha3;
+
+import "bibliophage/v1alpha3/common.proto";
+import "google/protobuf/timestamp.proto";
+
+// Service definitions - the API endpoints
+service DocumentService {
+  rpc StoreDocument(StoreDocumentRequest) returns (StoreDocumentResponse);
+  rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse);
+  rpc UpdateDocument(UpdateDocumentRequest) returns (UpdateDocumentResponse);
+  rpc SearchDocuments(SearchDocumentsRequest) returns (SearchDocumentsResponse);
+  rpc DeleteDocument(DeleteDocumentRequest) returns (DeleteDocumentResponse);
+}
+
+// ============================================================================
+// Data Objects - Reusable entities that represent core domain models
+// ============================================================================
+
+// Document represents a text document in the system
+// this type actually contains the raw data it represents
+// which is different from  how we handle PDFs
+// the rationale here is that text documents are probably
+// not as large as full blown PDFs, and then we do not have
+// to worry about keeping server and client synchronised
+message Document {
+  // Unique identifier for this document (assigned by the system)
+  string id = 1;
+
+  // Human-readable name (e.g., "My Campaign Notes", "NPC: Elara Brightwood")
+  string name = 2;
+
+  // Raw text content of the document
+  string content = 3;
+
+  // Type of document (categorization)
+  DocumentType type = 4;
+
+  // When this document was created
+  google.protobuf.Timestamp created_at = 5;
+
+  // When this document was last updated
+  google.protobuf.Timestamp updated_at = 6;
+
+  // Structured tags for organization (name + multiple values)
+  repeated Tag tags = 7;
+
+  // Character count (for display purposes)
+  int32 character_count = 8;
+
+  // Source authority for LLM context weighting
+  SourceType source_type = 9;
+}
+
+// DocumentListItem represents a document in list/search results
+// Contains metadata and a content snippet, but not the full content
+// This enforces bandwidth efficiency - clients cannot request full content in searches
+message DocumentListItem {
+  // Unique identifier for this document
+  string id = 1;
+
+  // Human-readable name
+  string name = 2;
+
+  // Short excerpt from the content (max ~200 characters)
+  // May be empty if the document has no content
+  // Use GetDocument RPC to retrieve full content
+  string content_snippet = 3;
+
+  // Type of document
+  DocumentType type = 4;
+
+  // When this document was created
+  google.protobuf.Timestamp created_at = 5;
+
+  // When this document was last updated
+  google.protobuf.Timestamp updated_at = 6;
+
+  // Structured tags for organization
+  repeated Tag tags = 7;
+
+  // Character count of full document (not the snippet)
+  int32 character_count = 8;
+
+  // Source authority for LLM context weighting
+  SourceType source_type = 9;
+}
+
+// Enums for strict classification of data
+enum DocumentType {
+  DOCUMENT_TYPE_UNSPECIFIED = 0; // Default/unknown
+  NOTE = 1; // General notes, least specific
+  LORE_FRAGMENT = 2; // Authoritative lore/world information
+  CHARACTER = 3; // PCs, NPCs, historical figures
+  LOCATION = 4; // Places, regions, buildings
+  OBJECT = 5; // Possessions, items, artifacts
+  QUEST = 6; // Quests, missions, plot hooks
+  SESSION_LOG = 7; // Session summaries, game logs
+}
+
+// SourceType categorizes who created  a document or where a document came from
+// Used to weight authority when constructing LLM context
+enum SourceType {
+  SOURCE_TYPE_UNSPECIFIED = 0; // Default/unknown
+  RULEBOOK = 1;                 // Official published rules (highest authority)
+  SUPPLEMENT = 2;               // Official expansions/supplements
+  GM_NOTES = 3;                 // Game master's notes and preparations
+  PLAYER_NOTES = 4;             // Player character journals/notes
+  SESSION_LOG_RECORD = 5;       // Actual play session records
+  GENERATED = 6;                // LLM-generated content
+  COMMUNITY = 7;                // Community/fan-created content
+}
+
+// ============================================================================
+// Request/Response Messages - Operation-specific wrappers
+// ============================================================================
+
+// StoreDocumentRequest - Create a new document
+message StoreDocumentRequest {
+  // The document to store (ID will be assigned by server)
+  Document document = 1;
+}
+
+// StoreDocumentResponse - Result of storing a document
+message StoreDocumentResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // The stored document with assigned ID
+  Document document = 3;
+}
+
+// GetDocumentRequest - Retrieve a specific document by ID
+message GetDocumentRequest {
+  // The unique ID of the document to retrieve
+  string id = 1;
+}
+
+// GetDocumentResponse - Result of getting a document
+message GetDocumentResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // The requested document (null if not found)
+  optional Document document = 3;
+}
+
+// UpdateDocumentRequest - Update an existing document
+message UpdateDocumentRequest {
+  // The document to update (must include ID)
+  Document document = 1;
+}
+
+// UpdateDocumentResponse - Result of updating a document
+message UpdateDocumentResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // The updated document
+  Document document = 3;
+}
+
+// DocumentFilter - Reusable filter criteria for document searches
+// This can be used across different search endpoints and services
+message DocumentFilter {
+  // Search by name (partial match, case-insensitive)
+  optional string name_query = 1;
+
+  // Search by content (partial match, case-insensitive)
+  optional string content_query = 2;
+
+  // Filter by type (exact match)
+  optional DocumentType type_filter = 3;
+
+  // Filter by tags (documents must match ALL specified tag filters)
+  // Example: [{"name": "genre", "value": "fantasy"}, {"name": "tone", "value": "dark"}]
+  // would match documents that have both genre=fantasy AND tone=dark
+  repeated TagFilter tag_filters = 4;
+}
+
+// SearchDocumentsRequest - Search for documents by various criteria
+message SearchDocumentsRequest {
+  // Filter criteria (all fields are optional)
+  optional DocumentFilter filter = 1;
+
+  // Pagination (optional, server applies defaults if not specified)
+  optional int32 page_size = 2; // Max results to return (default: 50)
+  optional int32 page_number = 3; // Which page of results (0-indexed, default: 0)
+
+  // Sorting
+  optional SortOrder sort_order = 4;
+}
+
+// SearchDocumentsResponse - Results of document search
+message SearchDocumentsResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // Array of matching document summaries (with snippets, not full content)
+  // To retrieve full content, use GetDocument RPC with the document ID
+  repeated DocumentListItem matches = 3;
+
+  // Total number of results (for pagination)
+  int32 total_count = 4;
+
+  // Current page number
+  int32 page_number = 5;
+
+  // Whether there are more pages
+  bool has_more = 6;
+}
+
+// DeleteDocumentRequest - Delete a document by ID
+message DeleteDocumentRequest {
+  // The unique ID of the document to delete
+  string id = 1;
+}
+
+// DeleteDocumentResponse - Result of deleting a document
+message DeleteDocumentResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+}
