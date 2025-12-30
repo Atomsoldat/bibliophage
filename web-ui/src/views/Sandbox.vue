@@ -4,13 +4,13 @@ import { ChunkType } from '../bibliophage/v1alpha3/chat_pb'
 import ChatInput from '../components/chat/ChatInput.vue'
 import ChatMessage from '../components/chat/ChatMessage.vue'
 import DocumentPicker from '../components/chat/DocumentPicker.vue'
-import { useAppConsole } from '../composables/useAppConsole'
 import { useChatApi } from '../composables/useChatApi'
 import { useChatState } from '../composables/useChatState'
+import { useLogger } from '../composables/useLogger'
 
 const chatApi = useChatApi()
 const chatState = useChatState()
-const console = useAppConsole()
+const logger = useLogger()
 
 const messagesContainer = ref<HTMLElement | null>(null)
 const currentMetadata = ref<any>(null)
@@ -29,6 +29,12 @@ async function handleSend(message: string) {
   // Scroll to bottom
   await scrollToBottom()
 
+  // Debug info (browser console only)
+  logger.debug('Starting chat stream', {
+    message,
+    contextDocs: chatState.selectedDocuments.value.length,
+  })
+
   try {
     // Stream response from backend
     await chatApi.streamChat(
@@ -42,25 +48,30 @@ async function handleSend(message: string) {
         }
         else if (chunk.type === ChunkType.METADATA) {
           currentMetadata.value = chunk.metadata
-          console.log(
+          // User-facing notification
+          logger.notify(
             `Using ${chunk.metadata?.contextDocuments.length || 0} context documents`,
             'info',
           )
+          // Technical details (browser only)
+          logger.debug('Context metadata', chunk.metadata)
         }
         else if (chunk.type === ChunkType.DONE) {
           chatState.finishStreaming()
-          console.log('Response complete', 'success')
+          logger.success('Response complete')
         }
         else if (chunk.type === ChunkType.ERROR) {
           chatState.finishStreaming()
-          console.log(`Error: ${chunk.content}`, 'error')
+          // Show error to user and log details for debugging
+          logger.error(`Error: ${chunk.content}`)
         }
       },
     )
   }
   catch (error) {
     chatState.finishStreaming()
-    console.log(`Failed to send message: ${error}`, 'error')
+    // Both consoles get error notification (default behavior)
+    logger.error(`Failed to send message: ${error}`, 'both', error)
   }
 }
 

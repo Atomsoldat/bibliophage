@@ -11,13 +11,13 @@ import { computed, onBeforeMount, ref } from 'vue'
 import { DocumentService } from '../bibliophage/v1alpha3/document_connect.ts'
 import { DeleteDocumentRequest, DocumentType, GetDocumentRequest, SearchDocumentsRequest } from '../bibliophage/v1alpha3/document_pb.ts'
 import DataTable from '../components/DataTable.vue'
-import { useAppConsole } from '../composables/useAppConsole'
 import { useConfig } from '../composables/useConfig'
 import { useEditorWindows } from '../composables/useEditorWindows'
 import { useJournalRefresh } from '../composables/useJournalRefresh'
+import { useLogger } from '../composables/useLogger'
 
 const { config, loadConfig } = useConfig()
-const { log } = useAppConsole()
+const logger = useLogger()
 const { openWindow } = useEditorWindows()
 const { onRefreshTriggered } = useJournalRefresh()
 
@@ -99,7 +99,7 @@ function buildSearchDocumentsRequest(): SearchDocumentsRequest {
 
 async function handleSearchSubmit() {
   if (!client.value) {
-    log('Error: Client not initialized. Configuration may not be loaded yet.', 'error')
+    logger.error('Error: Client not initialized. Configuration may not be loaded yet.')
     return
   }
 
@@ -107,16 +107,16 @@ async function handleSearchSubmit() {
 
   try {
     const request = buildSearchDocumentsRequest()
-    log('Searching for journal entries...', 'info')
+    logger.info('Searching for journal entries...')
 
     const response = await client.value.searchDocuments(request)
 
     // Store the results
     entries.value = response.matches
-    log(`Success! Found ${response.matches.length} journal entries`, 'success')
+    logger.success(`Success! Found ${response.matches.length} journal entries`)
   }
   catch (error) {
-    log(`Error during document search: ${(error as Error).message}`, 'error')
+    logger.error(`Error during document search: ${(error as Error).message}`)
   }
   finally {
     loading.value = false
@@ -156,7 +156,7 @@ function handleNewEntry() {
     documentId: '',
     isNew: true,
   })
-  log('Opened new journal entry', 'info')
+  logger.info('Opened new journal entry')
 }
 
 async function fetchDocument(id: string): Promise<Document> {
@@ -178,7 +178,7 @@ async function fetchDocument(id: string): Promise<Document> {
 
 async function handleEditEntry(entry: DocumentListItem) {
   try {
-    log(`Opening: ${entry.name}`, 'info')
+    logger.info(`Opening: ${entry.name}`)
     const document = await fetchDocument(entry.id)
     if (!document.content) {
       throw new Error('API returned document with empty content, refusing to edit out of caution')
@@ -191,21 +191,21 @@ async function handleEditEntry(entry: DocumentListItem) {
       isNew: false,
     })
 
-    log(`Opened editor for: ${entry.name}`, 'success')
+    logger.success(`Opened editor for: ${entry.name}`)
   }
   catch (error) {
-    log(`Error opening document: ${(error as Error).message}`, 'error')
+    logger.error(`Error opening document: ${(error as Error).message}`)
   }
 }
 
 async function handleBulkDelete() {
   if (!client.value) {
-    log('Error: Client not initialized.', 'error')
+    logger.error('Error: Client not initialized.')
     return
   }
 
   if (selectedIds.value.size === 0) {
-    log('No entries selected for deletion', 'warning')
+    logger.warn('No entries selected for deletion')
     return
   }
 
@@ -226,7 +226,7 @@ async function handleBulkDelete() {
 
     await Promise.all(deletePromises)
 
-    log(`Successfully deleted ${count} ${count === 1 ? 'entry' : 'entries'}`, 'success')
+    logger.success(`Successfully deleted ${count} ${count === 1 ? 'entry' : 'entries'}`)
 
     // Clear selections
     selectedIds.value.clear()
@@ -235,7 +235,7 @@ async function handleBulkDelete() {
     await handleSearchSubmit()
   }
   catch (error) {
-    log(`Error deleting entries: ${(error as Error).message}`, 'error')
+    logger.error(`Error deleting entries: ${(error as Error).message}`)
   }
   finally {
     loading.value = false

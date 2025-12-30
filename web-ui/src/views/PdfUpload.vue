@@ -13,11 +13,11 @@ import { ChunkingConfig, LoadPdfRequest, Pdf } from '../bibliophage/v1alpha3/pdf
 import BaseCard from '../components/BaseCard.vue'
 import FormField from '../components/forms/FormField.vue'
 import FormSelect from '../components/forms/FormSelect.vue'
-import { useAppConsole } from '../composables/useAppConsole'
 import { useConfig } from '../composables/useConfig'
+import { useLogger } from '../composables/useLogger'
 
 const { config, loadConfig } = useConfig()
-const { log } = useAppConsole()
+const logger = useLogger()
 
 // Client will be initialized after config loads
 // see https://connectrpc.com/docs/node/using-clients/#connect
@@ -108,38 +108,38 @@ async function handleFormSubmit() {
   }
 
   if (!client.value) {
-    log('Error: Client not initialized. Configuration may not be loaded yet.', 'error')
+    logger.error('Error: Client not initialized. Configuration may not be loaded yet.')
     return
   }
 
   // show cute loading animation
   loading.value = true
 
-  log(`Connecting to server at ${config.value.backendHost}...`, 'info')
-  log(`File: ${pdfFile.value.name}`, 'info')
-  log(`PDF Name: ${pdfName.value}`, 'info')
-  log(`Systems: ${[rpgSystem.value].join(', ')}`, 'info')
-  log(`Type: ${publicationType.value}`, 'info')
+  logger.info(`Connecting to server at ${config.value.backendHost}...`)
+  logger.info(`File: ${pdfFile.value.name}`)
+  logger.info(`PDF Name: ${pdfName.value}`)
+  logger.info(`Systems: ${[rpgSystem.value].join(', ')}`)
+  logger.info(`Type: ${publicationType.value}`)
 
   try {
     const fileData = new Uint8Array(await pdfFile.value.arrayBuffer())
     const request = buildPdfLoadRequest(fileData)
-    log('Loading PDF...', 'info')
+    logger.info('Loading PDF...')
 
     // Make the Connect-RPC call (async)
-    log('Sending Request...', 'info')
+    logger.info('Sending Request...')
     const response = await client.value.loadPdf(request)
 
-    log('Upload successful!', 'success')
-    log(`PDF ID: ${response.pdf?.id}`, 'success')
-    log(`Pages: ${response.pdf?.pageCount}`, 'info')
-    log(`Batches: ${response.pdf?.batchCount}`, 'info')
-    log(`Vector Chunks: ${response.pdf?.vectorChunkCount}`, 'info')
-    log(`File Size: ${response.pdf?.fileSize} bytes`, 'info')
+    logger.success('Upload successful!')
+    logger.success(`PDF ID: ${response.pdf?.id}`)
+    logger.info(`Pages: ${response.pdf?.pageCount}`)
+    logger.info(`Batches: ${response.pdf?.batchCount}`)
+    logger.info(`Vector Chunks: ${response.pdf?.vectorChunkCount}`)
+    logger.info(`File Size: ${response.pdf?.fileSize} bytes`)
   }
   catch (error) {
     // TODO: check if we are correctly handling timeouts
-    log(`Error during upload: ${(error as Error).message}`, 'error')
+    logger.error(`Error during upload: ${(error as Error).message}`)
   }
   finally {
     loading.value = false
