@@ -2,26 +2,14 @@ import logging
 import traceback
 import uuid
 from datetime import datetime, timezone
-from pathlib import Path
-from tempfile import NamedTemporaryFile
-import gc
 
 from google.protobuf import timestamp_pb2
-from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
-from docling.datamodel.base_models import ConversionStatus, InputFormat
-from docling.datamodel.pipeline_options import ThreadedPdfPipelineOptions
-from docling.document_converter import DocumentConverter, PdfFormatOption
 
 import bibliophage.v1alpha3.pdf_pb2 as pdf_api
 import bibliophage.v1alpha3.document_pb2 as doc_api
 from config import get_settings
 from database import get_database
-from batch_size_calculator import calculate_batch_size
-from pdf_outline_inspector import (
-    inspect_pdf_outline,
-    analyze_outline_for_batching,
-    get_pdf_page_count,
-)
+from docling_pipeline import DoclingPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -37,25 +25,22 @@ class LoadingServiceImplementation:
     """
 
     def __init__(self):
-        """Initialize the loading service with configuration from environment variables."""
+        """Initialise the loading service with configuration from environment variables."""
         settings = get_settings()
 
         self.db = get_database()
 
-        # Initialize docling pipeline options
+        # Initialise docling pipeline
         # TODO: Make these configurable via environment variables or request parameters
-        self.pipeline_options = ThreadedPdfPipelineOptions(
-            accelerator_options=AcceleratorOptions(
-                device=AcceleratorDevice.CUDA,
-            ),
+        self.docling_pipeline = DoclingPipeline(
             ocr_batch_size=4,
             layout_batch_size=64,
             table_batch_size=4,
+            do_ocr=False,
         )
-        self.pipeline_options.do_ocr = False
 
         logger.info(
-            "Loading service initialized with Docling pipeline and database repository"
+            "Loading service initialised with Docling pipeline and database repository"
         )
 
     async def load_pdf(self, request: pdf_api.LoadPdfRequest, ctx):
@@ -63,11 +48,10 @@ class LoadingServiceImplementation:
         Load a PDF using docling's batch processing pipeline.
 
         This method:
-        1. Writes PDF bytes to a temporary file
-        2. Calculates optimal batch size based on system memory
-        3. Processes PDF pages in batches using docling's DocumentConverter
-        4. Stores the result as a Document in the unified documents collection
-        5. Returns LoadPdfResponse with PDF metadata
+        1. Validates the request
+        2. Processes PDF using the Docling pipeline
+        3. Stores the result as a Document in the unified documents collection
+        4. Returns LoadPdfResponse with PDF metadata
 
         Args:
             request: LoadPdfRequest containing PDF metadata and file data
@@ -89,173 +73,17 @@ class LoadingServiceImplementation:
 
             pdf_bytes = request.file_data
 
-            # Write PDF to temporary file for processing
-            # Using 'with' ensures cleanup after processing
-            with NamedTemporaryFile(delete=True, suffix=".pdf") as tmp:
-                tmp.write(pdf_bytes)
-                tmp.flush()
-                tmp_path = Path(tmp.name)
-                logger.info(f"Temporary file created: {tmp_path}")
+            # Process PDF using Docling pipeline
+            logger.info("Processing PDF with Docling pipeline...")
+            processing_result = self.docling_pipeline.process_pdf(
+                pdf_bytes=pdf_bytes,
+                pdf_name=request.pdf.name,
+                use_smart_batching=True,
+                memory_per_page_mb=67.8,  # TODO: Make configurable
+            )
 
-                # Calculate optimal batch size based on system memory
-                # For table-heavy PDFs: 67.8 MB/page (default)
-                # For text-heavy PDFs: use 40.0 MB/page
-                # For image-heavy PDFs: use 100.0 MB/page
-                logger.info("Calculating optimal batch size...")
-                batch_config = calculate_batch_size(memory_per_page_mb=67.8)
-                logger.info(f"Batch configuration: {batch_config}")
-                batch_size = batch_config["recommended_batch_size"]
-
-                # Get total page count
-                logger.info(f"Reading PDF metadata from {request.pdf.name}...")
-                total_pages = get_pdf_page_count(tmp_path)
-                logger.info(f"PDF has {total_pages} pages")
-
-                # Try smart batching based on PDF outline
-                # TODO: Make configurable
-                batches = []
-                use_smart_batching = True
-
-                if use_smart_batching:
-                    logger.info("Attempting smart batching based on PDF outline...")
-                    try:
-                        outline_result = inspect_pdf_outline(tmp_path)
-                        if outline_result["has_outline"]:
-                            batches = analyze_outline_for_batching(
-                                outline_result["outline_items"], total_pages, batch_size
-                            )
-                            if batches:
-                                logger.info(
-                                    f"✓ Smart batching enabled: {len(batches)} chapter-based batches"
-                                )
-                                logger.info(
-                                    f"  Batch sizes range from {min(b[1] - b[0] + 1 for b in batches)} to {max(b[1] - b[0] + 1 for b in batches)} pages"
-                                )
-                            else:
-                                logger.warning(
-                                    "Could not create smart batches from outline"
-                                )
-                        else:
-                            logger.info("PDF has no outline/bookmarks")
-                    except Exception as e:
-                        logger.warning(f"Smart batching failed: {e}")
-
-                # Fall back to fixed-size batching
-                if not batches:
-                    logger.info(
-                        f"Using fixed-size batching: {batch_size} pages per batch"
-                    )
-                    batches = []
-                    for i in range(0, total_pages, batch_size):
-                        start = i + 1
-                        end = min(i + batch_size, total_pages)
-                        batches.append((start, end, f"Pages {start}-{end}"))
-
-                num_batches = len(batches)
-                logger.info(f"Will process in {num_batches} batches")
-
-                # Initialize docling converter with pipeline options
-                doc_converter = DocumentConverter(
-                    format_options={
-                        InputFormat.PDF: PdfFormatOption(
-                            pipeline_options=self.pipeline_options,
-                        )
-                    }
-                )
-
-                # Initialize pipeline once (reused across batches)
-                doc_converter.initialize_pipeline(InputFormat.PDF)
-                logger.info("Pipeline initialized")
-
-                # Process batches and collect results
-                processed_batches = []
-                successful_batches = 0
-                failed_batches = 0
-
-                for batch_num, (start_page, end_page, description) in enumerate(
-                    batches
-                ):
-                    pages_in_batch = end_page - start_page + 1
-
-                    logger.info("=" * 60)
-                    logger.info(
-                        f"BATCH {batch_num + 1}/{num_batches}: Pages {start_page}-{end_page} ({pages_in_batch} pages)"
-                    )
-                    logger.info(f"  Content: {description}")
-                    logger.info("=" * 60)
-
-                    try:
-                        # Convert this batch of pages
-                        conv_result = doc_converter.convert(
-                            tmp_path, page_range=(start_page, end_page)
-                        )
-
-                        if conv_result.status != ConversionStatus.SUCCESS:
-                            logger.warning(
-                                f"Batch {batch_num + 1} conversion status: {conv_result.status}"
-                            )
-                            failed_batches += 1
-                            processed_batches.append(
-                                {
-                                    "batch_number": batch_num + 1,
-                                    "start_page": start_page,
-                                    "end_page": end_page,
-                                    "description": description,
-                                    "status": str(conv_result.status),
-                                    "markdown": None,
-                                    "success": False,
-                                }
-                            )
-                            continue
-
-                        # Export batch to markdown
-                        batch_markdown = conv_result.document.export_to_markdown()
-
-                        processed_batches.append(
-                            {
-                                "batch_number": batch_num + 1,
-                                "start_page": start_page,
-                                "end_page": end_page,
-                                "description": description,
-                                "status": "SUCCESS",
-                                "markdown": batch_markdown,
-                                "success": True,
-                            }
-                        )
-
-                        successful_batches += 1
-                        logger.info(f"Batch {batch_num + 1} complete")
-
-                        # Free memory before next batch
-                        del conv_result
-                        del batch_markdown
-                        gc.collect()
-
-                    except Exception as e:
-                        logger.error(f"Batch {batch_num + 1} failed with error: {e}")
-                        failed_batches += 1
-                        processed_batches.append(
-                            {
-                                "batch_number": batch_num + 1,
-                                "start_page": start_page,
-                                "end_page": end_page,
-                                "description": description,
-                                "status": "ERROR",
-                                "error": str(e),
-                                "success": False,
-                            }
-                        )
-                        gc.collect()
-
-            # Concatenate markdown from all successful batches into single content string
-            markdown_parts = []
-            for batch in processed_batches:
-                if batch.get("success") and "markdown" in batch:
-                    markdown_parts.append(batch["markdown"])
-
-            concatenated_content = "\n\n".join(markdown_parts)
             logger.info(
-                f"Concatenated {len(markdown_parts)} batches into {len(concatenated_content)} characters of markdown"
+                f"PDF processing complete: {processing_result['successful_batches']}/{len(processing_result['processed_batches'])} batches succeeded"
             )
 
             # Store as Document in unified documents collection
@@ -291,12 +119,12 @@ class LoadingServiceImplementation:
 
             # Create metadata for PDF-sourced document
             metadata = {
-                "file_size": len(pdf_bytes),
+                "file_sise": len(pdf_bytes),
                 "publication_type": request.pdf.type,
                 "pdf": {
-                    "loading_batch_count": len(processed_batches),
+                    "loading_batch_count": len(processing_result['processed_batches']),
                     "vector_chunk_count": vector_chunk_count,
-                    "page_count": total_pages,
+                    "page_count": processing_result['total_pages'],
                 },
             }
 
@@ -305,7 +133,7 @@ class LoadingServiceImplementation:
                 name=request.pdf.name,
                 systems=list(request.pdf.systems),
                 source_type=source_type,
-                content=concatenated_content,
+                content=processing_result['content'],
                 doc_type=doc_type,
                 tags=tags,
                 created_at=now,
@@ -316,8 +144,8 @@ class LoadingServiceImplementation:
             stored_pdf = pdf_api.Pdf()
             stored_pdf.CopyFrom(request.pdf)
             stored_pdf.id = document_id
-            stored_pdf.page_count = total_pages
-            stored_pdf.batch_count = len(processed_batches)
+            stored_pdf.page_count = processing_result['total_pages']
+            stored_pdf.batch_count = len(processing_result['processed_batches'])
             stored_pdf.vector_chunk_count = vector_chunk_count
             stored_pdf.file_size = len(pdf_bytes)
 
@@ -329,7 +157,7 @@ class LoadingServiceImplementation:
 
             return pdf_api.LoadPdfResponse(
                 success=True,
-                message=f"PDF {request.pdf.name} processed successfully ({successful_batches}/{len(processed_batches)} batches)",
+                message=f"PDF {request.pdf.name} processed successfully ({processing_result['successful_batches']}/{len(processing_result['processed_batches'])} batches)",
                 pdf=stored_pdf,
             )
 
