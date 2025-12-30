@@ -5,8 +5,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from bibliophage.v1alpha2.document_connect import DocumentServiceASGIApplication
-from bibliophage.v1alpha2.pdf_connect import PdfServiceASGIApplication
+from bibliophage.v1alpha3.document_connect import DocumentServiceASGIApplication
+from bibliophage.v1alpha3.pdf_connect import PdfServiceASGIApplication
 from document_service_implementation import DocumentServiceImplementation
 from loading_service_implementation import LoadingServiceImplementation
 from database import get_database
