@@ -292,12 +292,12 @@ async function handleBulkDelete() {
       :columns="columns"
       :loading="loading"
       :selectable="true"
+      :select-on-row-click="true"
       :enable-column-visibility="true"
       table-id="journal"
       row-key="id"
       empty-message="No journal entries yet"
       empty-description="Click 'New Entry' to create your first journal entry"
-      @row-click="handleEditEntry"
     >
       <!-- Custom rendering for Name column with preview -->
       <template #cell-name="{ row }">

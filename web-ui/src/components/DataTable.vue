@@ -33,6 +33,8 @@ interface Props {
   loading?: boolean
   /** Whether to show selection checkboxes */
   selectable?: boolean
+  /** Enable selecting rows by clicking on the entire row, not just the checkbox */
+  selectOnRowClick?: boolean
   /** Property name to use as unique row key */
   rowKey?: keyof T
   /** Message to display when table is empty */
@@ -50,6 +52,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
   selectable: false,
+  selectOnRowClick: false,
   rowKey: 'id' as keyof T,
   emptyMessage: 'No data available',
   emptyDescription: 'There are no items to display',
@@ -184,7 +187,12 @@ function resetToDefaults(): void {
  * Handle row click event
  */
 function handleRowClick(row: T, index: number) {
-  emit('rowClick', row, index)
+  if (props.selectOnRowClick) {
+    toggleSelection(row)
+  }
+  else {
+    emit('rowClick', row, index)
+  }
 }
 </script>
 
