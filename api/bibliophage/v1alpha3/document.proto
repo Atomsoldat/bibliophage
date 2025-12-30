@@ -21,64 +21,66 @@ service DocumentService {
 // PDF-specific metadata for documents sourced from PDFs
 message PdfData {
   // Number of batches processed by Docling
-  int32 batch_count = 1;
+  int32 loading_batch_count = 1;
 
   // Number of text chunks created for vector embeddings
   int32 vector_chunk_count = 2;
+
+  // Number of pages in the source material
+  int32 page_count = 3;
 }
 
 // Metadata for file-based content (PDFs, scanned books, etc.)
 // Populated when DocumentType indicates file-based content
 message Metadata {
-  // Number of pages in the source material
-  int32 page_count = 1;
 
   // File size in bytes
-  int64 file_size = 2;
+  int64 file_size = 1;
 
   // Publication type (e.g., "Core Rulebook", "Adventure", "Supplement")
-  optional string publication_type = 3;
+  optional string publication_type = 2;
 
   // PDF-specific data (only populated for PDF-sourced documents)
-  optional PdfData pdf = 10;
+  optional PdfData pdf = 3;
 }
 
 // Document represents any content in the system (user-created or loaded from files)
 message Document {
+
   // Unique identifier for this document (assigned by the system)
   string id = 1;
 
   // Human-readable name (e.g., "My Campaign Notes", "Player's Handbook")
   string name = 2;
 
-  // Raw text content of the document (markdown formatted for PDFs, user notes should be treated as plain text) 
-  string content = 3;
+  // Source type for LLM context weighting
+  SourceType source_type = 3;
+
+  // Metadata for file-based content (populated when type indicates file-based content)
+  optional Metadata metadata = 4;
+
+  // Raw text content of the document (markdown formatted for PDFs, user notes should be treated as plain text)
+  string content = 5;
 
   // Type of document (categorization)
-  DocumentType type = 4;
+  DocumentType type = 6;
 
   // Which RPG system(s) this document belongs to
   // Examples: ["Call of Cthulhu"], ["D&D 3.5e", "Pathfinder 1e"], ["Generic"]
   // Must contain at least one value
-  repeated string systems = 5;
+  repeated string systems = 7;
 
   // When this document was created
-  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp created_at = 8;
 
   // When this document was last updated
-  google.protobuf.Timestamp updated_at = 7;
+  google.protobuf.Timestamp updated_at = 9;
 
   // Structured tags for organization (name + multiple values)
-  repeated Tag tags = 8;
+  repeated Tag tags = 10;
 
-  // Character count (for display purposes)
-  int32 character_count = 9;
-
-  // Source authority for LLM context weighting
-  SourceType source_type = 10;
-
-  // Metadata for file-based content (populated when type indicates file-based content)
-  optional Metadata metadata = 11;
+  // Character count
+  int32 character_count = 11;
 }
 
 
@@ -92,37 +94,42 @@ message DocumentListItem {
   // Human-readable name
   string name = 2;
 
+  // Source authority for LLM context weighting
+  SourceType source_type = 3;
+
+  // Metadata for file-based content
+  optional Metadata metadata = 4;
+
   // Short excerpt from the content (max ~200 characters)
   // May be empty if the document has no content
   // Use GetDocument RPC to retrieve full content
-  string content_snippet = 3;
+  string content_snippet = 5;
 
   // Type of document
-  DocumentType type = 4;
+  DocumentType type = 6;
 
   // Which RPG system(s) this document belongs to
-  repeated string systems = 5;
+  repeated string systems = 7;
 
   // When this document was created
-  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp created_at = 8;
 
   // When this document was last updated
-  google.protobuf.Timestamp updated_at = 7;
+  google.protobuf.Timestamp updated_at = 9;
 
   // Structured tags for organization
-  repeated Tag tags = 8;
+  repeated Tag tags = 10;
 
   // Character count of full document (not the snippet)
-  int32 character_count = 9;
+  int32 character_count = 11;
 
-  // Source authority for LLM context weighting
-  SourceType source_type = 10;
-
-  // Metadata for file-based content
-  optional Metadata metadata = 11;
 }
 
 // Enums for strict classification of data
+// TODO: A single Document may contain multiple types of information
+// this should probably be an array of applicable types in the future
+// that raises the question whether we need different levels of "authoritativeness"
+// for the different facets of a document
 enum DocumentType {
   DOCUMENT_TYPE_UNSPECIFIED = 0; // Default/unknown
   NOTE = 1; // General notes, least specific
@@ -133,7 +140,7 @@ enum DocumentType {
   QUEST = 6; // Quests, missions, plot hooks
   SESSION_LOG = 7; // Session summaries, game logs
   RULEBOOK = 8; // Core rulebook (typically from PDF)
-  SUPPLEMENT = 9; // Supplement/expansion (typically from PDF)
+  EXPANSION = 9; // Supplement/expansion (typically from PDF)
   ADVENTURE = 10; // Adventure module (typically from PDF)
   BESTIARY = 11; // Monster/creature compendium (typically from PDF)
 }
@@ -141,14 +148,14 @@ enum DocumentType {
 // SourceType categorizes who created  a document or where a document came from
 // Used to weight authority when constructing LLM context
 enum SourceType {
-  SOURCE_TYPE_UNSPECIFIED = 0; // Default/unknown
-  RULEBOOK = 1;                 // Official published rules (highest authority)
-  SUPPLEMENT = 2;               // Official expansions/supplements
-  GM_NOTES = 3;                 // Game master's notes and preparations
-  PLAYER_NOTES = 4;             // Player character journals/notes
-  SESSION_LOG_RECORD = 5;       // Actual play session records
-  GENERATED = 6;                // LLM-generated content
-  COMMUNITY = 7;                // Community/fan-created content
+  SOURCE_TYPE_UNSPECIFIED = 0;  // Default/unknown
+  CORE = 1; // Official published rules (highest authority)
+  SUPPLEMENT = 2; // Official expansions/supplements
+  GM_NOTES = 3; // Game master's notes and preparations
+  PLAYER_NOTES = 4; // Player character journals/notes
+  SESSION_LOG_RECORD = 5; // Actual play session records
+  GENERATED = 6; // LLM-generated content
+  COMMUNITY = 7; // Community/fan-created content
 }
 
 // ============================================================================
