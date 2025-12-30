@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref, nextTick } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
+import { ChunkType } from '../bibliophage/v1alpha3/chat_pb'
+import ChatInput from '../components/chat/ChatInput.vue'
+import ChatMessage from '../components/chat/ChatMessage.vue'
+import DocumentPicker from '../components/chat/DocumentPicker.vue'
+import { useAppConsole } from '../composables/useAppConsole'
 import { useChatApi } from '../composables/useChatApi'
 import { useChatState } from '../composables/useChatState'
-import { useAppConsole } from '../composables/useAppConsole'
-import ChatMessage from '../components/chat/ChatMessage.vue'
-import ChatInput from '../components/chat/ChatInput.vue'
-import DocumentPicker from '../components/chat/DocumentPicker.vue'
-import { ChunkType } from '../bibliophage/v1alpha3/chat_pb'
 
 const chatApi = useChatApi()
 const chatState = useChatState()
@@ -33,28 +33,32 @@ async function handleSend(message: string) {
     // Stream response from backend
     await chatApi.streamChat(
       message,
-      Array.from(chatState.selectedDocuments.value).map((d) => d.id),
+      Array.from(chatState.selectedDocuments.value).map(d => d.id),
       [], // Empty history for now (can extend later with full conversation)
       (chunk) => {
         if (chunk.type === ChunkType.TOKEN) {
           chatState.appendToken(chunk.content)
           scrollToBottom()
-        } else if (chunk.type === ChunkType.METADATA) {
+        }
+        else if (chunk.type === ChunkType.METADATA) {
           currentMetadata.value = chunk.metadata
           console.log(
             `Using ${chunk.metadata?.contextDocuments.length || 0} context documents`,
-            'info'
+            'info',
           )
-        } else if (chunk.type === ChunkType.DONE) {
+        }
+        else if (chunk.type === ChunkType.DONE) {
           chatState.finishStreaming()
           console.log('Response complete', 'success')
-        } else if (chunk.type === ChunkType.ERROR) {
+        }
+        else if (chunk.type === ChunkType.ERROR) {
           chatState.finishStreaming()
           console.log(`Error: ${chunk.content}`, 'error')
         }
-      }
+      },
     )
-  } catch (error) {
+  }
+  catch (error) {
     chatState.finishStreaming()
     console.log(`Failed to send message: ${error}`, 'error')
   }
@@ -70,7 +74,9 @@ async function scrollToBottom() {
 
 <template>
   <div class="h-full flex flex-col">
-    <h1 class="text-4xl font-bold mb-4">LLM Chat</h1>
+    <h1 class="text-4xl font-bold mb-4">
+      LLM Chat
+    </h1>
 
     <div class="flex-1 flex gap-4 min-h-0">
       <!-- Chat area -->
@@ -84,26 +90,30 @@ async function scrollToBottom() {
             v-if="chatState.messages.value.length === 0"
             class="text-center text-base-content/50 py-12"
           >
-            <p class="text-lg">Start a conversation</p>
-            <p class="text-sm">Ask a question or select context documents below</p>
+            <p class="text-lg">
+              Start a conversation
+            </p>
+            <p class="text-sm">
+              Ask a question or select context documents below
+            </p>
           </div>
           <div v-else class="space-y-4">
             <ChatMessage
               v-for="msg in chatState.messages.value"
-              :key="msg.id"
-              :message="msg"
+              v-bind:key="msg.id"
+              v-bind:message="msg"
             />
           </div>
         </div>
 
         <!-- Input -->
-        <ChatInput :disabled="chatState.isStreaming.value" @send="handleSend" />
+        <ChatInput v-bind:disabled="chatState.isStreaming.value" @send="handleSend" />
       </div>
 
       <!-- Sidebar: Document picker -->
       <div class="w-96 flex-shrink-0">
         <DocumentPicker
-          :selected-documents="chatState.selectedDocuments.value"
+          v-bind:selected-documents="chatState.selectedDocuments.value"
           @toggle="chatState.toggleContextDocument"
         />
       </div>

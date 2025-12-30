@@ -1,7 +1,7 @@
 import type { Ref } from 'vue'
-import { computed, watch } from 'vue'
-import { useLocalStorage } from '@vueuse/core'
 import type { TableColumn } from '../components/DataTable.vue'
+import { useLocalStorage } from '@vueuse/core'
+import { computed, watch } from 'vue'
 
 /**
  * Column visibility state structure

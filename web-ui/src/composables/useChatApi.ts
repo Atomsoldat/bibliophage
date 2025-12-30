@@ -1,12 +1,12 @@
 import type { Client } from '@connectrpc/connect'
 
-import type { ChatResponseChunk } from '../bibliophage/v1alpha3/chat_pb'
+import type { ChatMessage, ChatResponseChunk } from '../bibliophage/v1alpha3/chat_pb'
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 
 import { ref } from 'vue'
 import { ChatService } from '../bibliophage/v1alpha3/chat_connect'
-import { ChatRequest, ChatMessage } from '../bibliophage/v1alpha3/chat_pb'
+import { ChatRequest } from '../bibliophage/v1alpha3/chat_pb'
 import { useConfig } from './useConfig'
 
 // Shared client instance (singleton)
@@ -67,7 +67,7 @@ export function useChatApi() {
     message: string,
     contextDocumentIds: string[],
     conversationHistory: ChatMessage[],
-    onChunk: StreamCallback
+    onChunk: StreamCallback,
   ): Promise<void> {
     checkInitialisation()
 

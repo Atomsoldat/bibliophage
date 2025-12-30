@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Icon } from '@iconify/vue'
-import { useDocumentApi } from '../../composables/useDocumentApi'
 import type { DocumentListItem } from '../../bibliophage/v1alpha3/document_pb'
 import type { ContextDocument } from '../../composables/useChatState'
+import { Icon } from '@iconify/vue'
+import { ref } from 'vue'
+import { useDocumentApi } from '../../composables/useDocumentApi'
 
 const props = defineProps<{
   selectedDocuments: readonly ContextDocument[]
@@ -35,15 +35,17 @@ async function handleSearch() {
       pageSize: 20,
     })
     searchResults.value = response.matches
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Document search failed:', error)
-  } finally {
+  }
+  finally {
     isSearching.value = false
   }
 }
 
 function isSelected(docId: string): boolean {
-  return props.selectedDocuments.some((d) => d.id === docId)
+  return props.selectedDocuments.some(d => d.id === docId)
 }
 
 function handleToggle(doc: DocumentListItem) {
@@ -74,7 +76,7 @@ function handleToggle(doc: DocumentListItem) {
           placeholder="Search documents..."
           class="input input-bordered w-full"
           @keyup.enter="handleSearch"
-        />
+        >
         <button class="btn btn-square" @click="handleSearch">
           <Icon icon="heroicons:magnifying-glass" />
         </button>
@@ -83,11 +85,13 @@ function handleToggle(doc: DocumentListItem) {
 
     <!-- Selected documents -->
     <div v-if="selectedDocuments.length > 0" class="mb-3">
-      <div class="text-xs font-semibold text-base-content/60 mb-2">Selected:</div>
+      <div class="text-xs font-semibold text-base-content/60 mb-2">
+        Selected:
+      </div>
       <div class="flex flex-wrap gap-2">
         <div
           v-for="doc in selectedDocuments"
-          :key="doc.id"
+          v-bind:key="doc.id"
           class="badge badge-primary gap-1"
         >
           {{ doc.name }}
@@ -108,18 +112,20 @@ function handleToggle(doc: DocumentListItem) {
     >
       <div
         v-for="doc in searchResults"
-        :key="doc.id"
+        v-bind:key="doc.id"
         class="p-2 border border-base-300 rounded hover:bg-base-200 cursor-pointer flex items-start gap-2"
         @click="handleToggle(doc)"
       >
         <input
           type="checkbox"
           class="checkbox checkbox-sm mt-1"
-          :checked="isSelected(doc.id)"
+          v-bind:checked="isSelected(doc.id)"
           @click.stop
-        />
+        >
         <div class="flex-1">
-          <div class="font-semibold text-sm">{{ doc.name }}</div>
+          <div class="font-semibold text-sm">
+            {{ doc.name }}
+          </div>
           <div class="text-xs text-base-content/60 line-clamp-2">
             {{ doc.contentSnippet }}
           </div>
