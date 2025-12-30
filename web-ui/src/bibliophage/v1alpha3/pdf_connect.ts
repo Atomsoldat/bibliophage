@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { GetPdfRequest, GetPdfResponse, LoadPdfRequest, LoadPdfResponse, SearchPdfsRequest, SearchPdfsResponse } from "./pdf_pb.js";
+import { LoadPdfRequest, LoadPdfResponse } from "./pdf_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -21,24 +21,6 @@ export const PdfService = {
       name: "LoadPdf",
       I: LoadPdfRequest,
       O: LoadPdfResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc bibliophage.v1alpha3.PdfService.SearchPdfs
-     */
-    searchPdfs: {
-      name: "SearchPdfs",
-      I: SearchPdfsRequest,
-      O: SearchPdfsResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc bibliophage.v1alpha3.PdfService.GetPdf
-     */
-    getPdf: {
-      name: "GetPdf",
-      I: GetPdfRequest,
-      O: GetPdfResponse,
       kind: MethodKind.Unary,
     },
   }
