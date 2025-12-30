@@ -18,40 +18,69 @@ service DocumentService {
 // Data Objects - Reusable entities that represent core domain models
 // ============================================================================
 
-// Document represents a text document in the system
-// this type actually contains the raw data it represents
-// which is different from  how we handle PDFs
-// the rationale here is that text documents are probably
-// not as large as full blown PDFs, and then we do not have
-// to worry about keeping server and client synchronised
+// PDF-specific metadata for documents sourced from PDFs
+message PdfData {
+  // Number of batches processed by Docling
+  int32 batch_count = 1;
+
+  // Number of text chunks created for vector embeddings
+  int32 vector_chunk_count = 2;
+}
+
+// Metadata for file-based content (PDFs, scanned books, etc.)
+// Populated when DocumentType indicates file-based content
+message Metadata {
+  // Number of pages in the source material
+  int32 page_count = 1;
+
+  // File size in bytes
+  int64 file_size = 2;
+
+  // Publication type (e.g., "Core Rulebook", "Adventure", "Supplement")
+  optional string publication_type = 3;
+
+  // PDF-specific data (only populated for PDF-sourced documents)
+  optional PdfData pdf = 10;
+}
+
+// Document represents any content in the system (user-created or loaded from files)
 message Document {
   // Unique identifier for this document (assigned by the system)
   string id = 1;
 
-  // Human-readable name (e.g., "My Campaign Notes", "NPC: Elara Brightwood")
+  // Human-readable name (e.g., "My Campaign Notes", "Player's Handbook")
   string name = 2;
 
-  // Raw text content of the document
+  // Raw text content of the document (markdown formatted for PDFs, user notes should be treated as plain text) 
   string content = 3;
 
   // Type of document (categorization)
   DocumentType type = 4;
 
+  // Which RPG system(s) this document belongs to
+  // Examples: ["Call of Cthulhu"], ["D&D 3.5e", "Pathfinder 1e"], ["Generic"]
+  // Must contain at least one value
+  repeated string systems = 5;
+
   // When this document was created
-  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp created_at = 6;
 
   // When this document was last updated
-  google.protobuf.Timestamp updated_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
 
   // Structured tags for organization (name + multiple values)
-  repeated Tag tags = 7;
+  repeated Tag tags = 8;
 
   // Character count (for display purposes)
-  int32 character_count = 8;
+  int32 character_count = 9;
 
   // Source authority for LLM context weighting
-  SourceType source_type = 9;
+  SourceType source_type = 10;
+
+  // Metadata for file-based content (populated when type indicates file-based content)
+  optional Metadata metadata = 11;
 }
+
 
 // DocumentListItem represents a document in list/search results
 // Contains metadata and a content snippet, but not the full content
@@ -71,20 +100,26 @@ message DocumentListItem {
   // Type of document
   DocumentType type = 4;
 
+  // Which RPG system(s) this document belongs to
+  repeated string systems = 5;
+
   // When this document was created
-  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp created_at = 6;
 
   // When this document was last updated
-  google.protobuf.Timestamp updated_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
 
   // Structured tags for organization
-  repeated Tag tags = 7;
+  repeated Tag tags = 8;
 
   // Character count of full document (not the snippet)
-  int32 character_count = 8;
+  int32 character_count = 9;
 
   // Source authority for LLM context weighting
-  SourceType source_type = 9;
+  SourceType source_type = 10;
+
+  // Metadata for file-based content
+  optional Metadata metadata = 11;
 }
 
 // Enums for strict classification of data
@@ -97,6 +132,10 @@ enum DocumentType {
   OBJECT = 5; // Possessions, items, artifacts
   QUEST = 6; // Quests, missions, plot hooks
   SESSION_LOG = 7; // Session summaries, game logs
+  RULEBOOK = 8; // Core rulebook (typically from PDF)
+  SUPPLEMENT = 9; // Supplement/expansion (typically from PDF)
+  ADVENTURE = 10; // Adventure module (typically from PDF)
+  BESTIARY = 11; // Monster/creature compendium (typically from PDF)
 }
 
 // SourceType categorizes who created  a document or where a document came from
@@ -186,6 +225,10 @@ message DocumentFilter {
   // Example: [{"name": "genre", "value": "fantasy"}, {"name": "tone", "value": "dark"}]
   // would match documents that have both genre=fantasy AND tone=dark
   repeated TagFilter tag_filters = 4;
+
+  // Filter by systems (returns documents where systems contains ANY of these values)
+  // Example: ["Call of Cthulhu", "Pathfinder 1e", "Generic"] returns CoC + Pathfinder + generic docs
+  repeated string system_filters = 5;
 }
 
 // SearchDocumentsRequest - Search for documents by various criteria
