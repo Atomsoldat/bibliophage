@@ -8,9 +8,9 @@ import { createConnectTransport } from '@connectrpc/connect-web'
 import { Icon } from '@iconify/vue'
 import { computed, onBeforeMount, ref } from 'vue'
 
-import DataTable from '../components/DataTable.vue'
 import { DocumentService } from '../bibliophage/v1alpha3/document_connect.ts'
-import { DocumentType, SearchDocumentsRequest, GetDocumentRequest, GetDocumentResponse, DeleteDocumentRequest } from '../bibliophage/v1alpha3/document_pb.ts'
+import { DeleteDocumentRequest, DocumentType, GetDocumentRequest, SearchDocumentsRequest } from '../bibliophage/v1alpha3/document_pb.ts'
+import DataTable from '../components/DataTable.vue'
 import { useAppConsole } from '../composables/useAppConsole'
 import { useConfig } from '../composables/useConfig'
 import { useEditorWindows } from '../composables/useEditorWindows'
@@ -55,12 +55,12 @@ const columns = computed<TableColumn<DocumentListItem>[]>(() => [
   {
     key: 'createdAt',
     label: 'Created',
-    formatter: (value) => formatDate(value),
+    formatter: value => formatDate(value),
   },
   {
     key: 'updatedAt',
     label: 'Updated',
-    formatter: (value) => formatDate(value),
+    formatter: value => formatDate(value),
   },
   {
     key: 'actions',
@@ -165,7 +165,7 @@ async function fetchDocument(id: string): Promise<Document> {
   }
 
   const request = new GetDocumentRequest({
-    id: id,
+    id,
   })
   const response = await client.value.getDocument(request)
 
@@ -244,92 +244,92 @@ async function handleBulkDelete() {
 </script>
 
 <template>
-    <div class="flex justify-between items-center mb-8">
-      <h1 class="text-4xl font-bold">
-        Journal
-      </h1>
-      <button
-        type="button"
-        class="btn btn-primary btn-lg gap-2"
-        @click="handleNewEntry"
-      >
-        <Icon icon="heroicons:plus" />
-        New Entry
-      </button>
-    </div>
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-4xl font-bold">
+      Journal
+    </h1>
+    <button
+      type="button"
+      class="btn btn-primary btn-lg gap-2"
+      @click="handleNewEntry"
+    >
+      <Icon icon="heroicons:plus" />
+      New Entry
+    </button>
+  </div>
 
-    <!-- Action Buttons -->
-    <div class="flex gap-4 mb-4">
-      <form class="flex-1" @submit.prevent="handleSearchSubmit">
-        <button
-          type="submit"
-          class="btn btn-accent btn-lg gap-2"
-          v-bind:disabled="loading"
-        >
-          <Icon v-if="!loading" icon="game-icons:magnifying-glass" class="text-xl" />
-          <span v-if="loading" class="loading loading-spinner" />
-          Search
-        </button>
-      </form>
-
+  <!-- Action Buttons -->
+  <div class="flex gap-4 mb-4">
+    <form class="flex-1" @submit.prevent="handleSearchSubmit">
       <button
-        v-if="selectedIds.size > 0"
-        type="button"
-        class="btn btn-error btn-lg gap-2"
-        @click="handleBulkDelete"
+        type="submit"
+        class="btn btn-accent btn-lg gap-2"
         v-bind:disabled="loading"
       >
-        <Icon icon="heroicons:trash" class="text-xl" />
-        Delete ({{ selectedIds.size }})
+        <Icon v-if="!loading" icon="game-icons:magnifying-glass" class="text-xl" />
+        <span v-if="loading" class="loading loading-spinner" />
+        Search
       </button>
-    </div>
+    </form>
 
-    <!-- Journal entries table -->
-    <DataTable
-      v-model="selectedIds"
-      :data="entries"
-      :columns="columns"
-      :loading="loading"
-      :selectable="true"
-      :select-on-row-click="true"
-      :enable-column-visibility="true"
-      table-id="journal"
-      row-key="id"
-      empty-message="No journal entries yet"
-      empty-description="Click 'New Entry' to create your first journal entry"
+    <button
+      v-if="selectedIds.size > 0"
+      type="button"
+      class="btn btn-error btn-lg gap-2"
+      v-bind:disabled="loading"
+      @click="handleBulkDelete"
     >
-      <!-- Custom rendering for Name column with preview -->
-      <template #cell-name="{ row }">
-        <div class="font-semibold">
-          {{ row.name }}
-        </div>
-        <div class="text-sm text-base-content/70 truncate max-w-md">
-          {{ row.content?.substring(0, 100) }}{{ row.content && row.content.length > 100 ? '...' : '' }}
-        </div>
-      </template>
+      <Icon icon="heroicons:trash" class="text-xl" />
+      Delete ({{ selectedIds.size }})
+    </button>
+  </div>
 
-      <!-- Custom rendering for Tags column with badges -->
-      <template #cell-tags="{ row }">
-        <div class="flex gap-1 flex-wrap">
-          <span v-for="tag in row.tags" v-bind:key="tag" class="badge badge-sm badge-outline">
-            {{ tag }}
-          </span>
-          <span v-if="row.tags.length === 0" class="text-sm text-base-content/50">
-            -
-          </span>
-        </div>
-      </template>
+  <!-- Journal entries table -->
+  <DataTable
+    v-model="selectedIds"
+    v-bind:data="entries"
+    v-bind:columns="columns"
+    v-bind:loading="loading"
+    v-bind:selectable="true"
+    v-bind:select-on-row-click="true"
+    v-bind:enable-column-visibility="true"
+    table-id="journal"
+    row-key="id"
+    empty-message="No journal entries yet"
+    empty-description="Click 'New Entry' to create your first journal entry"
+  >
+    <!-- Custom rendering for Name column with preview -->
+    <template #cell-name="{ row }">
+      <div class="font-semibold">
+        {{ row.name }}
+      </div>
+      <div class="text-sm text-base-content/70 truncate max-w-md">
+        {{ row.content?.substring(0, 100) }}{{ row.content && row.content.length > 100 ? '...' : '' }}
+      </div>
+    </template>
 
-      <!-- Custom rendering for Actions column with Edit button -->
-      <template #cell-actions="{ row }">
-        <button
-          type="button"
-          class="btn btn-sm btn-primary gap-1"
-          @click.stop="handleEditEntry(row)"
-        >
-          <Icon icon="heroicons:pencil" />
-          Edit
-        </button>
-      </template>
-    </DataTable>
+    <!-- Custom rendering for Tags column with badges -->
+    <template #cell-tags="{ row }">
+      <div class="flex gap-1 flex-wrap">
+        <span v-for="tag in row.tags" v-bind:key="tag" class="badge badge-sm badge-outline">
+          {{ tag }}
+        </span>
+        <span v-if="row.tags.length === 0" class="text-sm text-base-content/50">
+          -
+        </span>
+      </div>
+    </template>
+
+    <!-- Custom rendering for Actions column with Edit button -->
+    <template #cell-actions="{ row }">
+      <button
+        type="button"
+        class="btn btn-sm btn-primary gap-1"
+        @click.stop="handleEditEntry(row)"
+      >
+        <Icon icon="heroicons:pencil" />
+        Edit
+      </button>
+    </template>
+  </DataTable>
 </template>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import type { DisplayMessage } from '../../composables/useChatState'
 import { Icon } from '@iconify/vue'
 import { marked } from 'marked'
-import type { DisplayMessage } from '../../composables/useChatState'
+import { computed } from 'vue'
 
 const props = defineProps<{
   message: DisplayMessage
@@ -23,11 +23,11 @@ const formattedTime = computed(() => {
 </script>
 
 <template>
-  <div class="chat" :class="message.role === 'user' ? 'chat-end' : 'chat-start'">
+  <div class="chat" v-bind:class="message.role === 'user' ? 'chat-end' : 'chat-start'">
     <div class="chat-image avatar">
       <div class="w-10 rounded-full bg-base-300 flex items-center justify-center">
         <Icon
-          :icon="message.role === 'user' ? 'heroicons:user' : 'heroicons:cpu-chip'"
+          v-bind:icon="message.role === 'user' ? 'heroicons:user' : 'heroicons:cpu-chip'"
           class="text-lg"
         />
       </div>
@@ -38,12 +38,12 @@ const formattedTime = computed(() => {
     </div>
     <div
       class="chat-bubble"
-      :class="{
+      v-bind:class="{
         'chat-bubble-primary': message.role === 'user',
         'chat-bubble-secondary': message.role === 'assistant',
       }"
     >
-      <div v-html="renderedContent" class="prose prose-sm max-w-none" />
+      <div class="prose prose-sm max-w-none" v-html="renderedContent" />
       <span v-if="message.isStreaming" class="loading loading-dots loading-sm ml-2" />
     </div>
   </div>

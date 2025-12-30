@@ -8,10 +8,10 @@ import { createConnectTransport } from '@connectrpc/connect-web'
 import { Icon } from '@iconify/vue'
 import { computed, onBeforeMount, ref } from 'vue'
 
-import DataTable from '../components/DataTable.vue'
 import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
 import { PdfService } from '../bibliophage/v1alpha3/pdf_connect.ts'
 import { SearchPdfsRequest } from '../bibliophage/v1alpha3/pdf_pb.ts'
+import DataTable from '../components/DataTable.vue'
 import { useAppConsole } from '../composables/useAppConsole.ts'
 import { useConfig } from '../composables/useConfig.ts'
 import { useEditorWindows } from '../composables/useEditorWindows.ts'
@@ -39,14 +39,15 @@ const pageNumber = ref(0)
  * Format file size in bytes to human-readable format (KB, MB, GB)
  */
 function formatFileSize(bytes: number | bigint): string {
-  if (bytes === 0 || bytes === 0n) return '0 B'
+  if (bytes === 0 || bytes === 0n)
+    return '0 B'
 
   const numBytes = typeof bytes === 'bigint' ? Number(bytes) : bytes
   const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
   const kibibyte = 1024
   const magnitude = Math.floor(Math.log(numBytes) / Math.log(kibibyte))
 
-  return `${(numBytes / Math.pow(kibibyte, magnitude)).toFixed(2)} ${units[magnitude]}`
+  return `${(numBytes / kibibyte ** magnitude).toFixed(2)} ${units[magnitude]}`
 }
 
 /**
@@ -105,17 +106,17 @@ const columns = computed<TableColumn<PdfListItem>[]>(() => [
   {
     key: 'createdAt',
     label: 'Created',
-    formatter: (value) => formatDate(value),
+    formatter: value => formatDate(value),
   },
   {
     key: 'updatedAt',
     label: 'Updated',
-    formatter: (value) => formatDate(value),
+    formatter: value => formatDate(value),
   },
   {
     key: 'fileSize',
     label: 'Size',
-    formatter: (value) => formatFileSize(value),
+    formatter: value => formatFileSize(value),
   },
   {
     key: 'batchCount',
@@ -254,12 +255,12 @@ async function handleEditDocument(pdf: PdfListItem) {
 
   <div>
     <DataTable
-      :data="pdfs"
-      :columns="columns"
-      :loading="loading"
-      :enable-column-visibility="true"
-      :selectable="true"
-      :select-on-row-click="false"
+      v-bind:data="pdfs"
+      v-bind:columns="columns"
+      v-bind:loading="loading"
+      v-bind:enable-column-visibility="true"
+      v-bind:selectable="true"
+      v-bind:select-on-row-click="false"
       table-id="document-list"
       row-key="id"
       empty-message="No PDFs found"
@@ -267,29 +268,29 @@ async function handleEditDocument(pdf: PdfListItem) {
       empty-icon="heroicons:document"
       @row-click="handleEditDocument"
     >
-        <!-- Custom rendering for Systems column with badges -->
-        <template #cell-systems="{ row }">
-          <div class="flex gap-1 flex-wrap">
-            <span v-for="system in row.systems" v-bind:key="system" class="badge badge-sm badge-primary">
-              {{ system }}
-            </span>
-            <span v-if="row.systems.length === 0" class="text-sm text-base-content/50">
-              -
-            </span>
-          </div>
-        </template>
+      <!-- Custom rendering for Systems column with badges -->
+      <template #cell-systems="{ row }">
+        <div class="flex gap-1 flex-wrap">
+          <span v-for="system in row.systems" v-bind:key="system" class="badge badge-sm badge-primary">
+            {{ system }}
+          </span>
+          <span v-if="row.systems.length === 0" class="text-sm text-base-content/50">
+            -
+          </span>
+        </div>
+      </template>
 
-        <!-- Custom rendering for Actions column with Edit button -->
-        <template #cell-actions="{ row }">
-          <button
-            type="button"
-            class="btn btn-sm btn-primary gap-1"
-            @click.stop="handleEditDocument(row)"
-          >
-            <Icon icon="heroicons:pencil" />
-            Edit
-          </button>
-        </template>
-      </DataTable>
-    </div>
+      <!-- Custom rendering for Actions column with Edit button -->
+      <template #cell-actions="{ row }">
+        <button
+          type="button"
+          class="btn btn-sm btn-primary gap-1"
+          @click.stop="handleEditDocument(row)"
+        >
+          <Icon icon="heroicons:pencil" />
+          Edit
+        </button>
+      </template>
+    </DataTable>
+  </div>
 </template>

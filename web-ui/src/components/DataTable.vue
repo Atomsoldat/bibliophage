@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
-import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
+import { computed } from 'vue'
 import { useColumnVisibility } from '../composables/useColumnVisibility'
 
 /**
@@ -211,14 +211,14 @@ function handleRowClick(row: T, index: number) {
             <input
               type="checkbox"
               class="checkbox"
-              :checked="isAllSelected"
+              v-bind:checked="isAllSelected"
               @change="toggleSelectAll"
-            />
+            >
           </th>
           <th
             v-for="column in displayColumns"
-            :key="column.key"
-            :class="column.headerClass"
+            v-bind:key="column.key"
+            v-bind:class="column.headerClass"
           >
             {{ column.label }}
           </th>
@@ -245,17 +245,17 @@ function handleRowClick(row: T, index: number) {
                 <div class="overflow-y-auto flex-1 py-1 flex flex-col">
                   <label
                     v-for="column in columns"
-                    :key="column.key"
+                    v-bind:key="column.key"
                     class="label cursor-pointer justify-start gap-2 px-4 hover:bg-base-200 rounded-none"
                   >
                     <input
                       type="checkbox"
                       class="checkbox checkbox-sm"
-                      :checked="isColumnVisible(column.key)"
-                      :disabled="column.required"
+                      v-bind:checked="isColumnVisible(column.key)"
+                      v-bind:disabled="column.required"
                       @change="toggleColumn(column.key)"
-                    />
-                    <span class="label-text flex-1" :class="{ 'text-base-content/40': column.required }">
+                    >
+                    <span class="label-text flex-1" v-bind:class="{ 'text-base-content/40': column.required }">
                       {{ column.label }}
                     </span>
                     <span v-if="column.required" class="badge badge-xs">Required</span>
@@ -283,7 +283,7 @@ function handleRowClick(row: T, index: number) {
       <tbody>
         <tr
           v-for="(row, index) in data"
-          :key="getRowKey(row)"
+          v-bind:key="getRowKey(row)"
           class="hover"
           @click="handleRowClick(row, index)"
         >
@@ -291,21 +291,21 @@ function handleRowClick(row: T, index: number) {
             <input
               type="checkbox"
               class="checkbox"
-              :checked="selectedIds.has(getRowKey(row))"
+              v-bind:checked="selectedIds.has(getRowKey(row))"
               @change="toggleSelection(row)"
-            />
+            >
           </td>
           <td
             v-for="column in displayColumns"
-            :key="column.key"
-            :class="column.cellClass"
+            v-bind:key="column.key"
+            v-bind:class="column.cellClass"
           >
             <slot
-              :name="`cell-${column.key}`"
-              :value="getNestedValue(row, column.key)"
-              :row="row"
-              :index="index"
-              :column="column"
+              v-bind:name="`cell-${column.key}`"
+              v-bind:value="getNestedValue(row, column.key)"
+              v-bind:row="row"
+              v-bind:index="index"
+              v-bind:column="column"
             >
               {{ formatCell(row, column, index) }}
             </slot>
@@ -319,7 +319,7 @@ function handleRowClick(row: T, index: number) {
 
   <!-- Empty state -->
   <div v-else class="text-center p-12">
-    <Icon :icon="emptyIcon" class="text-6xl text-base-content/30 mx-auto mb-4" />
+    <Icon v-bind:icon="emptyIcon" class="text-6xl text-base-content/30 mx-auto mb-4" />
     <p class="text-lg text-base-content/70">
       {{ emptyMessage }}
     </p>

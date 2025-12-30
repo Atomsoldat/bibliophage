@@ -1,4 +1,4 @@
-import { ref, readonly, computed } from 'vue'
+import { computed, readonly, ref } from 'vue'
 
 export interface DisplayMessage {
   id: string
@@ -61,9 +61,10 @@ export function useChatState() {
    * Append a token to the current streaming message
    */
   function appendToken(token: string) {
-    if (!currentStreamingMessageId.value) return
+    if (!currentStreamingMessageId.value)
+      return
 
-    const message = messages.value.find((m) => m.id === currentStreamingMessageId.value)
+    const message = messages.value.find(m => m.id === currentStreamingMessageId.value)
     if (message) {
       message.content += token
     }
@@ -73,9 +74,10 @@ export function useChatState() {
    * Complete the current streaming message
    */
   function finishStreaming() {
-    if (!currentStreamingMessageId.value) return
+    if (!currentStreamingMessageId.value)
+      return
 
-    const message = messages.value.find((m) => m.id === currentStreamingMessageId.value)
+    const message = messages.value.find(m => m.id === currentStreamingMessageId.value)
     if (message) {
       message.isStreaming = false
     }
@@ -88,10 +90,11 @@ export function useChatState() {
    * Add or remove a context document
    */
   function toggleContextDocument(doc: ContextDocument) {
-    const index = selectedDocuments.value.findIndex((d) => d.id === doc.id)
+    const index = selectedDocuments.value.findIndex(d => d.id === doc.id)
     if (index >= 0) {
       selectedDocuments.value.splice(index, 1)
-    } else {
+    }
+    else {
       selectedDocuments.value.push(doc)
     }
   }
@@ -114,7 +117,7 @@ export function useChatState() {
    * Get conversation history in ChatMessage format for API
    */
   const conversationHistory = computed(() => {
-    return messages.value.map((msg) => ({
+    return messages.value.map(msg => ({
       role: msg.role,
       content: msg.content,
       timestamp: msg.timestamp,

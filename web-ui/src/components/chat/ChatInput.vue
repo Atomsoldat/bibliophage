@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { useEditor, EditorContent } from '@tiptap/vue-3'
-import StarterKit from '@tiptap/starter-kit'
-import Placeholder from '@tiptap/extension-placeholder'
-import { onBeforeUnmount, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+import Placeholder from '@tiptap/extension-placeholder'
+import StarterKit from '@tiptap/starter-kit'
+import { EditorContent, useEditor } from '@tiptap/vue-3'
+import { onBeforeUnmount, watch } from 'vue'
 
 const props = defineProps<{
   disabled?: boolean
@@ -38,14 +38,16 @@ watch(
   () => props.disabled,
   (disabled) => {
     editor.value?.setEditable(!disabled)
-  }
+  },
 )
 
 function handleSend() {
-  if (!editor.value) return
+  if (!editor.value)
+    return
 
   const text = editor.value.getText().trim()
-  if (!text) return
+  if (!text)
+    return
 
   emit('send', text)
 
@@ -65,13 +67,13 @@ function handleKeydown(event: KeyboardEvent) {
 <template>
   <div class="border border-base-300 rounded-lg bg-base-100">
     <EditorContent
-      :editor="editor"
+      v-bind:editor="editor"
       class="min-h-[80px] max-h-[200px] overflow-y-auto"
       @keydown="handleKeydown"
     />
     <div class="border-t border-base-300 p-2 flex justify-between items-center">
       <span class="text-xs text-base-content/50"> Press Cmd+Enter to send </span>
-      <button class="btn btn-primary btn-sm" :disabled="disabled" @click="handleSend">
+      <button class="btn btn-primary btn-sm" v-bind:disabled="disabled" @click="handleSend">
         <Icon icon="heroicons:paper-airplane" />
         Send
       </button>
