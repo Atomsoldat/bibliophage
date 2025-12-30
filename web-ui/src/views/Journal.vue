@@ -244,7 +244,6 @@ async function handleBulkDelete() {
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4">
     <div class="flex justify-between items-center mb-8">
       <h1 class="text-4xl font-bold">
         Journal
@@ -267,9 +266,9 @@ async function handleBulkDelete() {
           class="btn btn-accent btn-lg gap-2"
           v-bind:disabled="loading"
         >
-          <Icon v-if="!loading" icon="heroicons:arrow-path" class="text-xl" />
+          <Icon v-if="!loading" icon="game-icons:magnifying-glass" class="text-xl" />
           <span v-if="loading" class="loading loading-spinner" />
-          Refresh
+          Search
         </button>
       </form>
 
@@ -333,5 +332,4 @@ async function handleBulkDelete() {
         </button>
       </template>
     </DataTable>
-  </div>
 </template>
