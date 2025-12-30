@@ -28,6 +28,52 @@ const entries = ref<DocumentListItem[]>([])
 const loading = ref(false)
 const selectedIds = ref<Set<string>>(new Set())
 
+// DocumentType filter state
+// Journal-specific types (excluding PDF-sourced types like RULEBOOK, EXPANSION, etc.)
+const journalDocumentTypes = [
+  { value: DocumentType.DOCUMENT_TYPE_UNSPECIFIED, label: 'Unspecified', enabled: ref(true) },
+  { value: DocumentType.NOTE, label: 'Note', enabled: ref(true) },
+  { value: DocumentType.LORE_FRAGMENT, label: 'Lore Fragment', enabled: ref(true) },
+  { value: DocumentType.CHARACTER, label: 'Character', enabled: ref(true) },
+  { value: DocumentType.LOCATION, label: 'Location', enabled: ref(true) },
+  { value: DocumentType.OBJECT, label: 'Object', enabled: ref(true) },
+  { value: DocumentType.QUEST, label: 'Quest', enabled: ref(true) },
+  { value: DocumentType.SESSION_LOG, label: 'Session Log', enabled: ref(true) },
+]
+
+// Track dropdown state
+const isTypeFilterOpen = ref(false)
+
+/**
+ * Toggle type filter dropdown
+ */
+function toggleTypeFilter() {
+  isTypeFilterOpen.value = !isTypeFilterOpen.value
+}
+
+/**
+ * Get count of enabled document types
+ */
+const enabledTypeCount = computed(() => {
+  return journalDocumentTypes.filter(t => t.enabled.value).length
+})
+
+/**
+ * Toggle all document types on/off
+ */
+function toggleAllTypes() {
+  const allEnabled = journalDocumentTypes.every(t => t.enabled.value)
+  journalDocumentTypes.forEach(t => t.enabled.value = !allEnabled)
+}
+
+/**
+ * Convert DocumentType enum value to human-readable label
+ */
+function formatDocumentType(type: DocumentType): string {
+  const typeEntry = journalDocumentTypes.find(t => t.value === type)
+  return typeEntry?.label || 'Unknown'
+}
+
 /**
  * Define table columns for journal entries
  */
@@ -42,6 +88,11 @@ const columns = computed<TableColumn<DocumentListItem>[]>(() => [
     key: 'name',
     label: 'Name',
     required: true,
+  },
+  {
+    key: 'type',
+    label: 'Document Type',
+    formatter: value => formatDocumentType(value),
   },
   {
     key: 'id',
@@ -89,13 +140,31 @@ onBeforeMount(async () => {
 })
 
 function buildSearchDocumentsRequest(): SearchDocumentsRequest {
-  // Create the request to search for NOTE type documents
+  // Get enabled document types
+  const enabledTypes = journalDocumentTypes
+    .filter(t => t.enabled.value)
+    .map(t => t.value)
+
+  // Note: The API currently only supports a single typeFilter
+  // For now, we'll filter client-side if multiple types are selected
+  // TODO: Update API to support multiple type filters
   const req = new SearchDocumentsRequest({
-    typeFilter: DocumentType.NOTE,
+    // Don't set typeFilter - we'll get all documents and filter client-side
   })
 
   return req
 }
+
+/**
+ * Filter entries based on enabled document types (client-side filtering)
+ */
+const filteredEntries = computed(() => {
+  const enabledTypes = journalDocumentTypes
+    .filter(t => t.enabled.value)
+    .map(t => t.value)
+
+  return entries.value.filter(entry => enabledTypes.includes(entry.type))
+})
 
 async function handleSearchSubmit() {
   if (!client.value) {
@@ -111,9 +180,10 @@ async function handleSearchSubmit() {
 
     const response = await client.value.searchDocuments(request)
 
-    // Store the results
-    entries.value = response.matches
-    logger.success(`Success! Found ${response.matches.length} journal entries`)
+    // Store the results (filter to exclude PDF-sourced documents)
+    const pdfTypes = [DocumentType.RULEBOOK, DocumentType.EXPANSION, DocumentType.ADVENTURE, DocumentType.BESTIARY]
+    entries.value = response.matches.filter(doc => !pdfTypes.includes(doc.type))
+    logger.success(`Success! Found ${entries.value.length} journal entries`)
   }
   catch (error) {
     logger.error(`Error during document search: ${(error as Error).message}`)
@@ -258,6 +328,57 @@ async function handleBulkDelete() {
     </button>
   </div>
 
+  <!-- Document Type Filter -->
+  <div class="card bg-base-200 shadow-xl p-6 mb-6">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center gap-4">
+        <h3 class="font-semibold text-lg">
+          Document Type Filter
+        </h3>
+        <span class="badge badge-primary">
+          {{ enabledTypeCount }} / {{ journalDocumentTypes.length }} types shown
+        </span>
+      </div>
+      <div class="relative">
+        <button
+          type="button"
+          class="btn btn-sm btn-primary gap-2"
+          @click="toggleTypeFilter"
+        >
+          <Icon icon="heroicons:funnel" />
+          {{ isTypeFilterOpen ? 'Hide' : 'Show' }} Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Type filter checkboxes (collapsible) -->
+    <div v-if="isTypeFilterOpen" class="mt-4 pt-4 border-t border-base-300">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <label
+          v-for="docType in journalDocumentTypes"
+          v-bind:key="docType.value"
+          class="label cursor-pointer justify-start gap-2 hover:bg-base-300 rounded-lg px-2"
+        >
+          <input
+            v-model="docType.enabled.value"
+            type="checkbox"
+            class="checkbox checkbox-sm checkbox-primary"
+          />
+          <span class="label-text">{{ docType.label }}</span>
+        </label>
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button
+          type="button"
+          class="btn btn-ghost btn-xs"
+          @click="toggleAllTypes"
+        >
+          Toggle All
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Action Buttons -->
   <div class="flex gap-4 mb-4">
     <form class="flex-1" @submit.prevent="handleSearchSubmit">
@@ -287,7 +408,7 @@ async function handleBulkDelete() {
   <!-- Journal entries table -->
   <DataTable
     v-model="selectedIds"
-    v-bind:data="entries"
+    v-bind:data="filteredEntries"
     v-bind:columns="columns"
     v-bind:loading="loading"
     v-bind:selectable="true"
