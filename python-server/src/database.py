@@ -229,6 +229,7 @@ class DocumentDatabase:
         doc_type: str,
         tags: list[str],
         created_at: datetime,
+        source_type: Optional[str] = None,
     ) -> str:
         """Store a text document in the database.
 
@@ -239,6 +240,7 @@ class DocumentDatabase:
             doc_type: Type of document
             tags: List of tags for the document
             created_at: Document creation timestamp
+            source_type: Source type for authority weighting (optional)
 
         Returns:
             The document_id of the stored document
@@ -257,6 +259,9 @@ class DocumentDatabase:
             "created_at": created_at,
             "updated_at": created_at,
         }
+
+        if source_type is not None:
+            document["source_type"] = source_type
 
         await self.documents_collection.insert_one(document)
         logger.info(f"Text document stored with ID: {document_id}")
@@ -281,6 +286,7 @@ class DocumentDatabase:
         content: Optional[str] = None,
         doc_type: Optional[str] = None,
         tags: Optional[list[str]] = None,
+        source_type: Optional[str] = None,
     ) -> Optional[dict[str, Any]]:
         """Update a text document.
 
@@ -290,6 +296,7 @@ class DocumentDatabase:
             content: New content (if provided)
             doc_type: New type (if provided)
             tags: New tags (if provided)
+            source_type: New source type (if provided)
 
         Returns:
             The updated document if found, None otherwise
@@ -309,6 +316,8 @@ class DocumentDatabase:
             updates["type"] = doc_type
         if tags is not None:
             updates["tags"] = tags
+        if source_type is not None:
+            updates["source_type"] = source_type
 
         result = await self.documents_collection.find_one_and_update(
             {"_id": document_id},

@@ -38,6 +38,11 @@ class DocumentServiceImplementation:
         # Convert enum to string name for database storage
         doc_type = api.DocumentType.Name(request.document.type)
 
+        # Convert source_type enum to string if provided
+        source_type = None
+        if request.document.source_type != api.SOURCE_TYPE_UNSPECIFIED:
+            source_type = api.SourceType.Name(request.document.source_type)
+
         await self.db.store_document(
             document_id=document_id,
             name=request.document.name,
@@ -45,6 +50,7 @@ class DocumentServiceImplementation:
             doc_type=doc_type,
             tags=tags,
             created_at=now,
+            source_type=source_type,
         )
 
         # Create response with stored document metadata
@@ -90,6 +96,10 @@ class DocumentServiceImplementation:
         document.content = doc_data["content"]
         document.type = getattr(api, doc_data["type"], api.DOCUMENT_TYPE_UNSPECIFIED)
         document.character_count = doc_data["character_count"]
+
+        # Convert source_type string to enum (default to UNSPECIFIED if not present)
+        source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
+        document.source_type = getattr(api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED)
 
         # Convert dict tags to protobuf tags
         for tag_data in doc_data.get("tags", []):
@@ -142,6 +152,14 @@ class DocumentServiceImplementation:
         ):
             doc_type = api.DocumentType.Name(request.document.type)
 
+        # Convert source_type enum to string if provided
+        source_type = None
+        if (
+            request.document.source_type
+            and request.document.source_type != api.SOURCE_TYPE_UNSPECIFIED
+        ):
+            source_type = api.SourceType.Name(request.document.source_type)
+
         # Update document in database
         doc_data = await self.db.update_document(
             document_id=request.document.id,
@@ -149,6 +167,7 @@ class DocumentServiceImplementation:
             content=request.document.content if request.document.content else None,
             doc_type=doc_type,
             tags=tags,
+            source_type=source_type,
         )
 
         if doc_data is None:
@@ -166,6 +185,10 @@ class DocumentServiceImplementation:
             api, doc_data["type"], api.DOCUMENT_TYPE_UNSPECIFIED
         )
         updated_document.character_count = doc_data["character_count"]
+
+        # Convert source_type string to enum (default to UNSPECIFIED if not present)
+        source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
+        updated_document.source_type = getattr(api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED)
 
         # Convert dict tags to protobuf tags
         for tag_data in doc_data.get("tags", []):
@@ -257,6 +280,10 @@ class DocumentServiceImplementation:
                 api, doc_data["type"], api.DOCUMENT_TYPE_UNSPECIFIED
             )
             list_item.character_count = doc_data["character_count"]
+
+            # Convert source_type string to enum (default to UNSPECIFIED if not present)
+            source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
+            list_item.source_type = getattr(api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED)
 
             # Set timestamps
             created_timestamp = timestamp_pb2.Timestamp()
