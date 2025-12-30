@@ -12,7 +12,8 @@ from docling.datamodel.base_models import ConversionStatus, InputFormat
 from docling.datamodel.pipeline_options import ThreadedPdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
-import bibliophage.v1alpha2.pdf_pb2 as api
+import bibliophage.v1alpha3.pdf_pb2 as pdf_api
+import bibliophage.v1alpha3.document_pb2 as doc_api
 from config import get_settings
 from database import get_database
 from batch_size_calculator import calculate_batch_size
@@ -29,9 +30,10 @@ class LoadingServiceImplementation:
     """
     Loading service implementation using Docling for PDF processing.
 
-    This replaces the legacy chunking approach with docling's batch-based
-    PDF processing pipeline, storing full documents in FerretDB instead
-    of chunked embeddings in pgvector.
+    This service processes PDFs using docling's batch-based pipeline and stores
+    them as Documents in the unified documents collection. The LoadPdf RPC
+    returns PDF-specific metadata for compatibility with the PDF upload workflow,
+    but the data is stored as a Document internally.
     """
 
     def __init__(self):
@@ -56,7 +58,7 @@ class LoadingServiceImplementation:
             "Loading service initialized with Docling pipeline and database repository"
         )
 
-    async def load_pdf(self, request: api.LoadPdfRequest, ctx):
+    async def load_pdf(self, request: pdf_api.LoadPdfRequest, ctx):
         """
         Load a PDF using docling's batch processing pipeline.
 
@@ -64,8 +66,8 @@ class LoadingServiceImplementation:
         1. Writes PDF bytes to a temporary file
         2. Calculates optimal batch size based on system memory
         3. Processes PDF pages in batches using docling's DocumentConverter
-        4. Stores the full document with batches in FerretDB
-        5. Returns LoadPdfResponse with metadata
+        4. Stores the result as a Document in the unified documents collection
+        5. Returns LoadPdfResponse with PDF metadata
 
         Args:
             request: LoadPdfRequest containing PDF metadata and file data
@@ -77,6 +79,13 @@ class LoadingServiceImplementation:
         """
         try:
             logger.info(f"Received LoadPdf request for file: {request.pdf.name}")
+
+            # Validate systems array (must have at least one value)
+            if not request.pdf.systems:
+                return pdf_api.LoadPdfResponse(
+                    success=False,
+                    message="PDF must belong to at least one system",
+                )
 
             pdf_bytes = request.file_data
 
@@ -249,34 +258,67 @@ class LoadingServiceImplementation:
                 f"Concatenated {len(markdown_parts)} batches into {len(concatenated_content)} characters of markdown"
             )
 
-            # Store document using database repository
+            # Store as Document in unified documents collection
             document_id = str(uuid.uuid4())
             now = datetime.now(timezone.utc)
 
-            await self.db.store_pdf_document(
+            # Convert protobuf tags to dict format for database storage
+            tags = []
+            for tag in request.pdf.tags:
+                tags.append({"name": tag.name, "values": list(tag.values)})
+
+            # Determine DocumentType based on PDF type
+            # Map PDF type strings to DocumentType enums
+            pdf_type_upper = request.pdf.type.upper()
+            if "RULEBOOK" in pdf_type_upper or "CORE" in pdf_type_upper:
+                doc_type = "RULEBOOK"
+                source_type = "CORE"
+            elif "SUPPLEMENT" in pdf_type_upper or "EXPANSION" in pdf_type_upper:
+                doc_type = "EXPANSION"
+                source_type = "SUPPLEMENT"
+            elif "ADVENTURE" in pdf_type_upper:
+                doc_type = "ADVENTURE"
+                source_type = "SUPPLEMENT"
+            elif "BESTIARY" in pdf_type_upper or "MONSTER" in pdf_type_upper:
+                doc_type = "BESTIARY"
+                source_type = "SUPPLEMENT"
+            else:
+                doc_type = "RULEBOOK"
+                source_type = "CORE"
+
+            # TODO: Track vector_chunk_count when vector embedding is implemented
+            vector_chunk_count = 0
+
+            # Create metadata for PDF-sourced document
+            metadata = {
+                "file_size": len(pdf_bytes),
+                "publication_type": request.pdf.type,
+                "pdf": {
+                    "loading_batch_count": len(processed_batches),
+                    "vector_chunk_count": vector_chunk_count,
+                    "page_count": total_pages,
+                },
+            }
+
+            await self.db.store_document(
                 document_id=document_id,
                 name=request.pdf.name,
-                system=request.pdf.system,
-                doc_type=request.pdf.type,
-                origin_path=request.pdf.origin_path,
-                page_count=total_pages,
-                file_size=len(pdf_bytes),
+                systems=list(request.pdf.systems),
+                source_type=source_type,
                 content=concatenated_content,
-                batch_count=len(processed_batches),
-                batch_config=batch_config,
-                use_smart_batching=use_smart_batching,
-                tags=list(request.pdf.tags) if request.pdf.tags else [],
+                doc_type=doc_type,
+                tags=tags,
                 created_at=now,
+                metadata=metadata,
             )
 
-            # Create response matching LoadPdfResponse structure
-            stored_pdf = api.Pdf()
+            # Create response with PDF metadata (for API compatibility)
+            stored_pdf = pdf_api.Pdf()
             stored_pdf.CopyFrom(request.pdf)
             stored_pdf.id = document_id
             stored_pdf.page_count = total_pages
-            # For API compatibility, set chunk_count to batch_count
-            # (API expects chunk_count, but we're storing batches now)
-            stored_pdf.chunk_count = len(processed_batches)
+            stored_pdf.batch_count = len(processed_batches)
+            stored_pdf.vector_chunk_count = vector_chunk_count
             stored_pdf.file_size = len(pdf_bytes)
 
             # Set timestamps
@@ -285,7 +327,7 @@ class LoadingServiceImplementation:
             stored_pdf.created_at.CopyFrom(timestamp)
             stored_pdf.updated_at.CopyFrom(timestamp)
 
-            return api.LoadPdfResponse(
+            return pdf_api.LoadPdfResponse(
                 success=True,
                 message=f"PDF {request.pdf.name} processed successfully ({successful_batches}/{len(processed_batches)} batches)",
                 pdf=stored_pdf,
@@ -297,49 +339,61 @@ class LoadingServiceImplementation:
 
     async def search_pdfs(
         self,
-        request: api.SearchPdfsRequest,
+        request: pdf_api.SearchPdfsRequest,
         ctx,
-    ) -> api.SearchPdfsResponse:
-        """Search for PDFs in FerretDB."""
+    ) -> pdf_api.SearchPdfsResponse:
+        """Search for PDFs in the unified documents collection.
+
+        This method delegates to the documents collection but filters for
+        PDF-sourced documents (those with metadata.pdf field).
+        """
 
         logger.info("Received SearchPdfsRequest")
 
         try:
-            mongodb_response: tuple[
-                list[dict[str, Any]], int
-            ] = await self.db.search_pdfs(
-                # TODO: see the TODO about inconsistent naming in database.py
-                name_query=request.title_query,
-                system_filter=request.system_filter,
-                type_filter=request.type_filter,
-                # TODO: actually do something with the tags, this  code is buggy
-                # tags=request.tag_filters if request.tag_filters else [],
-                # the parameters  default to 0 when unspecified
+            # Convert tag filters from protobuf to database format
+            tag_filters = None
+            if request.tag_filters:
+                tag_filters = []
+                for tag_filter in request.tag_filters:
+                    tag_filters.append({
+                        "name": tag_filter.name,
+                        "value": tag_filter.value,
+                    })
+
+            # Extract system filters
+            system_filters = list(request.system_filters) if request.system_filters else None
+
+            # Search documents collection
+            documents, total_count = await self.db.search_documents(
+                name_query=request.title_query if request.HasField("title_query") else None,
+                system_filters=system_filters,
+                type_filter=request.type_filter if request.HasField("type_filter") else None,
+                tag_filters=tag_filters,
                 page_size=request.page_size if request.page_size > 0 else 50,
-                page_number=request.page_number,
+                page_number=request.page_number if request.page_number >= 0 else 0,
             )
 
-            # we convert what FerretDB returns into what protobuf expects here
-            # FerretDB prefixes the ID with an underscore, for example
-            found_pdfs: list[PdfListItem] = []
+            # Filter to only include PDF-sourced documents (those with metadata.pdf)
+            pdf_documents = [doc for doc in documents if "metadata" in doc and "pdf" in doc.get("metadata", {})]
 
-            for doc in mongodb_response[0]:
-                pdf_item = api.PdfListItem(
-                    id=doc.get("_id", ""),  # map _id → id
+            # Convert database documents to PdfListItem protobuf objects
+            found_pdfs = []
+            for doc in pdf_documents:
+                pdf_item = pdf_api.PdfListItem(
+                    id=doc.get("_id", ""),
                     name=doc.get("name", ""),
-                    system=doc.get("system", ""),
-                    type=doc.get("type", ""),
-                    page_count=doc.get("page_count", 0),
-                    origin_path=doc.get("origin_path", ""),
-                    file_size=doc.get("file_size", 0),
-                    # TODO: this is an old value which we are abusing here
-                    # we should refactor this in the future
-                    chunk_count=doc.get(
-                        "batch_count", 0
-                    ),  # Map batch_count → chunk_count
+                    type=doc.get("metadata", {}).get("publication_type", ""),
+                    page_count=doc.get("metadata", {}).get("pdf", {}).get("page_count", 0),
+                    file_size=doc.get("metadata", {}).get("file_size", 0),
+                    batch_count=doc.get("metadata", {}).get("pdf", {}).get("loading_batch_count", 0),
+                    vector_chunk_count=doc.get("metadata", {}).get("pdf", {}).get("vector_chunk_count", 0),
                 )
 
-                # Handle timestamps if present
+                # Add systems array
+                pdf_item.systems.extend(doc.get("systems", []))
+
+                # Handle timestamps
                 if "created_at" in doc:
                     created_ts = timestamp_pb2.Timestamp()
                     created_ts.FromDatetime(doc["created_at"])
@@ -349,66 +403,87 @@ class LoadingServiceImplementation:
                     updated_ts = timestamp_pb2.Timestamp()
                     updated_ts.FromDatetime(doc["updated_at"])
                     pdf_item.updated_at.CopyFrom(updated_ts)
-                    # TODO: Handle tags
+
+                # Add tags
+                for tag_data in doc.get("tags", []):
+                    tag = pdf_api.Tag()
+                    tag.name = tag_data.get("name", "")
+                    tag.values.extend(tag_data.get("values", []))
+                    pdf_item.tags.append(tag)
 
                 found_pdfs.append(pdf_item)
 
-            return api.SearchPdfsResponse(
+            # Calculate pagination
+            pdf_count = len(pdf_documents)
+            page_number = request.page_number if request.page_number >= 0 else 0
+            page_size = request.page_size if request.page_size > 0 else 50
+            has_more = (page_number + 1) * page_size < pdf_count
+
+            return pdf_api.SearchPdfsResponse(
                 success=True,
-                message="Search succesful",
+                message="Search successful",
                 pdfs=found_pdfs,
-                total_count=mongodb_response[1],
-                page_number=request.page_number if request.page_number else 0,
-                has_more=False,
+                total_count=pdf_count,
+                page_number=page_number,
+                has_more=has_more,
             )
         except Exception as e:
-            exception_message = f"{type(e).__name__} occured during PDF search: {e}"
+            exception_message = f"{type(e).__name__} occurred during PDF search: {e}"
             logger.error(exception_message)
             logger.error(traceback.format_exc())
 
-            return api.SearchPdfsResponse(
+            return pdf_api.SearchPdfsResponse(
                 success=False,
                 message=exception_message,
                 pdfs=[],
                 total_count=0,
-                page_number=request.page_number if request.page_number else 0,
+                page_number=request.page_number if request.page_number >= 0 else 0,
                 has_more=False,
             )
 
     async def get_pdf(
         self,
-        request: api.GetPdfRequest,
+        request: pdf_api.GetPdfRequest,
         ctx,
-    ) -> api.GetPdfResponse:
+    ) -> pdf_api.GetPdfResponse:
         """
-        Retrieve a specific PDF by ID from FerretDB, including markdown content.
+        Retrieve a specific PDF by ID from the documents collection.
 
-        The markdown content from all batches is concatenated and included in the response.
-        This allows the frontend to display and edit the processed PDF content.
+        This queries the unified documents collection and returns the document
+        as a Pdf message if it has PDF metadata.
         """
         logger.info(f"Received GetPdfRequest for ID: {request.id}")
 
         try:
-            # Fetch PDF document from database
-            doc = await self.db.get_pdf_by_id(request.id)
+            # Fetch document from database
+            doc = await self.db.get_document_by_id(request.id)
 
             if not doc:
-                return api.GetPdfResponse(
+                return pdf_api.GetPdfResponse(
                     success=False,
                     message=f"PDF with ID '{request.id}' not found",
                 )
 
+            # Verify this is a PDF-sourced document
+            if "metadata" not in doc or "pdf" not in doc.get("metadata", {}):
+                return pdf_api.GetPdfResponse(
+                    success=False,
+                    message=f"Document with ID '{request.id}' is not a PDF",
+                )
+
             # Convert database document to protobuf Pdf message
-            pdf = api.Pdf(
+            pdf = pdf_api.Pdf(
                 id=doc.get("_id", ""),
                 name=doc.get("name", ""),
-                system=doc.get("system", ""),
-                type=doc.get("type", ""),
-                page_count=doc.get("page_count", 0),
-                origin_path=doc.get("origin_path", ""),
-                file_size=doc.get("file_size", 0),
-                chunk_count=doc.get("batch_count", 0),
+                type=doc.get("metadata", {}).get("publication_type", ""),
+                page_count=doc.get("metadata", {}).get("pdf", {}).get("page_count", 0),
+                file_size=doc.get("metadata", {}).get("file_size", 0),
+                batch_count=doc.get("metadata", {}).get("pdf", {}).get("loading_batch_count", 0),
+                vector_chunk_count=doc.get("metadata", {}).get("pdf", {}).get("vector_chunk_count", 0),
             )
+
+            # Add systems array
+            pdf.systems.extend(doc.get("systems", []))
 
             # Handle timestamps
             if "created_at" in doc:
@@ -422,13 +497,11 @@ class LoadingServiceImplementation:
                 pdf.updated_at.CopyFrom(updated_ts)
 
             # Handle tags
-            if "tags" in doc and doc["tags"]:
-                for tag_dict in doc["tags"]:
-                    tag = api.Tag(
-                        name=tag_dict.get("name", ""),
-                        value=tag_dict.get("value", ""),
-                    )
-                    pdf.tags.append(tag)
+            for tag_data in doc.get("tags", []):
+                tag = pdf_api.Tag()
+                tag.name = tag_data.get("name", "")
+                tag.values.extend(tag_data.get("values", []))
+                pdf.tags.append(tag)
 
             # Include markdown content if present
             if "content" in doc:
@@ -436,7 +509,7 @@ class LoadingServiceImplementation:
                 logger.info(f"Included {len(pdf.content)} characters of content")
 
             logger.info(f"Successfully retrieved PDF: {pdf.name} ({pdf.id})")
-            return api.GetPdfResponse(
+            return pdf_api.GetPdfResponse(
                 success=True,
                 message=f"PDF '{pdf.name}' retrieved successfully",
                 pdf=pdf,
@@ -445,7 +518,7 @@ class LoadingServiceImplementation:
         except Exception as e:
             logger.error(f"Error retrieving PDF: {e}")
             logger.error(traceback.format_exc())
-            return api.GetPdfResponse(
+            return pdf_api.GetPdfResponse(
                 success=False,
                 message=f"Error retrieving PDF: {str(e)}",
             )
