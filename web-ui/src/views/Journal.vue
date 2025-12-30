@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Client } from '@connectrpc/connect'
-import type { Document, DocumentListItem } from '../bibliophage/v1alpha2/document_pb.ts'
+import type { Document, DocumentListItem } from '../bibliophage/v1alpha3/document_pb.ts'
 import type { TableColumn } from '../components/DataTable.vue'
 
 import { createClient } from '@connectrpc/connect'
@@ -9,8 +9,8 @@ import { Icon } from '@iconify/vue'
 import { computed, onBeforeMount, ref } from 'vue'
 
 import DataTable from '../components/DataTable.vue'
-import { DocumentService } from '../bibliophage/v1alpha2/document_connect.ts'
-import { DocumentType, SearchDocumentsRequest, GetDocumentRequest, GetDocumentResponse, DeleteDocumentRequest } from '../bibliophage/v1alpha2/document_pb.ts'
+import { DocumentService } from '../bibliophage/v1alpha3/document_connect.ts'
+import { DocumentType, SearchDocumentsRequest, GetDocumentRequest, GetDocumentResponse, DeleteDocumentRequest } from '../bibliophage/v1alpha3/document_pb.ts'
 import { useAppConsole } from '../composables/useAppConsole'
 import { useConfig } from '../composables/useConfig'
 import { useEditorWindows } from '../composables/useEditorWindows'

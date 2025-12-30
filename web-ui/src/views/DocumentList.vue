@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Client } from '@connectrpc/connect'
-import type { PdfListItem } from '../bibliophage/v1alpha2/pdf_pb.ts'
+import type { PdfListItem } from '../bibliophage/v1alpha3/pdf_pb.ts'
 import type { TableColumn } from '../components/DataTable.vue'
 
 import { createClient } from '@connectrpc/connect'
@@ -9,9 +9,9 @@ import { Icon } from '@iconify/vue'
 import { computed, onBeforeMount, ref } from 'vue'
 
 import DataTable from '../components/DataTable.vue'
-import { SortOrder } from '../bibliophage/v1alpha2/common_pb.ts'
-import { PdfService } from '../bibliophage/v1alpha2/pdf_connect.ts'
-import { SearchPdfsRequest } from '../bibliophage/v1alpha2/pdf_pb.ts'
+import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
+import { PdfService } from '../bibliophage/v1alpha3/pdf_connect.ts'
+import { SearchPdfsRequest } from '../bibliophage/v1alpha3/pdf_pb.ts'
 import { useAppConsole } from '../composables/useAppConsole'
 import { useConfig } from '../composables/useConfig'
 import { useEditorWindows } from '../composables/useEditorWindows'
@@ -26,6 +26,14 @@ const client = ref<Client<typeof PdfService> | null>(null)
 
 const pdfs = ref<PdfListItem[]>([])
 const loading = ref(false)
+
+// Search filter parameters
+// TODO: Make these selectable via the web UI (dropdowns, checkboxes, etc.)
+const titleQuery = ref('')
+const systemFilters = ref<string[]>(['PATHFINDER_1E']) // Filter by systems (ANY match)
+const typeFilter = ref('')
+const pageSize = ref(20)
+const pageNumber = ref(0)
 
 /**
  * Format file size in bytes to human-readable format (KB, MB, GB)
@@ -83,8 +91,8 @@ const columns = computed<TableColumn<PdfListItem>[]>(() => [
     cellClass: 'text-xs font-mono',
   },
   {
-    key: 'system',
-    label: 'System',
+    key: 'systems',
+    label: 'Systems',
   },
   {
     key: 'type',
@@ -93,10 +101,6 @@ const columns = computed<TableColumn<PdfListItem>[]>(() => [
   {
     key: 'pageCount',
     label: 'Page Count',
-  },
-  {
-    key: 'originPath',
-    label: 'Origin Path',
   },
   {
     key: 'createdAt',
@@ -114,8 +118,12 @@ const columns = computed<TableColumn<PdfListItem>[]>(() => [
     formatter: (value) => formatFileSize(value),
   },
   {
-    key: 'chunkCount',
-    label: 'Chunk Count',
+    key: 'batchCount',
+    label: 'Batches',
+  },
+  {
+    key: 'vectorChunkCount',
+    label: 'Chunks',
   },
   {
     key: 'tags',
@@ -143,14 +151,14 @@ onBeforeMount(async () => {
 })
 
 function buildSearchPdfsRequest(): SearchPdfsRequest {
-  // Create the request with hardcoded search parameters
+  // Create the request using filter parameters
   const req = new SearchPdfsRequest({
-    titleQuery: '',
-    systemFilter: 'PATHFINDER_1E',
-    typeFilter: '',
+    titleQuery: titleQuery.value,
+    systemFilters: systemFilters.value,
+    typeFilter: typeFilter.value,
     tagFilters: [],
-    pageSize: 20,
-    pageNumber: 0,
+    pageSize: pageSize.value,
+    pageNumber: pageNumber.value,
     sortOrder: SortOrder.NAME_ASC,
   })
 
@@ -195,7 +203,7 @@ async function handleEditDocument(pdf: PdfListItem) {
     log(`Fetching content for: ${pdf.name}`, 'info')
 
     // Import the necessary types
-    const { GetPdfRequest } = await import('../bibliophage/v1alpha2/pdf_pb.ts')
+    const { GetPdfRequest } = await import('../bibliophage/v1alpha3/pdf_pb.ts')
 
     // Fetch the full PDF with content
     const request = new GetPdfRequest({ id: pdf.id })
@@ -257,6 +265,18 @@ async function handleEditDocument(pdf: PdfListItem) {
       empty-icon="heroicons:document"
       @row-click="handleEditDocument"
     >
+        <!-- Custom rendering for Systems column with badges -->
+        <template #cell-systems="{ row }">
+          <div class="flex gap-1 flex-wrap">
+            <span v-for="system in row.systems" v-bind:key="system" class="badge badge-sm badge-primary">
+              {{ system }}
+            </span>
+            <span v-if="row.systems.length === 0" class="text-sm text-base-content/50">
+              -
+            </span>
+          </div>
+        </template>
+
         <!-- Custom rendering for Actions column with Edit button -->
         <template #cell-actions="{ row }">
           <button
