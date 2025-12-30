@@ -5,8 +5,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from bibliophage.v1alpha3.chat_connect import ChatServiceASGIApplication
 from bibliophage.v1alpha3.document_connect import DocumentServiceASGIApplication
 from bibliophage.v1alpha3.pdf_connect import PdfServiceASGIApplication
+from chat_service_implementation import ChatServiceImplementation
 from document_service_implementation import DocumentServiceImplementation
 from loading_service_implementation import LoadingServiceImplementation
 from database import get_database
@@ -69,12 +71,14 @@ api_server.add_middleware(
 # instantiate each of our Service Implementations of the Service Interfaces generated for us
 pdf_service = LoadingServiceImplementation()
 document_service = DocumentServiceImplementation()
+chat_service = ChatServiceImplementation()
 
 
 # toss our instantiated implementation into the generated wrapper so we don't need to think about
 # how all the communication works
 pdf_service_endpoint = PdfServiceASGIApplication(service=pdf_service)
 document_service_endpoint = DocumentServiceASGIApplication(service=document_service)
+chat_service_endpoint = ChatServiceASGIApplication(service=chat_service)
 
 
 # Apply CORS directly to the mounted app
@@ -88,6 +92,14 @@ pdf_service_endpoint_cors = CORSMiddleware(
 
 document_service_endpoint_cors = CORSMiddleware(
     app=document_service_endpoint,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+chat_service_endpoint_cors = CORSMiddleware(
+    app=chat_service_endpoint,
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
@@ -113,4 +125,9 @@ api_server.mount(
 api_server.mount(
     document_service_endpoint.path,
     document_service_endpoint_cors,
+)
+
+api_server.mount(
+    chat_service_endpoint.path,
+    chat_service_endpoint_cors,
 )
