@@ -17,7 +17,7 @@ import { Icon } from '@iconify/vue'
       </button>
     </router-link>
 
-    <router-link to="/document-list">
+    <router-link to="/library">
       <button class="btn btn-ghost btn-square">
         <Icon icon="game-icons:bookshelf" class="text-3xl" />
       </button>
