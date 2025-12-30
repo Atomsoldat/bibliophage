@@ -8,8 +8,8 @@ import { Icon } from '@iconify/vue'
 
 import { onMounted, ref } from 'vue'
 
-import { PdfService } from '../bibliophage/v1alpha2/pdf_connect.ts'
-import { ChunkingConfig, LoadPdfRequest, Pdf } from '../bibliophage/v1alpha2/pdf_pb.ts'
+import { PdfService } from '../bibliophage/v1alpha3/pdf_connect.ts'
+import { ChunkingConfig, LoadPdfRequest, Pdf } from '../bibliophage/v1alpha3/pdf_pb.ts'
 import BaseCard from '../components/BaseCard.vue'
 import FormField from '../components/forms/FormField.vue'
 import FormSelect from '../components/forms/FormSelect.vue'
@@ -32,7 +32,8 @@ const client = ref<Client<typeof PdfService> | null>(null)
 // pointer here, and no other", technically, var could work too, but then someone could reassign the ref
 // and not just the ref's .value property
 const pdfName = ref('')
-const rpgSystem = ref('PATHFINDER_1E')
+// TODO: Allow selecting multiple systems in the UI (multi-select dropdown or checkboxes)
+const rpgSystem = ref('PATHFINDER_1E') // Selected system
 const publicationType = ref('BESTIARY')
 const chunkSize = ref(600)
 const chunkOverlap = ref(50)
@@ -73,9 +74,8 @@ function buildPdfLoadRequest(fileData: Uint8Array<ArrayBuffer>): LoadPdfRequest 
   // Create the PDF metadata object
   const pdf = new Pdf({
     name: pdfName.value,
-    system: rpgSystem.value,
+    systems: [rpgSystem.value], // v1alpha3 uses systems array
     type: publicationType.value,
-    originPath: 'web-upload', // Mark as uploaded via web interface
     tags: [], // Empty tags for now - could be extended in the future
   })
 
@@ -118,7 +118,7 @@ async function handleFormSubmit() {
   log(`Connecting to server at ${config.value.backendHost}...`, 'info')
   log(`File: ${pdfFile.value.name}`, 'info')
   log(`PDF Name: ${pdfName.value}`, 'info')
-  log(`System: ${rpgSystem.value}`, 'info')
+  log(`Systems: ${[rpgSystem.value].join(', ')}`, 'info')
   log(`Type: ${publicationType.value}`, 'info')
 
   try {
@@ -133,7 +133,8 @@ async function handleFormSubmit() {
     log('Upload successful!', 'success')
     log(`PDF ID: ${response.pdf?.id}`, 'success')
     log(`Pages: ${response.pdf?.pageCount}`, 'info')
-    log(`Chunks: ${response.pdf?.chunkCount}`, 'info')
+    log(`Batches: ${response.pdf?.batchCount}`, 'info')
+    log(`Vector Chunks: ${response.pdf?.vectorChunkCount}`, 'info')
     log(`File Size: ${response.pdf?.fileSize} bytes`, 'info')
   }
   catch (error) {

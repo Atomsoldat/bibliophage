@@ -6,12 +6,12 @@ import type {
   SearchDocumentsResponse,
   StoreDocumentResponse,
   UpdateDocumentResponse,
-} from '../bibliophage/v1alpha2/document_pb'
+} from '../bibliophage/v1alpha3/document_pb'
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 
 import { ref } from 'vue'
-import { DocumentService } from '../bibliophage/v1alpha2/document_connect'
+import { DocumentService } from '../bibliophage/v1alpha3/document_connect'
 import {
   DeleteDocumentRequest,
   Document,
@@ -19,7 +19,7 @@ import {
   SearchDocumentsRequest,
   StoreDocumentRequest,
   UpdateDocumentRequest,
-} from '../bibliophage/v1alpha2/document_pb'
+} from '../bibliophage/v1alpha3/document_pb'
 import { useConfig } from './useConfig'
 
 // Shared client instance (singleton pattern)
