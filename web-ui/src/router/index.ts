@@ -21,6 +21,10 @@ const router = createRouter({
       component: () => import('../views/Journal.vue'),
     },
     {
+      path: '/chat',
+      component: () => import('../views/Chat.vue'),
+    },
+    {
       path: '/sandbox',
       component: () => import('../views/Sandbox.vue'),
     },

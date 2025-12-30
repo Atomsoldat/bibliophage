@@ -30,6 +30,12 @@ import { Icon } from '@iconify/vue'
       </button>
     </router-link>
 
+    <router-link to="/chat">
+      <button class="btn btn-ghost btn-square">
+        <Icon icon="game-icons:talk" class="text-3xl" />
+      </button>
+    </router-link>
+
     <router-link to="/sandbox">
       <button class="btn btn-ghost btn-square">
         <Icon icon="game-icons:sand-castle" class="text-3xl" />
