@@ -52,9 +52,17 @@ async function handleSave(windowId: string) {
 
   try {
     if (window.isNew) {
+      // Import necessary types for creating new documents
+      const { DocumentType, SourceType } = await import('../bibliophage/v1alpha3/document_pb.ts')
+
       const response = await api.storeDocument({
         name: window.title,
         content: window.content,
+        // Provide required fields with sensible defaults
+        systems: ['General'], // Default system - user can change via bulk edit later
+        type: DocumentType.NOTE, // Default to NOTE for journal entries
+        sourceType: SourceType.GM_NOTES, // Default source type
+        tags: [], // Empty tags array
       })
       if (response?.success && response.document) {
         updateDocument(windowId, {
@@ -66,6 +74,10 @@ async function handleSave(windowId: string) {
         triggerRefresh()
         // Switch to preview mode after successful save
         editorWindowRefs.value.get(windowId)?.switchToPreview()
+      }
+      else {
+        // Handle save failure
+        logger.error(`Failed to create document: ${response?.message || 'Unknown error'}`)
       }
     }
     else {
@@ -80,6 +92,10 @@ async function handleSave(windowId: string) {
         triggerRefresh()
         // Switch to preview mode after successful save
         editorWindowRefs.value.get(windowId)?.switchToPreview()
+      }
+      else {
+        // Handle update failure
+        logger.error(`Failed to update document: ${response?.message || 'Unknown error'}`)
       }
     }
   }
