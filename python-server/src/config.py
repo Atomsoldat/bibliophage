@@ -5,6 +5,9 @@
 - LOG_LEVEL: Logging level (optional, default: INFO)
 - OLLAMA_URL: Ollama API URL (optional, default: http://localhost:11435)
 - OLLAMA_DEFAULT_MODEL: Default Ollama model (optional, default: mistral)
+- OLLAMA_TEMPERATURE: LLM temperature 0.0-1.0 (optional, default: 0.7)
+- OLLAMA_MAX_TOKENS: Maximum tokens to generate (optional, default: 2048)
+- OLLAMA_TIMEOUT: Request timeout in seconds (optional, default: 120)
 """
 
 
@@ -84,6 +87,21 @@ class OllamaConfig(BaseSettings):
     ollama_default_model: str = Field(
         default="mistral",
         description="Default Ollama model",
+    )
+
+    ollama_temperature: float = Field(
+        default=0.7,
+        description="LLM temperature (0.0-1.0). Higher = more creative",
+    )
+
+    ollama_max_tokens: int = Field(
+        default=2048,
+        description="Maximum tokens to generate",
+    )
+
+    ollama_timeout: int = Field(
+        default=120,
+        description="Request timeout in seconds",
     )
 
     model_config = SettingsConfigDict(
