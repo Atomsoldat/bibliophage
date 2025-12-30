@@ -12,9 +12,9 @@ import DataTable from '../components/DataTable.vue'
 import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
 import { PdfService } from '../bibliophage/v1alpha3/pdf_connect.ts'
 import { SearchPdfsRequest } from '../bibliophage/v1alpha3/pdf_pb.ts'
-import { useAppConsole } from '../composables/useAppConsole'
-import { useConfig } from '../composables/useConfig'
-import { useEditorWindows } from '../composables/useEditorWindows'
+import { useAppConsole } from '../composables/useAppConsole.ts'
+import { useConfig } from '../composables/useConfig.ts'
+import { useEditorWindows } from '../composables/useEditorWindows.ts'
 
 const { config, loadConfig } = useConfig()
 const { log } = useAppConsole()
@@ -233,10 +233,10 @@ async function handleEditDocument(pdf: PdfListItem) {
 <template>
   <div>
     <h1 class="text-4xl font-bold mb-4">
-      Document List
+      Library
     </h1>
     <p class="text-lg">
-      Here is where we would like to have a searchable list of all documents
+      Here is where we would like to have a searchable list of all imported documents ( PDFs, Text Files, ...)
     </p>
   </div>
 

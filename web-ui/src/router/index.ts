@@ -13,8 +13,8 @@ const router = createRouter({
       component: () => import('../views/PdfUpload.vue'),
     },
     {
-      path: '/document-list',
-      component: () => import('../views/DocumentList.vue'),
+      path: '/library',
+      component: () => import('../views/Library.vue'),
     },
     {
       path: '/journal',
