@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Client } from '@connectrpc/connect'
-import type { PdfListItem } from '../bibliophage/v1alpha3/pdf_pb.ts'
+import type { DocumentListItem } from '../bibliophage/v1alpha3/document_pb.ts'
 import type { TableColumn } from '../components/DataTable.vue'
 
 import { createClient } from '@connectrpc/connect'
@@ -9,9 +9,8 @@ import { Icon } from '@iconify/vue'
 import { computed, onBeforeMount, ref, watch } from 'vue'
 
 import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
-import { PdfService } from '../bibliophage/v1alpha3/pdf_connect.ts'
 import { DocumentService } from '../bibliophage/v1alpha3/document_connect.ts'
-import { SearchPdfsRequest } from '../bibliophage/v1alpha3/pdf_pb.ts'
+import { SearchDocumentsRequest, DocumentFilter } from '../bibliophage/v1alpha3/document_pb.ts'
 import DataTable from '../components/DataTable.vue'
 import { useConfig } from '../composables/useConfig.ts'
 import { useEditorWindows } from '../composables/useEditorWindows.ts'
@@ -23,10 +22,9 @@ const { openWindow } = useEditorWindows()
 
 // Client will be initialized after config loads
 // see https://connectrpc.com/docs/node/using-clients/#connect
-const client = ref<Client<typeof PdfService> | null>(null)
-const documentClient = ref<Client<typeof DocumentService> | null>(null)
+const client = ref<Client<typeof DocumentService> | null>(null)
 
-const pdfs = ref<PdfListItem[]>([])
+const pdfs = ref([] as DocumentListItem[])
 const loading = ref(false)
 const selectedIds = ref<Set<string | number>>(new Set())
 
@@ -40,7 +38,6 @@ const bulkEditTags = ref('')
 const titleQuery = ref('')
 const systemFiltersInput = ref('') // User input for systems (comma-separated)
 const systemFilters = ref<string[]>([]) // Parsed array of system filters
-const typeFilter = ref('')
 const pageSize = ref(20)
 const pageNumber = ref(0)
 
@@ -97,7 +94,7 @@ function formatDate(timestamp: any): string {
 /**
  * Define table columns for PDF list
  */
-const columns = computed<TableColumn<PdfListItem>[]>(() => [
+const columns = computed<TableColumn<DocumentListItem>[]>(() => [
   {
     key: 'index',
     label: 'Index',
@@ -168,20 +165,22 @@ onBeforeMount(async () => {
   const transport = createConnectTransport({
     baseUrl: config.value.backendHost,
   })
-  client.value = createClient(PdfService, transport)
-  documentClient.value = createClient(DocumentService, transport)
+  client.value = createClient(DocumentService, transport)
 
   // Send initial search to populate table
   handleSearchSubmit()
 })
 
-function buildSearchPdfsRequest(): SearchPdfsRequest {
+function buildSearchDocumentsRequest(): SearchDocumentsRequest {
   // Create the request using filter parameters
-  const req = new SearchPdfsRequest({
-    titleQuery: titleQuery.value,
+  const filter = new DocumentFilter({
+    nameQuery: titleQuery.value,
     systemFilters: systemFilters.value,
-    typeFilter: typeFilter.value,
     tagFilters: [], // Tag filtering not implemented yet
+  })
+
+  const req = new SearchDocumentsRequest({
+    filter,
     pageSize: pageSize.value,
     pageNumber: pageNumber.value,
     sortOrder: SortOrder.NAME_ASC,
@@ -199,18 +198,21 @@ async function handleSearchSubmit() {
   loading.value = true
 
   try {
-    const request = buildSearchPdfsRequest()
-    logger.info('Searching for PDFs...')
+    const request = buildSearchDocumentsRequest()
+    logger.info('Searching for documents...')
 
-    const response = await client.value.searchPdfs(request)
+    const response = await client.value.searchDocuments(request)
+
+    // Filter to only show PDF-sourced documents (those with metadata.pdf)
+    const pdfDocuments = response.matches.filter(doc => doc.metadata?.pdf !== undefined) as typeof response.matches
 
     // Store the results
-    pdfs.value = response.pdfs
-    logger.success(`Success! Found ${response.totalCount} PDFs`)
-    logger.info(`Returned ${response.pdfs.length} results on page ${response.pageNumber}`)
+    pdfs.value = pdfDocuments
+    logger.success(`Success! Found ${pdfDocuments.length} PDF documents (${response.totalCount} total documents)`)
+    logger.info(`Returned ${pdfDocuments.length} PDF results on page ${response.pageNumber}`)
   }
   catch (error) {
-    logger.error(`Error during PDF search: ${(error as Error).message}`)
+    logger.error(`Error during document search: ${(error as Error).message}`)
   }
   finally {
     loading.value = false
@@ -218,7 +220,7 @@ async function handleSearchSubmit() {
 }
 
 // Open a global editor window for the selected document
-async function handleEditDocument(pdf: PdfListItem) {
+async function handleEditDocument(pdf: DocumentListItem) {
   if (!client.value) {
     logger.error('Error: Client not initialized')
     return
@@ -228,26 +230,26 @@ async function handleEditDocument(pdf: PdfListItem) {
     logger.info(`Fetching content for: ${pdf.name}`)
 
     // Import the necessary types
-    const { GetPdfRequest } = await import('../bibliophage/v1alpha3/pdf_pb.ts')
+    const { GetDocumentRequest } = await import('../bibliophage/v1alpha3/document_pb.ts')
 
-    // Fetch the full PDF with content
-    const request = new GetPdfRequest({ id: pdf.id })
-    const response = await client.value.getPdf(request)
+    // Fetch the full document with content
+    const request = new GetDocumentRequest({ id: pdf.id })
+    const response = await client.value.getDocument(request)
 
-    if (!response.success || !response.pdf) {
-      logger.error(`Failed to fetch PDF: ${response.message}`)
+    if (!response.success || !response.document) {
+      logger.error(`Failed to fetch document: ${response.message}`)
       return
     }
 
     // Open editor window with the fetched content
     openWindow({
-      title: response.pdf.name,
-      content: response.pdf.content || '',
-      documentId: response.pdf.id,
+      title: response.document.name,
+      content: response.document.content || '',
+      documentId: response.document.id,
       isNew: false,
     })
 
-    logger.success(`Opened editor for: ${response.pdf.name} (${response.pdf.content?.length || 0} characters)`)
+    logger.success(`Opened editor for: ${response.document.name} (${response.document.content?.length || 0} characters)`)
   }
   catch (error) {
     logger.error(`Error fetching PDF: ${(error as Error).message}`)
@@ -257,7 +259,7 @@ async function handleEditDocument(pdf: PdfListItem) {
 // Open bulk edit modal
 function openBulkEditModal() {
   if (selectedIds.value.size === 0) {
-    logger.warning('No documents selected for bulk edit')
+    logger.warn('No documents selected for bulk edit')
     return
   }
 
@@ -267,7 +269,7 @@ function openBulkEditModal() {
     const selectedPdf = pdfs.value.find(pdf => pdf.id === selectedId)
     if (selectedPdf) {
       bulkEditSystems.value = selectedPdf.systems.join(', ')
-      bulkEditType.value = selectedPdf.type
+      bulkEditType.value = selectedPdf.metadata?.publicationType || ''
       bulkEditTags.value = selectedPdf.tags.map(tag => `${tag.name}:${tag.values.join('|')}`).join(', ')
     }
   }
@@ -282,7 +284,7 @@ function openBulkEditModal() {
 }
 
 async function handleBulkUpdate() {
-  if (!documentClient.value) {
+  if (!client.value) {
     logger.error('Error: Document client not initialized')
     return
   }
@@ -322,7 +324,7 @@ async function handleBulkUpdate() {
       try {
         // Fetch the document
         const getRequest = new GetDocumentRequest({ id: String(docId) })
-        const getResponse = await documentClient.value.getDocument(getRequest)
+        const getResponse = await client.value.getDocument(getRequest)
 
         if (!getResponse.success || !getResponse.document) {
           errors.push(`${docId}: ${getResponse.message}`)
@@ -355,7 +357,7 @@ async function handleBulkUpdate() {
 
         // Send update request
         const updateRequest = new UpdateDocumentRequest({ document: doc })
-        const updateResponse = await documentClient.value.updateDocument(updateRequest)
+        const updateResponse = await client.value.updateDocument(updateRequest)
 
         if (updateResponse.success) {
           successCount++

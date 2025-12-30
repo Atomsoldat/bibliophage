@@ -19,12 +19,6 @@ class PdfService(Protocol):
     async def load_pdf(self, request: bibliophage_dot_v1alpha3_dot_pdf__pb2.LoadPdfRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_pdf__pb2.LoadPdfResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def search_pdfs(self, request: bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsResponse:
-        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-
-    async def get_pdf(self, request: bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfResponse:
-        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-
 
 class PdfServiceASGIApplication(ConnectASGIApplication[PdfService]):
     def __init__(self, service: PdfService | AsyncGenerator[PdfService], *, interceptors: Iterable[Interceptor]=(), read_max_bytes: int | None = None) -> None:
@@ -40,26 +34,6 @@ class PdfServiceASGIApplication(ConnectASGIApplication[PdfService]):
                         idempotency_level=IdempotencyLevel.UNKNOWN,
                     ),
                     function=svc.load_pdf,
-                ),
-                "/bibliophage.v1alpha3.PdfService/SearchPdfs": Endpoint.unary(
-                    method=MethodInfo(
-                        name="SearchPdfs",
-                        service_name="bibliophage.v1alpha3.PdfService",
-                        input=bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsRequest,
-                        output=bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsResponse,
-                        idempotency_level=IdempotencyLevel.UNKNOWN,
-                    ),
-                    function=svc.search_pdfs,
-                ),
-                "/bibliophage.v1alpha3.PdfService/GetPdf": Endpoint.unary(
-                    method=MethodInfo(
-                        name="GetPdf",
-                        service_name="bibliophage.v1alpha3.PdfService",
-                        input=bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfRequest,
-                        output=bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfResponse,
-                        idempotency_level=IdempotencyLevel.UNKNOWN,
-                    ),
-                    function=svc.get_pdf,
                 ),
             },
             interceptors=interceptors,
@@ -93,53 +67,9 @@ class PdfServiceClient(ConnectClient):
             timeout_ms=timeout_ms,
         )
 
-    async def search_pdfs(
-        self,
-        request: bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsRequest,
-        *,
-        headers: Headers | Mapping[str, str] | None = None,
-        timeout_ms: int | None = None,
-    ) -> bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsResponse:
-        return await self.execute_unary(
-            request=request,
-            method=MethodInfo(
-                name="SearchPdfs",
-                service_name="bibliophage.v1alpha3.PdfService",
-                input=bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsRequest,
-                output=bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsResponse,
-                idempotency_level=IdempotencyLevel.UNKNOWN,
-            ),
-            headers=headers,
-            timeout_ms=timeout_ms,
-        )
-
-    async def get_pdf(
-        self,
-        request: bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfRequest,
-        *,
-        headers: Headers | Mapping[str, str] | None = None,
-        timeout_ms: int | None = None,
-    ) -> bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfResponse:
-        return await self.execute_unary(
-            request=request,
-            method=MethodInfo(
-                name="GetPdf",
-                service_name="bibliophage.v1alpha3.PdfService",
-                input=bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfRequest,
-                output=bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfResponse,
-                idempotency_level=IdempotencyLevel.UNKNOWN,
-            ),
-            headers=headers,
-            timeout_ms=timeout_ms,
-        )
-
 
 class PdfServiceSync(Protocol):
     def load_pdf(self, request: bibliophage_dot_v1alpha3_dot_pdf__pb2.LoadPdfRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_pdf__pb2.LoadPdfResponse:
-        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def search_pdfs(self, request: bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsResponse:
-        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def get_pdf(self, request: bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
@@ -156,26 +86,6 @@ class PdfServiceWSGIApplication(ConnectWSGIApplication):
                         idempotency_level=IdempotencyLevel.UNKNOWN,
                     ),
                     function=service.load_pdf,
-                ),
-                "/bibliophage.v1alpha3.PdfService/SearchPdfs": EndpointSync.unary(
-                    method=MethodInfo(
-                        name="SearchPdfs",
-                        service_name="bibliophage.v1alpha3.PdfService",
-                        input=bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsRequest,
-                        output=bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsResponse,
-                        idempotency_level=IdempotencyLevel.UNKNOWN,
-                    ),
-                    function=service.search_pdfs,
-                ),
-                "/bibliophage.v1alpha3.PdfService/GetPdf": EndpointSync.unary(
-                    method=MethodInfo(
-                        name="GetPdf",
-                        service_name="bibliophage.v1alpha3.PdfService",
-                        input=bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfRequest,
-                        output=bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfResponse,
-                        idempotency_level=IdempotencyLevel.UNKNOWN,
-                    ),
-                    function=service.get_pdf,
                 ),
             },
             interceptors=interceptors,
@@ -203,46 +113,6 @@ class PdfServiceClientSync(ConnectClientSync):
                 service_name="bibliophage.v1alpha3.PdfService",
                 input=bibliophage_dot_v1alpha3_dot_pdf__pb2.LoadPdfRequest,
                 output=bibliophage_dot_v1alpha3_dot_pdf__pb2.LoadPdfResponse,
-                idempotency_level=IdempotencyLevel.UNKNOWN,
-            ),
-            headers=headers,
-            timeout_ms=timeout_ms,
-        )
-
-    def search_pdfs(
-        self,
-        request: bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsRequest,
-        *,
-        headers: Headers | Mapping[str, str] | None = None,
-        timeout_ms: int | None = None,
-    ) -> bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsResponse:
-        return self.execute_unary(
-            request=request,
-            method=MethodInfo(
-                name="SearchPdfs",
-                service_name="bibliophage.v1alpha3.PdfService",
-                input=bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsRequest,
-                output=bibliophage_dot_v1alpha3_dot_pdf__pb2.SearchPdfsResponse,
-                idempotency_level=IdempotencyLevel.UNKNOWN,
-            ),
-            headers=headers,
-            timeout_ms=timeout_ms,
-        )
-
-    def get_pdf(
-        self,
-        request: bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfRequest,
-        *,
-        headers: Headers | Mapping[str, str] | None = None,
-        timeout_ms: int | None = None,
-    ) -> bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfResponse:
-        return self.execute_unary(
-            request=request,
-            method=MethodInfo(
-                name="GetPdf",
-                service_name="bibliophage.v1alpha3.PdfService",
-                input=bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfRequest,
-                output=bibliophage_dot_v1alpha3_dot_pdf__pb2.GetPdfResponse,
                 idempotency_level=IdempotencyLevel.UNKNOWN,
             ),
             headers=headers,
