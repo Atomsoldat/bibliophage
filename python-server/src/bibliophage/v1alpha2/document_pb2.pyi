@@ -21,6 +21,17 @@ class DocumentType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     OBJECT: _ClassVar[DocumentType]
     QUEST: _ClassVar[DocumentType]
     SESSION_LOG: _ClassVar[DocumentType]
+
+class SourceType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    SOURCE_TYPE_UNSPECIFIED: _ClassVar[SourceType]
+    RULEBOOK: _ClassVar[SourceType]
+    SUPPLEMENT: _ClassVar[SourceType]
+    GM_NOTES: _ClassVar[SourceType]
+    PLAYER_NOTES: _ClassVar[SourceType]
+    SESSION_LOG_RECORD: _ClassVar[SourceType]
+    GENERATED: _ClassVar[SourceType]
+    COMMUNITY: _ClassVar[SourceType]
 DOCUMENT_TYPE_UNSPECIFIED: DocumentType
 NOTE: DocumentType
 LORE_FRAGMENT: DocumentType
@@ -29,9 +40,17 @@ LOCATION: DocumentType
 OBJECT: DocumentType
 QUEST: DocumentType
 SESSION_LOG: DocumentType
+SOURCE_TYPE_UNSPECIFIED: SourceType
+RULEBOOK: SourceType
+SUPPLEMENT: SourceType
+GM_NOTES: SourceType
+PLAYER_NOTES: SourceType
+SESSION_LOG_RECORD: SourceType
+GENERATED: SourceType
+COMMUNITY: SourceType
 
 class Document(_message.Message):
-    __slots__ = ("id", "name", "content", "type", "created_at", "updated_at", "tags", "character_count")
+    __slots__ = ("id", "name", "content", "type", "created_at", "updated_at", "tags", "character_count", "source_type")
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     CONTENT_FIELD_NUMBER: _ClassVar[int]
@@ -40,6 +59,7 @@ class Document(_message.Message):
     UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
     TAGS_FIELD_NUMBER: _ClassVar[int]
     CHARACTER_COUNT_FIELD_NUMBER: _ClassVar[int]
+    SOURCE_TYPE_FIELD_NUMBER: _ClassVar[int]
     id: str
     name: str
     content: str
@@ -48,10 +68,11 @@ class Document(_message.Message):
     updated_at: _timestamp_pb2.Timestamp
     tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
     character_count: int
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., content: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ...) -> None: ...
+    source_type: SourceType
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., content: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ..., source_type: _Optional[_Union[SourceType, str]] = ...) -> None: ...
 
 class DocumentListItem(_message.Message):
-    __slots__ = ("id", "name", "content_snippet", "type", "created_at", "updated_at", "tags", "character_count")
+    __slots__ = ("id", "name", "content_snippet", "type", "created_at", "updated_at", "tags", "character_count", "source_type")
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     CONTENT_SNIPPET_FIELD_NUMBER: _ClassVar[int]
@@ -60,6 +81,7 @@ class DocumentListItem(_message.Message):
     UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
     TAGS_FIELD_NUMBER: _ClassVar[int]
     CHARACTER_COUNT_FIELD_NUMBER: _ClassVar[int]
+    SOURCE_TYPE_FIELD_NUMBER: _ClassVar[int]
     id: str
     name: str
     content_snippet: str
@@ -68,7 +90,8 @@ class DocumentListItem(_message.Message):
     updated_at: _timestamp_pb2.Timestamp
     tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
     character_count: int
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., content_snippet: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ...) -> None: ...
+    source_type: SourceType
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., content_snippet: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ..., source_type: _Optional[_Union[SourceType, str]] = ...) -> None: ...
 
 class StoreDocumentRequest(_message.Message):
     __slots__ = ("document",)

@@ -48,6 +48,9 @@ message Document {
 
   // Character count (for display purposes)
   int32 character_count = 8;
+
+  // Source authority for LLM context weighting
+  SourceType source_type = 9;
 }
 
 // DocumentListItem represents a document in list/search results
@@ -79,6 +82,9 @@ message DocumentListItem {
 
   // Character count of full document (not the snippet)
   int32 character_count = 8;
+
+  // Source authority for LLM context weighting
+  SourceType source_type = 9;
 }
 
 // Enums for strict classification of data
@@ -91,6 +97,19 @@ enum DocumentType {
   OBJECT = 5; // Possessions, items, artifacts
   QUEST = 6; // Quests, missions, plot hooks
   SESSION_LOG = 7; // Session summaries, game logs
+}
+
+// SourceType categorizes who created  a document or where a document came from
+// Used to weight authority when constructing LLM context
+enum SourceType {
+  SOURCE_TYPE_UNSPECIFIED = 0; // Default/unknown
+  RULEBOOK = 1;                 // Official published rules (highest authority)
+  SUPPLEMENT = 2;               // Official expansions/supplements
+  GM_NOTES = 3;                 // Game master's notes and preparations
+  PLAYER_NOTES = 4;             // Player character journals/notes
+  SESSION_LOG_RECORD = 5;       // Actual play session records
+  GENERATED = 6;                // LLM-generated content
+  COMMUNITY = 7;                // Community/fan-created content
 }
 
 // ============================================================================

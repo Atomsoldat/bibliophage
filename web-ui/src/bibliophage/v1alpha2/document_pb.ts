@@ -82,6 +82,81 @@ proto3.util.setEnumType(DocumentType, "bibliophage.v1alpha2.DocumentType", [
 ]);
 
 /**
+ * SourceType categorizes who created or where a document came from
+ * Used to weight authority when constructing LLM context
+ *
+ * @generated from enum bibliophage.v1alpha2.SourceType
+ */
+export enum SourceType {
+  /**
+   * Default/unknown
+   *
+   * @generated from enum value: SOURCE_TYPE_UNSPECIFIED = 0;
+   */
+  SOURCE_TYPE_UNSPECIFIED = 0,
+
+  /**
+   * Official published rules (highest authority)
+   *
+   * @generated from enum value: RULEBOOK = 1;
+   */
+  RULEBOOK = 1,
+
+  /**
+   * Official expansions/supplements
+   *
+   * @generated from enum value: SUPPLEMENT = 2;
+   */
+  SUPPLEMENT = 2,
+
+  /**
+   * Game master's notes and preparations
+   *
+   * @generated from enum value: GM_NOTES = 3;
+   */
+  GM_NOTES = 3,
+
+  /**
+   * Player character journals/notes
+   *
+   * @generated from enum value: PLAYER_NOTES = 4;
+   */
+  PLAYER_NOTES = 4,
+
+  /**
+   * Actual play session records
+   *
+   * @generated from enum value: SESSION_LOG_RECORD = 5;
+   */
+  SESSION_LOG_RECORD = 5,
+
+  /**
+   * AI-generated content (for transparency)
+   *
+   * @generated from enum value: GENERATED = 6;
+   */
+  GENERATED = 6,
+
+  /**
+   * Community/fan-created content
+   *
+   * @generated from enum value: COMMUNITY = 7;
+   */
+  COMMUNITY = 7,
+}
+// Retrieve enum metadata with: proto3.getEnumType(SourceType)
+proto3.util.setEnumType(SourceType, "bibliophage.v1alpha2.SourceType", [
+  { no: 0, name: "SOURCE_TYPE_UNSPECIFIED" },
+  { no: 1, name: "RULEBOOK" },
+  { no: 2, name: "SUPPLEMENT" },
+  { no: 3, name: "GM_NOTES" },
+  { no: 4, name: "PLAYER_NOTES" },
+  { no: 5, name: "SESSION_LOG_RECORD" },
+  { no: 6, name: "GENERATED" },
+  { no: 7, name: "COMMUNITY" },
+]);
+
+/**
  * Document represents a text document in the system
  * this type actually contains the raw data it represents
  * which is different from  how we handle PDFs
@@ -148,6 +223,13 @@ export class Document extends Message<Document> {
    */
   characterCount = 0;
 
+  /**
+   * Source authority for LLM context weighting
+   *
+   * @generated from field: bibliophage.v1alpha2.SourceType source_type = 9;
+   */
+  sourceType = SourceType.SOURCE_TYPE_UNSPECIFIED;
+
   constructor(data?: PartialMessage<Document>) {
     super();
     proto3.util.initPartial(data, this);
@@ -164,6 +246,7 @@ export class Document extends Message<Document> {
     { no: 6, name: "updated_at", kind: "message", T: Timestamp },
     { no: 7, name: "tags", kind: "message", T: Tag, repeated: true },
     { no: 8, name: "character_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 9, name: "source_type", kind: "enum", T: proto3.getEnumType(SourceType) },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Document {
@@ -249,6 +332,13 @@ export class DocumentListItem extends Message<DocumentListItem> {
    */
   characterCount = 0;
 
+  /**
+   * Source authority for LLM context weighting
+   *
+   * @generated from field: bibliophage.v1alpha2.SourceType source_type = 9;
+   */
+  sourceType = SourceType.SOURCE_TYPE_UNSPECIFIED;
+
   constructor(data?: PartialMessage<DocumentListItem>) {
     super();
     proto3.util.initPartial(data, this);
@@ -265,6 +355,7 @@ export class DocumentListItem extends Message<DocumentListItem> {
     { no: 6, name: "updated_at", kind: "message", T: Timestamp },
     { no: 7, name: "tags", kind: "message", T: Tag, repeated: true },
     { no: 8, name: "character_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 9, name: "source_type", kind: "enum", T: proto3.getEnumType(SourceType) },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DocumentListItem {
