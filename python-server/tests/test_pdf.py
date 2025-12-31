@@ -2,6 +2,8 @@ import pytest
 from pathlib import Path
 import subprocess
 import os
+import bibliophage.v1alpha3.pdf_pb2 as pdf_api
+from bibliophage.v1alpha3.pdf_connect import PdfServiceClient
 
 
 # this decorator allows tests to use this function as an argument
@@ -13,9 +15,34 @@ def sample_pdf(tmp_path):
     fixture_dir = Path(__file__).parent / "data"
     md_file = fixture_dir / "bestiary_sample.md"
     pdf_file = tmp_path / "bestiary_sample.pdf"
-    
+
     subprocess.run(['pandoc', str(md_file), '-o', str(pdf_file)], check=True)
     return pdf_file
 
 def test_pdf_creation(sample_pdf):
     assert os.path.exists(sample_pdf)
+
+# This decorator tells pytest that the function is asynchronous
+# pytest will run the function in an event loop
+# asynchronous functions just return a coroutine object when invoked, which does not
+# cause the function itself to be executed
+@pytest.mark.asyncio
+async def test_load_pdf_integration(sample_pdf):
+    """Integration test: Load a PDF via the PDF service API."""
+    # Read PDF bytes
+    with open(sample_pdf, 'rb') as f:
+        pdf_bytes = f.read()
+
+    request = pdf_api.LoadPdfRequest()
+    request.pdf.name = "Test Bestiary"
+    request.pdf.systems.append("Fantasy RPG")
+    request.pdf.type = "BESTIARY"
+    request.file_data = pdf_bytes
+
+    # Call service - Connect client takes URL string directly
+    async with PdfServiceClient("http://localhost:8000") as client:
+        response = await client.load_pdf(request)
+
+    assert response.success == True
+    assert response.pdf.page_count > 0
+    assert response.pdf.name == "Test Bestiary"
