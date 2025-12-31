@@ -73,11 +73,11 @@ function formatTime(date: Date): string {
     </div>
   </button>
 
-  <!-- Console Panel - Slides in from bottom -->
+  <!-- Console Panel - Part of layout flow, respects sidebar -->
   <div
     v-if="isVisible"
-    class="fixed bottom-0 left-0 right-0 z-40 bg-base-300 shadow-2xl border-t-4 border-primary transition-transform duration-300 ease-out"
-    style="height: 40vh; min-height: 300px;"
+    class="ml-16 bg-base-300 shadow-2xl border-t-4 border-primary transition-all duration-300 ease-out"
+    style="height: 50vh;"
   >
     <!-- Console Header -->
     <div class="flex items-center justify-between px-4 py-2 bg-base-200 border-b border-base-300">
@@ -128,11 +128,4 @@ function formatTime(date: Date): string {
       </div>
     </div>
   </div>
-
-  <!-- Backdrop overlay when console is visible -->
-  <div
-    v-if="isVisible"
-    class="fixed inset-0 bg-black/20 z-30 backdrop-blur-sm"
-    @click="toggleVisibility"
-  />
 </template>
