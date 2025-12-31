@@ -52,10 +52,10 @@ message ChatResponseChunk {
 // Type of streaming chunk
 enum ChunkType {
   CHUNK_TYPE_UNSPECIFIED = 0;
-  TOKEN = 1;           // Incremental token from LLM
-  METADATA = 2;        // Metadata about the response (model, context docs, etc.)
-  ERROR = 3;           // Error occurred during streaming
-  DONE = 4;            // Stream complete
+  TOKEN = 1; // Incremental token from LLM
+  METADATA = 2; // Metadata about the response (model, context docs, etc.)
+  ERROR = 3; // Error occurred during streaming
+  DONE = 4; // Stream complete
 }
 
 // Metadata about the chat response

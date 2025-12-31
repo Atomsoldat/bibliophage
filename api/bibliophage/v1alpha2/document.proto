@@ -103,13 +103,13 @@ enum DocumentType {
 // Used to weight authority when constructing LLM context
 enum SourceType {
   SOURCE_TYPE_UNSPECIFIED = 0; // Default/unknown
-  RULEBOOK = 1;                 // Official published rules (highest authority)
-  SUPPLEMENT = 2;               // Official expansions/supplements
-  GM_NOTES = 3;                 // Game master's notes and preparations
-  PLAYER_NOTES = 4;             // Player character journals/notes
-  SESSION_LOG_RECORD = 5;       // Actual play session records
-  GENERATED = 6;                // LLM-generated content
-  COMMUNITY = 7;                // Community/fan-created content
+  RULEBOOK = 1; // Official published rules (highest authority)
+  SUPPLEMENT = 2; // Official expansions/supplements
+  GM_NOTES = 3; // Game master's notes and preparations
+  PLAYER_NOTES = 4; // Player character journals/notes
+  SESSION_LOG_RECORD = 5; // Actual play session records
+  GENERATED = 6; // LLM-generated content
+  COMMUNITY = 7; // Community/fan-created content
 }
 
 // ============================================================================

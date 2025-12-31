@@ -33,7 +33,6 @@ message PdfData {
 // Metadata for file-based content (PDFs, scanned books, etc.)
 // Populated when DocumentType indicates file-based content
 message Metadata {
-
   // File size in bytes
   int64 file_size = 1;
 
@@ -46,7 +45,6 @@ message Metadata {
 
 // Document represents any content in the system (user-created or loaded from files)
 message Document {
-
   // Unique identifier for this document (assigned by the system)
   string id = 1;
 
@@ -82,7 +80,6 @@ message Document {
   // Character count
   int32 character_count = 11;
 }
-
 
 // DocumentListItem represents a document in list/search results
 // Contains metadata and a content snippet, but not the full content
@@ -122,7 +119,6 @@ message DocumentListItem {
 
   // Character count of full document (not the snippet)
   int32 character_count = 11;
-
 }
 
 // Enums for strict classification of data
@@ -148,7 +144,7 @@ enum DocumentType {
 // SourceType categorizes who created  a document or where a document came from
 // Used to weight authority when constructing LLM context
 enum SourceType {
-  SOURCE_TYPE_UNSPECIFIED = 0;  // Default/unknown
+  SOURCE_TYPE_UNSPECIFIED = 0; // Default/unknown
   CORE = 1; // Official published rules (highest authority)
   SUPPLEMENT = 2; // Official expansions/supplements
   GM_NOTES = 3; // Game master's notes and preparations
