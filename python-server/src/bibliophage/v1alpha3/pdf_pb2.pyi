@@ -65,22 +65,12 @@ class PdfListItem(_message.Message):
     def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., systems: _Optional[_Iterable[str]] = ..., type: _Optional[str] = ..., page_count: _Optional[int] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., file_size: _Optional[int] = ..., batch_count: _Optional[int] = ..., vector_chunk_count: _Optional[int] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ...) -> None: ...
 
 class LoadPdfRequest(_message.Message):
-    __slots__ = ("pdf", "file_data", "chunking_config")
+    __slots__ = ("pdf", "file_data")
     PDF_FIELD_NUMBER: _ClassVar[int]
     FILE_DATA_FIELD_NUMBER: _ClassVar[int]
-    CHUNKING_CONFIG_FIELD_NUMBER: _ClassVar[int]
     pdf: Pdf
     file_data: bytes
-    chunking_config: ChunkingConfig
-    def __init__(self, pdf: _Optional[_Union[Pdf, _Mapping]] = ..., file_data: _Optional[bytes] = ..., chunking_config: _Optional[_Union[ChunkingConfig, _Mapping]] = ...) -> None: ...
-
-class ChunkingConfig(_message.Message):
-    __slots__ = ("chunk_size", "chunk_overlap")
-    CHUNK_SIZE_FIELD_NUMBER: _ClassVar[int]
-    CHUNK_OVERLAP_FIELD_NUMBER: _ClassVar[int]
-    chunk_size: int
-    chunk_overlap: int
-    def __init__(self, chunk_size: _Optional[int] = ..., chunk_overlap: _Optional[int] = ...) -> None: ...
+    def __init__(self, pdf: _Optional[_Union[Pdf, _Mapping]] = ..., file_data: _Optional[bytes] = ...) -> None: ...
 
 class LoadPdfResponse(_message.Message):
     __slots__ = ("success", "message", "pdf")

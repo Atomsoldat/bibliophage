@@ -288,13 +288,6 @@ export class LoadPdfRequest extends Message<LoadPdfRequest> {
    */
   fileData = new Uint8Array(0);
 
-  /**
-   * Chunking configuration (optional parameters)
-   *
-   * @generated from field: bibliophage.v1alpha3.ChunkingConfig chunking_config = 3;
-   */
-  chunkingConfig?: ChunkingConfig;
-
   constructor(data?: PartialMessage<LoadPdfRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -305,7 +298,6 @@ export class LoadPdfRequest extends Message<LoadPdfRequest> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "pdf", kind: "message", T: Pdf },
     { no: 2, name: "file_data", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-    { no: 3, name: "chunking_config", kind: "message", T: ChunkingConfig },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): LoadPdfRequest {
@@ -322,55 +314,6 @@ export class LoadPdfRequest extends Message<LoadPdfRequest> {
 
   static equals(a: LoadPdfRequest | PlainMessage<LoadPdfRequest> | undefined, b: LoadPdfRequest | PlainMessage<LoadPdfRequest> | undefined): boolean {
     return proto3.util.equals(LoadPdfRequest, a, b);
-  }
-}
-
-/**
- * Configuration for text chunking
- *
- * @generated from message bibliophage.v1alpha3.ChunkingConfig
- */
-export class ChunkingConfig extends Message<ChunkingConfig> {
-  /**
-   * Size of text chunks (default: 600)
-   *
-   * @generated from field: int32 chunk_size = 1;
-   */
-  chunkSize = 0;
-
-  /**
-   * Overlap between chunks (default: 50)
-   *
-   * @generated from field: int32 chunk_overlap = 2;
-   */
-  chunkOverlap = 0;
-
-  constructor(data?: PartialMessage<ChunkingConfig>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "bibliophage.v1alpha3.ChunkingConfig";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "chunk_size", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 2, name: "chunk_overlap", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ChunkingConfig {
-    return new ChunkingConfig().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ChunkingConfig {
-    return new ChunkingConfig().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ChunkingConfig {
-    return new ChunkingConfig().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: ChunkingConfig | PlainMessage<ChunkingConfig> | undefined, b: ChunkingConfig | PlainMessage<ChunkingConfig> | undefined): boolean {
-    return proto3.util.equals(ChunkingConfig, a, b);
   }
 }
 

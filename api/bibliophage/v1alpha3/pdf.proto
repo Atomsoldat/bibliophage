@@ -111,18 +111,6 @@ message LoadPdfRequest {
 
   // The actual PDF file data (bytes)
   bytes file_data = 2;
-
-  // Chunking configuration (optional parameters)
-  ChunkingConfig chunking_config = 3;
-}
-
-// Configuration for text chunking
-message ChunkingConfig {
-  // Size of text chunks (default: 600)
-  int32 chunk_size = 1;
-
-  // Overlap between chunks (default: 50)
-  int32 chunk_overlap = 2;
 }
 
 // LoadPdfResponse - Result of loading a PDF
