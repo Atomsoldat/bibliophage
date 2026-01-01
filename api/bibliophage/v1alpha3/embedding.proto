@@ -1,0 +1,267 @@
+syntax = "proto3";
+
+package bibliophage.v1alpha3;
+
+import "google/protobuf/timestamp.proto";
+
+// Service definitions - the API endpoints
+service EmbeddingService {
+  rpc ProposeChunks(ProposeChunksRequest) returns (ProposeChunksResponse);
+  rpc EmbedDocument(EmbedDocumentRequest) returns (EmbedDocumentResponse);
+  rpc GetChunkBoundaries(GetChunkBoundariesRequest) returns (GetChunkBoundariesResponse);
+  rpc UpdateChunkBoundaries(UpdateChunkBoundariesRequest) returns (UpdateChunkBoundariesResponse);
+  rpc DeleteEmbeddings(DeleteEmbeddingsRequest) returns (DeleteEmbeddingsResponse);
+}
+
+// ============================================================================
+// Data Objects - Reusable entities that represent core domain models
+// ============================================================================
+
+// ChunkingStrategy defines the method used to split document content into chunks
+enum ChunkingStrategy {
+  CHUNKING_STRATEGY_UNSPECIFIED = 0; // Default/unknown
+  TOKEN_BASED = 1; // RecursiveCharacterTextSplitter with token limits
+  MARKDOWN_STRUCTURE = 2; // Split at heading boundaries
+  MARKDOWN_WITH_TOKEN_LIMIT = 3; // Hybrid: respect headings, split if too large
+  PDF_PAGE_BASED = 4; // Split at page markers (<!-- PAGE N -->)
+  USER_DEFINED = 5; // User manually edited chunk boundaries
+}
+
+// MarkdownReference represents a position in the document by markdown structure
+message MarkdownReference {
+  // Path through headings to reach this chunk
+  // Example: ["Chapter 1", "Combat Rules", "Initiative"]
+  repeated string heading_path = 1;
+
+  // Heading level where this chunk starts (1 = #, 2 = ##, etc.)
+  int32 start_heading_level = 2;
+}
+
+// PdfPageReference represents a position in a PDF document
+message PdfPageReference {
+  // Starting page number (1-indexed)
+  int32 start_page = 1;
+
+  // Ending page number (1-indexed, inclusive)
+  int32 end_page = 2;
+}
+
+// ChunkBoundary defines a single chunk's position and metadata
+message ChunkBoundary {
+  // Unique identifier for this chunk (e.g., "doc-uuid:chunk:0")
+  string chunk_id = 1;
+
+  // Character offset where this chunk starts (0-indexed)
+  int32 char_start = 2;
+
+  // Character offset where this chunk ends (0-indexed, exclusive)
+  int32 char_end = 3;
+
+  // Token offset where this chunk starts (optional, for token-based strategies)
+  optional int32 token_start = 4;
+
+  // Token offset where this chunk ends (optional, for token-based strategies)
+  optional int32 token_end = 5;
+
+  // Markdown structure reference (optional, for markdown-based strategies)
+  optional MarkdownReference markdown_ref = 6;
+
+  // PDF page reference (optional, for PDF documents)
+  optional PdfPageReference pdf_ref = 7;
+
+  // Human-readable description of this chunk (e.g., heading text)
+  string description = 8;
+
+  // Short preview of chunk content (first ~100 characters)
+  // TODO: this is not needed, just overlay the chunk over the respective document
+  // We don't want to display chunks separately from the document they come from
+  string preview = 9;
+}
+
+// ChunkingConfig defines parameters for chunk generation
+message ChunkingConfig {
+  // Strategy to use for chunking
+  ChunkingStrategy strategy = 1;
+
+  // Token-based chunking: chunk size in tokens (default: 512)
+  optional int32 token_chunk_size = 2;
+
+  // Token-based chunking: overlap in tokens (default: 50)
+  optional int32 token_chunk_overlap = 3;
+
+  // Markdown-based chunking: maximum heading level to split at (1-6, default: 3)
+  // 1 = split only at # headings, 3 = split at #, ##, and ### headings
+  optional int32 max_heading_level = 4;
+
+  // Version identifier for reproducibility (e.g., "1.0.0")
+  optional string config_version = 5;
+}
+
+// EmbeddingStatus represents the current embedding state for a document
+message EmbeddingStatus {
+  // Whether this document has been embedded
+  bool is_embedded = 1;
+
+  // Whether embeddings are current (false if content or boundaries changed)
+  bool embeddings_current = 2;
+
+  // When embeddings were last created
+  optional google.protobuf.Timestamp embedded_at = 3;
+
+  // Total number of chunks embedded
+  int32 total_chunks = 4;
+
+  // Embedding model used (e.g., "BAAI/bge-large-en-v1.5")
+  optional string embedding_model = 5;
+
+  // Name of the vector collection in pgvector
+  optional string vector_collection = 6;
+}
+
+// ChunkProposal contains proposed chunk boundaries and statistics
+message ChunkProposal {
+  // Array of proposed chunk boundaries
+  repeated ChunkBoundary boundaries = 1;
+
+  // Configuration used to generate these chunks
+  ChunkingConfig config = 2;
+
+  // Statistics about the proposed chunks
+  ChunkStatistics statistics = 3;
+}
+
+// ChunkStatistics provides metrics about a set of chunks
+message ChunkStatistics {
+  // Total number of chunks
+  int32 total_chunks = 1;
+
+  // Average chunk size in characters
+  int32 avg_chunk_size = 2;
+
+  // Minimum chunk size in characters
+  int32 min_chunk_size = 3;
+
+  // Maximum chunk size in characters
+  int32 max_chunk_size = 4;
+
+  // Total content length in characters
+  int32 total_content_length = 5;
+}
+
+// ============================================================================
+// Request/Response Messages - Operation-specific wrappers
+// ============================================================================
+
+// ProposeChunksRequest - Generate chunk boundary proposals for a document
+message ProposeChunksRequest {
+  // Document ID to chunk
+  string document_id = 1;
+
+  // Chunking configuration
+  ChunkingConfig config = 2;
+}
+
+// ProposeChunksResponse - Result of chunk proposal generation
+message ProposeChunksResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // Proposed chunks (null if operation failed)
+  optional ChunkProposal proposal = 3;
+}
+
+// EmbedDocumentRequest - Embed a document with specified or generated boundaries
+message EmbedDocumentRequest {
+  // Document ID to embed
+  string document_id = 1;
+
+  // Chunking configuration (used to generate boundaries if not provided)
+  ChunkingConfig config = 2;
+
+  // Optional: Pre-defined chunk boundaries (if not provided, will be generated from config)
+  repeated ChunkBoundary boundaries = 3;
+}
+
+// EmbedDocumentResponse - Result of document embedding
+message EmbedDocumentResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // Embedding status after operation
+  optional EmbeddingStatus embedding_status = 3;
+}
+
+// GetChunkBoundariesRequest - Retrieve existing chunk boundaries for a document
+message GetChunkBoundariesRequest {
+  // Document ID to retrieve boundaries for
+  string document_id = 1;
+}
+
+// GetChunkBoundariesResponse - Result of retrieving chunk boundaries
+message GetChunkBoundariesResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // Array of chunk boundaries (null if document has no boundaries)
+  repeated ChunkBoundary boundaries = 3;
+
+  // Configuration used to generate these boundaries
+  optional ChunkingConfig config = 4;
+
+  // Current embedding status
+  optional EmbeddingStatus embedding_status = 5;
+}
+
+// UpdateChunkBoundariesRequest - Modify chunk boundaries (marks embeddings stale)
+message UpdateChunkBoundariesRequest {
+  // Document ID to update boundaries for
+  string document_id = 1;
+
+  // Updated chunk boundaries
+  repeated ChunkBoundary boundaries = 2;
+
+  // Configuration used for these boundaries
+  ChunkingConfig config = 3;
+}
+
+// UpdateChunkBoundariesResponse - Result of updating chunk boundaries
+message UpdateChunkBoundariesResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // Updated boundaries
+  repeated ChunkBoundary boundaries = 3;
+
+  // Embedding status (embeddings_current should be false)
+  optional EmbeddingStatus embedding_status = 4;
+}
+
+// DeleteEmbeddingsRequest - Remove all embeddings for a document
+message DeleteEmbeddingsRequest {
+  // Document ID to delete embeddings for
+  string document_id = 1;
+}
+
+// DeleteEmbeddingsResponse - Result of deleting embeddings
+message DeleteEmbeddingsResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // Number of chunks deleted
+  int32 chunks_deleted = 3;
+}
