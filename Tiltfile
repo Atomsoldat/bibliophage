@@ -1,5 +1,5 @@
 # Database services via Docker Compose
-docker_compose('docker-compose.yaml')
+docker_compose('dev-environment/docker-compose.yaml')
 
 # Configure database resources
 dc_resource('postgres-pgvector', labels=['databases'])
