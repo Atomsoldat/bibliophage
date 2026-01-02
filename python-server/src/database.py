@@ -271,21 +271,9 @@ class DocumentDatabase:
         result = await self.documents_collection.delete_one({"_id": document_id})
         return result.deleted_count > 0
 
-    # ========================================================================
-    # Direct Collection Access (for special cases)
-    # ========================================================================
-
-    def get_documents_collection(self):
-        """Get direct access to documents collection.
-
-        Use this sparingly - only when you need operations not covered
-        by the repository methods above.
-        """
-        return self.documents_collection
-
-
+# TODO: We probably want some kind of connection pool here, if ferretdb allows that
 # ============================================================================
-# Singleton Pattern - One database connection for the entire application
+# Repository Pattern - Entire application reuses the same DB methods
 # ============================================================================
 
 _database: Optional[DocumentDatabase] = None
@@ -306,6 +294,8 @@ def get_database() -> DocumentDatabase:
         db = get_database()
         await db.store_document(...)
     """
+    # global keyword used to modify module level variables instead of
+    # locally scoped ones
     global _database, _mongo_client
 
     if _database is None:
@@ -317,6 +307,7 @@ def get_database() -> DocumentDatabase:
     return _database
 
 
+# TODO: We should call this function when our application terminates
 async def close_database():
     """Close the database connection.
 
@@ -329,4 +320,4 @@ async def close_database():
         _mongo_client.close()
         _mongo_client = None
         _database = None
-        logger.info("Database connection closed")
+        logger.info("Document Database connection closed")
