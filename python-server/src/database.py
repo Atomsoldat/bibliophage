@@ -46,6 +46,7 @@ class DocumentDatabase:
         self.client = mongo_client
         self.db = mongo_client.bibliophage
         self.documents_collection = self.db.documents
+        self.chunk_boundaries_collection = self.db.chunk_boundaries
 
         logger.info("DocumentDatabase repository initialized")
 
@@ -62,6 +63,12 @@ class DocumentDatabase:
         await self.documents_collection.create_index([("source_type", ASCENDING)])
         await self.documents_collection.create_index([("tags.name", ASCENDING)])
         await self.documents_collection.create_index([("created_at", DESCENDING)])
+
+        # Chunk boundaries indexes
+        await self.chunk_boundaries_collection.create_index(
+            [("document_id", ASCENDING)], unique=True
+        )
+        await self.chunk_boundaries_collection.create_index([("created_at", DESCENDING)])
 
         logger.info("Database indexes created/verified")
 
@@ -270,6 +277,169 @@ class DocumentDatabase:
         """
         result = await self.documents_collection.delete_one({"_id": document_id})
         return result.deleted_count > 0
+
+    # ========================================================================
+    # Chunk Boundaries Operations
+    # ========================================================================
+
+    async def store_chunk_boundaries(
+        self,
+        document_id: str,
+        chunking_config: dict[str, Any],
+        chunk_boundaries: list[dict[str, Any]],
+    ) -> str:
+        """Store or update chunk boundaries for a document.
+
+        Args:
+            document_id: UUID of the source document
+            chunking_config: Configuration used to generate chunks with keys:
+                - strategy: ChunkingStrategy enum value (as string)
+                - token_chunk_size: int (optional)
+                - token_chunk_overlap: int (optional)
+                - max_heading_level: int (optional)
+                - config_version: str (for reproducibility)
+            chunk_boundaries: List of chunk boundary dicts with keys:
+                - chunk_id: str
+                - char_start: int
+                - char_end: int
+                - token_start: int (optional)
+                - token_end: int (optional)
+                - description: str
+                - preview: str
+                - markdown_ref: dict (optional)
+                - pdf_ref: dict (optional)
+
+        Returns:
+            The document_id
+
+        Note:
+            This uses upsert behavior - if boundaries exist for this document,
+            they will be replaced. This also marks embeddings as stale since
+            chunk boundaries changed.
+        """
+        now = datetime.now()
+
+        chunk_boundaries_doc = {
+            "_id": document_id,  # Use document_id as _id for 1:1 relationship
+            "document_id": document_id,
+            "chunking_config": chunking_config,
+            "chunk_boundaries": chunk_boundaries,
+            "embedding_status": {
+                "is_embedded": False,
+                "embeddings_current": False,
+                "embedded_at": None,
+                "embedding_model": None,
+                "total_chunks": len(chunk_boundaries),
+                "vector_collection": "document_chunks",
+            },
+            "created_at": now,
+            "updated_at": now,
+        }
+
+        # Upsert: insert if new, replace if exists
+        await self.chunk_boundaries_collection.replace_one(
+            {"_id": document_id},
+            chunk_boundaries_doc,
+            upsert=True,
+        )
+
+        logger.info(f"Stored {len(chunk_boundaries)} chunk boundaries for document {document_id}")
+        return document_id
+
+    async def get_chunk_boundaries(self, document_id: str) -> Optional[dict[str, Any]]:
+        """Retrieve chunk boundaries for a document.
+
+        Args:
+            document_id: UUID of the document
+
+        Returns:
+            Chunk boundaries document if found, None otherwise.
+            Structure:
+            {
+                "document_id": str,
+                "chunking_config": {...},
+                "chunk_boundaries": [...],
+                "embedding_status": {...},
+                "created_at": datetime,
+                "updated_at": datetime
+            }
+        """
+        return await self.chunk_boundaries_collection.find_one({"_id": document_id})
+
+    async def delete_chunk_boundaries(self, document_id: str) -> bool:
+        """Delete chunk boundaries for a document.
+
+        Args:
+            document_id: UUID of the document
+
+        Returns:
+            True if boundaries were deleted, False if not found
+        """
+        result = await self.chunk_boundaries_collection.delete_one({"_id": document_id})
+        deleted = result.deleted_count > 0
+        if deleted:
+            logger.info(f"Deleted chunk boundaries for document {document_id}")
+        return deleted
+
+    async def mark_embeddings_stale(self, document_id: str) -> bool:
+        """Mark embeddings as stale for a document.
+
+        This should be called when document content or chunk boundaries change,
+        indicating that embeddings need to be regenerated.
+
+        Args:
+            document_id: UUID of the document
+
+        Returns:
+            True if boundaries were found and updated, False otherwise
+        """
+        result = await self.chunk_boundaries_collection.update_one(
+            {"_id": document_id},
+            {
+                "$set": {
+                    "embedding_status.embeddings_current": False,
+                    "updated_at": datetime.now(),
+                }
+            },
+        )
+        if result.modified_count > 0:
+            logger.info(f"Marked embeddings as stale for document {document_id}")
+        return result.modified_count > 0
+
+    async def mark_embeddings_current(
+        self,
+        document_id: str,
+        embedding_model: str,
+        total_chunks: int,
+    ) -> bool:
+        """Mark embeddings as current after successful embedding.
+
+        Args:
+            document_id: UUID of the document
+            embedding_model: Name of the embedding model used
+            total_chunks: Number of chunks that were embedded
+
+        Returns:
+            True if boundaries were found and updated, False otherwise
+        """
+        now = datetime.now()
+
+        result = await self.chunk_boundaries_collection.update_one(
+            {"_id": document_id},
+            {
+                "$set": {
+                    "embedding_status.is_embedded": True,
+                    "embedding_status.embeddings_current": True,
+                    "embedding_status.embedded_at": now,
+                    "embedding_status.embedding_model": embedding_model,
+                    "embedding_status.total_chunks": total_chunks,
+                    "updated_at": now,
+                }
+            },
+        )
+        if result.modified_count > 0:
+            logger.info(f"Marked embeddings as current for document {document_id}")
+        return result.modified_count > 0
 
 # TODO: We probably want some kind of connection pool here, if ferretdb allows that
 # ============================================================================

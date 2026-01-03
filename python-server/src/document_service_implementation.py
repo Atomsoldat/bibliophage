@@ -6,6 +6,7 @@ from google.protobuf import timestamp_pb2
 
 import bibliophage.v1alpha3.document_pb2 as api
 from database import get_database
+import vector_operations
 
 logger = logging.getLogger(__name__)
 
@@ -255,6 +256,14 @@ class DocumentServiceImplementation:
                 message=f"Document with ID {request.document.id} not found",
             )
 
+        # Lifecycle hook: Mark embeddings as stale if content changed
+        # This signals that the document has been modified and embeddings need re-generation
+        if request.document.content:
+            await self.db.mark_embeddings_stale(request.document.id)
+            logger.info(
+                f"Marked embeddings as stale for document {request.document.id} due to content update"
+            )
+
         # Convert updated database document to protobuf Document
         updated_document = api.Document()
         updated_document.id = doc_data["_id"]
@@ -469,6 +478,15 @@ class DocumentServiceImplementation:
                 success=False,
                 message=f"Document with ID {request.id} not found",
             )
+
+        # Lifecycle hooks: Cascade deletion to related data
+        # 1. Delete chunk boundaries from FerretDB
+        await self.db.delete_chunk_boundaries(request.id)
+        logger.info(f"Deleted chunk boundaries for document {request.id}")
+
+        # 2. Delete vector embeddings from pgvector
+        deleted_chunks = await vector_operations.delete_document_chunks(request.id)
+        logger.info(f"Deleted {deleted_chunks} vector chunks for document {request.id}")
 
         return api.DeleteDocumentResponse(
             success=True,

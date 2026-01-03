@@ -1,32 +1,44 @@
 """Vector database repository module.
 
-Provides a singleton connection pool manager for pgvector database operations.
-Uses psycopg3's async connection pooling
+Provides a connection pool manager for pgvector database operations.
+Extends the base PostgresRepository with vector-specific functionality.
 
 References:
+    - https://github.com/pgvector/pgvector-python
     - https://www.psycopg.org/psycopg3/docs/advanced/pool.html
-    - https://www.psycopg.org/psycopg3/docs/advanced/async.html
-    - https://www.psycopg.org/psycopg3/docs/api/pool.html#the-connectionpool-class
 """
 import logging
-from psycopg import Connection, Cursor
-from psycopg_pool import AsyncConnectionPool
+from pgvector.psycopg import register_vector_async
 
-from config import get_settings
+from postgres_repository import PostgresRepository
 
 logger = logging.getLogger(__name__)
 
-# Module-level state for the singleton connection pool
-_pool = None
+
+async def _configure_vector_connection(conn):
+    """Configure a connection for pgvector operations.
+
+    This callback is called for each connection in the pool to register
+    the pgvector types with psycopg.
+
+    Args:
+        conn: The async connection to configure
+    """
+    await register_vector_async(conn)
 
 
-class VectorDatabase:
-    """Singleton vector database connection manager using pgvector.
+class VectorDatabase(PostgresRepository):
+    """Vector database connection manager using pgvector.
 
-    Manages a connection pool to the vector database and provides methods
-    for executing queries. The pool is automatically initialized on first use.
+    Extends PostgresRepository with vector-specific connection configuration.
+    The repository handles connection pooling and query execution.
 
     Usage:
+        # Create an instance (typically once at application startup)
+        vector_db = VectorDatabase(
+            connection_url="postgresql://user:pass@localhost/vectordb"
+        )
+
         # the caller defines a callback function
         async def get_results(cursor):
             # do stuff with the passed cursor
@@ -35,100 +47,58 @@ class VectorDatabase:
         # the caller passes the callback function to our database
         # repository here, the repository handles all the cleanup
         # for the database connection
-        results = await VectorDatabase.execute(
+        results = await vector_db.execute(
             'SELECT true, 42, "Hello World!"',
             # call passed callback
             get_results
         )
+
+        # TODO: Call this function when our application terminates
+        await vector_db.close_pool()
     """
-    @classmethod
-    async def ensure_initialised(cls):
-        """Initialize the database connection pool if not already initialized.
+
+    def __init__(
+        self,
+        connection_url: str,
+        min_size: int = 4,
+        max_size: int = 100
+    ):
+        """Initialise the vector database repository.
+
+        Args:
+            connection_url: PostgreSQL connection string
+            min_size: Minimum number of connections in the pool
+            max_size: Maximum number of connections in the pool
+        """
+        super().__init__(
+            connection_url=connection_url,
+            configure_callback=_configure_vector_connection,
+            min_size=min_size,
+            max_size=max_size
+        )
+
+    async def ensure_initialised(self):
+        """Initialise the database connection pool if not already initialised.
 
         This method is called automatically by execute() and doesn't typically
         need to be called manually. The pool configuration is loaded from
         application settings.
 
-        If initialization fails (network issues, bad credentials, etc.), the pool
-        is reset to allow retry on the next call.
+        Creates a PostgresRepository instance configured with pgvector support.
 
         Raises:
             Exception: Any exception from pool creation, opening, or connection acquisition
-
-        Thread-safe for async contexts - multiple concurrent calls will only
-        initialize the pool once.
         """
-        global _pool
-        if _pool is None:
-            try:
-                settings = get_settings()
-                connectionString = settings.database.vector_db_url
-                _pool = AsyncConnectionPool(
-                    open = False,
-                    conninfo = connectionString,
-                    min_size = 4,
-                    max_size = 100,
-                    # return connections to the pool when calling close()
-                    close_returns = True,
-                    # kwargs stands for keyword args, this is a python convention
-                    # all of these arguments will be passed to every connect() invocation
-                    kwargs = {
-                        # we can still explicitly start transactions by using a transaction block
-                        # https://www.psycopg.org/psycopg3/docs/basic/transactions.html#transaction-context
-                        "autocommit": True
-                    }
-                )
-                await _pool.open()
-                # wait until min_size connections are available default timeout 30s
-                await _pool.wait()
-                logger.info("Vector Database connection pool initialized successfully")
-            except Exception as e:
-                logger.error(f"Failed to initialize vector database pool: {e}")
-                _pool = None
-                raise
+        if self._pool is None:
+            await super().ensure_initialised()
+            logger.info("Vector Database initialised successfully")
 
-    @classmethod
-    async def execute(cls, sql_command: str, callback):
-        """Execute a SQL command and pass the cursor to a callback function.
-
-        The connection stays open while the callback executes, then automatically
-        returns to the pool when the callback completes.
-
-        Args:
-            sql_command: The SQL command to execute
-            callback: An async function that receives the cursor and processes it
-
-        Returns:
-            The return value of the callback function
-
-        Example:
-            async def process_results(cursor):
-                return await cursor.fetchall()
-
-            results = await VectorDatabase.execute("SELECT * FROM users", process_results)
-        """
-        await cls.ensure_initialised()
-        async with _pool.connection() as conn:
-            # a cursor is an iterator over the results returned by the query
-            # the rows contained in the result set of the cursor can be accessed
-            # via various methods (fetchOne(), fetchAll(), ...)
-            # this cursor is unnamed and all data returned will be immediately
-            # transferred to the client
-            # for large SELECTs, using a server side named cursor will be better
-            cursor = await conn.execute(sql_command)
-            return await callback(cursor)
-    
-    # TODO: Call this function when our application terminates
-    @classmethod
-    async def close_pool(cls):
+    async def close_pool(self):
         """Close the database connection pool.
 
         This should be called when the application shuts down to cleanly
         close the psycopg connection pool.
         """
-        global _pool
-
-        if _pool is not None:
-            await _pool.close(timeout = 10.0)
-            _pool = None
+        if self._pool is not None:
+            await super().close_pool()
             logger.info("Vector Database connection pool closed")
