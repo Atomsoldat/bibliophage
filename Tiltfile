@@ -22,10 +22,10 @@ local_resource(
     labels=['app'],
     resource_deps=['postgres-pgvector', 'postgres-documentdb', 'ferretdb'],
     serve_env={
+        'PYTHONPATH': 'src',
         'PYTHONUNBUFFERED': '1',  # Ensure logs appear immediately
-        'PYTHONPATH': 'python-server/src',  # Add src to Python path
         # Database connections (12-factor: config from environment)
-        'VECTOR_DB_URL': 'postgresql+psycopg://pgvector:pgvector_dev@localhost:5432/pgvector',
+        'VECTOR_DB_URL': 'postgresql://pgvector:pgvector_dev@localhost:5432/pgvector',
         'DOC_DB_URL': 'mongodb://postgres:ferretdb_dev@localhost:27017/',
         # Ollama configuration
         'OLLAMA_URL': 'http://localhost:11435',
