@@ -109,31 +109,43 @@ class PostgresRepository:
                 self._pool = None
                 raise
 
-    async def execute(self, sql_command: str, callback):
+    async def execute(self, sql_command: str, *, params=None, callback):
         """Execute a SQL command and pass the cursor to a callback function.
 
         The connection stays open while the callback executes, then automatically
         returns to the pool when the callback completes.
 
         Args:
-            sql_command: The SQL command to execute
+            sql_command: The SQL command to execute (may contain %s placeholders)
+            params: Optional tuple/list of parameters for parameterized queries
             callback: An async function that receives the cursor and processes it
 
         Returns:
             The return value of the callback function
 
         Example:
+            # Simple query
             async def process_results(cursor):
                 return await cursor.fetchall()
 
-            results = await repo.execute("SELECT * FROM users", process_results)
+            results = await repo.execute("SELECT * FROM users", callback=process_results)
+
+            # Parameterized query
+            results = await repo.execute(
+                "SELECT * FROM users WHERE id = %s",
+                params=(user_id,),
+                callback=process_results
+            )
         """
         await self.ensure_initialised()
         async with self._pool.connection() as conn:
             # a cursor is an iterator over the results returned by the query
             # the rows contained in the result set of the cursor can be accessed
             # via various methods (fetchOne(), fetchAll(), ...)
-            cursor = await conn.execute(sql_command)
+            if params is not None:
+                cursor = await conn.execute(sql_command, params)
+            else:
+                cursor = await conn.execute(sql_command)
             return await callback(cursor)
 
     async def close_pool(self):
