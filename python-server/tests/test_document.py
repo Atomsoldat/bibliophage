@@ -1,11 +1,14 @@
 import pytest
+import logging
 from pathlib import Path
 import bibliophage.v1alpha3.document_pb2 as doc_api
-from bibliophage.v1alpha3.document_connect import DocumentServiceClient
 
 
-@pytest.mark.asyncio
-async def test_store_document_integration():
+logger = logging.getLogger(__name__)
+
+
+@pytest.mark.integration
+async def test_store_document_integration(document_client):
     """Integration test: Store a markdown document via the Document service API."""
     # Read markdown content
     fixture_dir = Path(__file__).parent / "data"
@@ -23,11 +26,32 @@ async def test_store_document_integration():
     request.document.content = markdown_content
 
     # Call service
-    async with DocumentServiceClient("http://localhost:8000") as client:
-        response = await client.store_document(request)
+    response = await document_client.store_document(request)
 
     # Assert response
-    assert response.success == True
+    assert response.success is True
     assert response.document.name == "Test Bestiary Note"
     assert response.document.character_count == len(markdown_content)
     assert len(response.document.id) > 0
+
+    # Cleanup: Delete the document we created
+    try:
+        delete_request = doc_api.DeleteDocumentRequest()
+        delete_request.id = response.document.id
+        await document_client.delete_document(delete_request)
+        logger.debug(f"Cleaned up document {response.document.id}")
+    except Exception as e:
+        logger.warning(f"Failed to cleanup document: {e}", exc_info=True)
+
+
+@pytest.mark.integration
+async def test_delete_document(test_document, document_client):
+    """Test deleting a document."""
+    # Delete the test document
+    delete_request = doc_api.DeleteDocumentRequest()
+    delete_request.id = test_document.id
+
+    response = await document_client.delete_document(delete_request)
+
+    # Assert deletion succeeded
+    assert response.success is True

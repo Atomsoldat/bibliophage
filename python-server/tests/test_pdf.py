@@ -3,7 +3,6 @@ from pathlib import Path
 import subprocess
 import os
 import bibliophage.v1alpha3.pdf_pb2 as pdf_api
-from bibliophage.v1alpha3.pdf_connect import PdfServiceClient
 
 
 # this decorator allows tests to use this function as an argument
@@ -27,7 +26,7 @@ def test_pdf_creation(sample_pdf):
 # asynchronous functions just return a coroutine object when invoked, which does not
 # cause the function itself to be executed
 @pytest.mark.asyncio
-async def test_load_pdf_integration(sample_pdf):
+async def test_load_pdf_integration(sample_pdf, pdf_client):
     """Integration test: Load a PDF via the PDF service API."""
     # Read PDF bytes
     with open(sample_pdf, 'rb') as f:
@@ -39,9 +38,8 @@ async def test_load_pdf_integration(sample_pdf):
     request.pdf.type = "BESTIARY"
     request.file_data = pdf_bytes
 
-    # Call service - Connect client takes URL string directly
-    async with PdfServiceClient("http://localhost:8000") as client:
-        response = await client.load_pdf(request)
+    # Call service
+    response = await pdf_client.load_pdf(request)
 
     assert response.success == True
     assert response.pdf.page_count > 0
