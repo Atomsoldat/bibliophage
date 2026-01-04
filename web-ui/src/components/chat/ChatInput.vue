@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
-import Placeholder from '@tiptap/extension-placeholder'
-import StarterKit from '@tiptap/starter-kit'
-import { EditorContent, useEditor } from '@tiptap/vue-3'
-import { onBeforeUnmount, watch } from 'vue'
+import { ref } from 'vue'
 
 const props = defineProps<{
   disabled?: boolean
@@ -13,46 +10,17 @@ const emit = defineEmits<{
   send: [message: string]
 }>()
 
-// Tiptap editor setup
-const editor = useEditor({
-  extensions: [
-    StarterKit,
-    Placeholder.configure({
-      placeholder: 'Type your message...',
-    }),
-  ],
-  editorProps: {
-    attributes: {
-      class: 'prose prose-sm max-w-none focus:outline-none min-h-[60px] p-3',
-    },
-  },
-})
-
-// Cleanup on unmount
-onBeforeUnmount(() => {
-  editor.value?.destroy()
-})
-
-// Disable editor when streaming
-watch(
-  () => props.disabled,
-  (disabled) => {
-    editor.value?.setEditable(!disabled)
-  },
-)
+const message = ref('')
 
 function handleSend() {
-  if (!editor.value)
-    return
-
-  const text = editor.value.getText().trim()
+  const text = message.value.trim()
   if (!text)
     return
 
   emit('send', text)
 
-  // Clear editor after sending
-  editor.value.commands.clearContent()
+  // Clear input after sending
+  message.value = ''
 }
 
 function handleKeydown(event: KeyboardEvent) {
@@ -66,9 +34,11 @@ function handleKeydown(event: KeyboardEvent) {
 
 <template>
   <div class="border border-base-300 rounded-lg bg-base-100">
-    <EditorContent
-      v-bind:editor="editor"
-      class="min-h-[80px] max-h-[200px] overflow-y-auto"
+    <textarea
+      v-model="message"
+      class="textarea w-full min-h-[80px] max-h-[200px] resize-none focus:outline-none border-0 rounded-b-none"
+      placeholder="Type your message..."
+      v-bind:disabled="disabled"
       @keydown="handleKeydown"
     />
     <div class="border-t border-base-300 p-2 flex justify-between items-center">
