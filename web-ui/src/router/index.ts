@@ -25,6 +25,10 @@ const router = createRouter({
       component: () => import('../views/Chat.vue'),
     },
     {
+      path: '/chunks',
+      component: () => import('../views/Chunks.vue'),
+    },
+    {
       path: '/sandbox',
       component: () => import('../views/Sandbox.vue'),
     },

@@ -205,6 +205,15 @@ defineExpose({
   getEditor() {
     return editorView.value
   },
+  scrollToPosition(pos: number) {
+    if (editorView.value) {
+      editorView.value.dispatch({
+        selection: { anchor: pos },
+        scrollIntoView: true,
+      })
+      editorView.value.focus()
+    }
+  },
 })
 </script>
 
