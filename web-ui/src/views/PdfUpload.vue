@@ -9,7 +9,7 @@ import { Icon } from '@iconify/vue'
 import { onMounted, ref } from 'vue'
 
 import { PdfService } from '../bibliophage/v1alpha3/pdf_connect.ts'
-import { ChunkingConfig, LoadPdfRequest, Pdf } from '../bibliophage/v1alpha3/pdf_pb.ts'
+import { LoadPdfRequest, Pdf } from '../bibliophage/v1alpha3/pdf_pb.ts'
 import BaseCard from '../components/BaseCard.vue'
 import FormField from '../components/forms/FormField.vue'
 import FormSelect from '../components/forms/FormSelect.vue'
@@ -35,8 +35,6 @@ const pdfName = ref('')
 // TODO: Allow selecting multiple systems in the UI (multi-select dropdown or checkboxes)
 const rpgSystem = ref('PATHFINDER_1E') // Selected system
 const publicationType = ref('BESTIARY')
-const chunkSize = ref(600)
-const chunkOverlap = ref(50)
 // a ref to either a File or null, which we initialise to null
 const pdfFile = ref<File | null>(null)
 // if we are loading, we display a cute little animation
@@ -79,17 +77,10 @@ function buildPdfLoadRequest(fileData: Uint8Array<ArrayBuffer>): LoadPdfRequest 
     tags: [], // Empty tags for now - could be extended in the future
   })
 
-  // Create chunking configuration
-  const chunkingConfig = new ChunkingConfig({
-    chunkSize: chunkSize.value,
-    chunkOverlap: chunkOverlap.value,
-  })
-
   // Create the request
   const req = new LoadPdfRequest({
     pdf,
     fileData,
-    chunkingConfig,
   })
 
   return req
@@ -134,7 +125,6 @@ async function handleFormSubmit() {
     logger.success(`PDF ID: ${response.pdf?.id}`)
     logger.info(`Pages: ${response.pdf?.pageCount}`)
     logger.info(`Batches: ${response.pdf?.batchCount}`)
-    logger.info(`Vector Chunks: ${response.pdf?.vectorChunkCount}`)
     logger.info(`File Size: ${response.pdf?.fileSize} bytes`)
   }
   catch (error) {
@@ -235,13 +225,6 @@ async function handleFormSubmit() {
               Setting
             </option>
           </FormSelect>
-        </BaseCard>
-
-        <!-- Chunking Parameters -->
-        <BaseCard title="Chunking Parameters" icon="heroicons:adjustments-horizontal">
-          <FormField v-model="chunkSize" label="Chunk Size (100-2000)" type="number" v-bind:min="100" v-bind:max="2000" />
-
-          <FormField v-model="chunkOverlap" label="Chunk Overlap (0-500)" type="number" v-bind:min="0" v-bind:max="500" />
         </BaseCard>
       </div>
 
