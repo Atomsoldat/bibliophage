@@ -49,6 +49,7 @@ class EmbeddingServiceImplementation:
 
         Returns:
             ProposeChunksResponse with proposed boundaries and statistics
+
         """
         logger.info(f"ProposeChunks request for document: {request.document_id}")
 
@@ -71,18 +72,18 @@ class EmbeddingServiceImplementation:
         try:
             strategy = chunking_strategies.get_strategy(request.config.strategy)
             proto_boundaries = await strategy.propose_chunks(
-                content, request.config, request.document_id
+                content, request.config, request.document_id,
             )
         except ValueError as e:
             return api.ProposeChunksResponse(
                 success=False,
-                message=f"Invalid chunking strategy or config: {str(e)}",
+                message=f"Invalid chunking strategy or config: {e!s}",
             )
         except Exception as e:
             logger.error(f"Error generating chunks: {e}", exc_info=True)
             return api.ProposeChunksResponse(
                 success=False,
-                message=f"Failed to generate chunks: {str(e)}",
+                message=f"Failed to generate chunks: {e!s}",
             )
 
         # Calculate statistics directly from protobuf objects
@@ -135,6 +136,7 @@ class EmbeddingServiceImplementation:
 
         Returns:
             EmbedDocumentResponse with embedding status
+
         """
         logger.info(f"EmbedDocument request for document: {request.document_id}")
 
@@ -165,13 +167,13 @@ class EmbeddingServiceImplementation:
             try:
                 strategy = chunking_strategies.get_strategy(request.config.strategy)
                 proto_boundaries = await strategy.propose_chunks(
-                    content, request.config, request.document_id
+                    content, request.config, request.document_id,
                 )
             except Exception as e:
                 logger.error(f"Error generating chunks: {e}", exc_info=True)
                 return api.EmbedDocumentResponse(
                     success=False,
-                    message=f"Failed to generate chunks: {str(e)}",
+                    message=f"Failed to generate chunks: {e!s}",
                 )
 
         # Extract chunk content for embedding
@@ -185,7 +187,7 @@ class EmbeddingServiceImplementation:
                     "char_start": boundary.char_start,
                     "char_end": boundary.char_end,
                     "description": boundary.description,
-                }
+                },
             })
 
         # Embed chunks in vector database
@@ -196,14 +198,14 @@ class EmbeddingServiceImplementation:
             # Embed all chunks
             embedded_count = await vector_operations.embed_chunks(
                 request.document_id,
-                chunks_with_content
+                chunks_with_content,
             )
             logger.info(f"Embedded {embedded_count} chunks for document {request.document_id}")
         except Exception as e:
             logger.error(f"Error embedding chunks: {e}", exc_info=True)
             return api.EmbedDocumentResponse(
                 success=False,
-                message=f"Failed to embed chunks: {str(e)}",
+                message=f"Failed to embed chunks: {e!s}",
             )
 
         # Store chunk boundaries in FerretDB (convert to dicts for database storage)
@@ -212,14 +214,14 @@ class EmbeddingServiceImplementation:
         await self.db.store_chunk_boundaries(
             request.document_id,
             config_dict,
-            boundaries_dicts
+            boundaries_dicts,
         )
 
         # Mark embeddings as current
         await self.db.mark_embeddings_current(
             request.document_id,
             self.settings.embedding.embedding_model_name,
-            embedded_count
+            embedded_count,
         )
 
         # Build embedding status response
@@ -245,6 +247,7 @@ class EmbeddingServiceImplementation:
 
         Returns:
             GetChunkBoundariesResponse with boundaries, config, and embedding status
+
         """
         logger.info(f"GetChunkBoundaries request for document: {request.document_id}")
 
@@ -295,6 +298,7 @@ class EmbeddingServiceImplementation:
 
         Returns:
             UpdateChunkBoundariesResponse with updated boundaries and status
+
         """
         logger.info(f"UpdateChunkBoundaries request for document: {request.document_id}")
 
@@ -312,7 +316,7 @@ class EmbeddingServiceImplementation:
         except ValueError as e:
             return api.UpdateChunkBoundariesResponse(
                 success=False,
-                message=f"Invalid boundaries: {str(e)}",
+                message=f"Invalid boundaries: {e!s}",
             )
 
         # Store updated boundaries in database (convert to dicts for storage)
@@ -321,7 +325,7 @@ class EmbeddingServiceImplementation:
         await self.db.store_chunk_boundaries(
             request.document_id,
             config_dict,
-            boundaries_dicts
+            boundaries_dicts,
         )
 
         logger.info(f"Updated {len(request.boundaries)} boundaries for document {request.document_id}")
@@ -354,6 +358,7 @@ class EmbeddingServiceImplementation:
 
         Returns:
             DeleteEmbeddingsResponse with count of deleted chunks
+
         """
         logger.info(f"DeleteEmbeddings request for document: {request.document_id}")
 
@@ -508,6 +513,7 @@ class EmbeddingServiceImplementation:
 
         Raises:
             ValueError: If validation fails
+
         """
         if not boundaries:
             return
@@ -521,14 +527,14 @@ class EmbeddingServiceImplementation:
             if boundary.char_start < 0 or boundary.char_end > content_length:
                 raise ValueError(
                     f"Boundary {boundary.chunk_id} out of content bounds "
-                    f"({boundary.char_start}-{boundary.char_end} vs 0-{content_length})"
+                    f"({boundary.char_start}-{boundary.char_end} vs 0-{content_length})",
                 )
 
             # Check start < end
             if boundary.char_start >= boundary.char_end:
                 raise ValueError(
                     f"Boundary {boundary.chunk_id} has invalid range "
-                    f"({boundary.char_start}-{boundary.char_end})"
+                    f"({boundary.char_start}-{boundary.char_end})",
                 )
 
             # Check for gaps and overlaps with next boundary
@@ -536,9 +542,9 @@ class EmbeddingServiceImplementation:
                 next_boundary = sorted_boundaries[i + 1]
                 if boundary.char_end < next_boundary.char_start:
                     raise ValueError(
-                        f"Gap between chunks {boundary.chunk_id} and {next_boundary.chunk_id}"
+                        f"Gap between chunks {boundary.chunk_id} and {next_boundary.chunk_id}",
                     )
                 if boundary.char_end > next_boundary.char_start:
                     raise ValueError(
-                        f"Overlap between chunks {boundary.chunk_id} and {next_boundary.chunk_id}"
+                        f"Overlap between chunks {boundary.chunk_id} and {next_boundary.chunk_id}",
                     )

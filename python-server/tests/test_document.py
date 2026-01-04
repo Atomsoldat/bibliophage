@@ -1,8 +1,9 @@
-import pytest
 import logging
 from pathlib import Path
-import bibliophage.v1alpha3.document_pb2 as doc_api
 
+import pytest
+
+import bibliophage.v1alpha3.document_pb2 as doc_api
 
 logger = logging.getLogger(__name__)
 

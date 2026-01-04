@@ -1,4 +1,6 @@
-"""Environment variables:
+"""Module for configuration handling based on environment variables.
+
+Environment variables:
 - VECTOR_DB_URL: PostgreSQL connection string for pgvector (required)
 - DOC_DB_URL: MongoDB/FerretDB connection string for document storage (required)
 - EMBEDDING_MODEL_NAME: HuggingFace model for embeddings (optional, default: BAAI/bge-large-en-v1.5)

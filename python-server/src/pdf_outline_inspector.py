@@ -1,5 +1,4 @@
-"""
-PDF Outline/Bookmark Inspector
+"""PDF Outline/Bookmark Inspector.
 
 This script extracts the table of contents (bookmarks/outlines) from a PDF
 to understand its structure. This information can be used to split batches
@@ -18,8 +17,7 @@ _log = logging.getLogger(__name__)
 
 
 def extract_outline(pdf_path: Path) -> list[dict[str, Any]]:
-    """
-    Extract PDF outline/bookmarks using PyMuPDF (fitz).
+    """Extract PDF outline/bookmarks using PyMuPDF (fitz).
 
     Returns a flat list of outline items with:
     - title: Bookmark title
@@ -42,14 +40,13 @@ def extract_outline(pdf_path: Path) -> list[dict[str, Any]]:
                     "title": title,
                     "page": page,  # PyMuPDF uses 1-indexed pages (matches Docling!)
                     "level": level - 1,  # Convert to 0-indexed levels for consistency
-                }
+                },
             )
         return outline_items
 
 
 def get_pdf_page_count(pdf_path: Path) -> int:
-    """
-    Get the total number of pages in a PDF using PyMuPDF.
+    """Get the total number of pages in a PDF using PyMuPDF.
 
     This is a lightweight operation that only reads PDF metadata.
     """
@@ -59,8 +56,7 @@ def get_pdf_page_count(pdf_path: Path) -> int:
 
 
 def get_top_level_chapters(outline_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """
-    Extract top-level chapters from outline items.
+    """Extract top-level chapters from outline items.
 
     Tries level 0 first (top-level), falls back to level 1 if none found.
     Returns chapters sorted by page number.
@@ -70,6 +66,7 @@ def get_top_level_chapters(outline_items: list[dict[str, Any]]) -> list[dict[str
 
     Returns:
         List of chapter items sorted by page number, or empty list if none found
+
     """
     chapters = [
         item
@@ -89,10 +86,9 @@ def get_top_level_chapters(outline_items: list[dict[str, Any]]) -> list[dict[str
 
 
 def analyze_outline_for_batching(
-    outline_items: list[dict[str, Any]], total_pages: int, max_batch_size: int
+    outline_items: list[dict[str, Any]], total_pages: int, max_batch_size: int,
 ) -> list[tuple[int, int, str]]:
-    """
-    Analyze outline to create smart batch boundaries.
+    """Analyze outline to create smart batch boundaries.
 
     Args:
         outline_items: List of outline items from extract_outline_*
@@ -101,6 +97,7 @@ def analyze_outline_for_batching(
 
     Returns:
         List of (start_page, end_page, description) tuples
+
     """
     if not outline_items:
         _log.info("No outline available, falling back to fixed batch size")
@@ -139,7 +136,7 @@ def analyze_outline_for_batching(
 
             # Split large chapter into fixed-size batches
             _log.info(
-                f"Chapter '{chapter['title']}' is {chapter_size} pages, splitting into sub-batches"
+                f"Chapter '{chapter['title']}' is {chapter_size} pages, splitting into sub-batches",
             )
             for sub_start in range(chapter_start, chapter_end + 1, max_batch_size):
                 sub_end = min(sub_start + max_batch_size - 1, chapter_end)
@@ -173,8 +170,7 @@ def analyze_outline_for_batching(
 
 
 def inspect_pdf_outline(pdf_path: Path) -> dict[str, Any]:
-    """
-    Inspect PDF outline and provide detailed information.
+    """Inspect PDF outline and provide detailed information.
 
     Returns dict with:
     - outline_items: Full outline structure
@@ -207,7 +203,7 @@ def inspect_pdf_outline(pdf_path: Path) -> dict[str, Any]:
                 "start_page": start,
                 "end_page": end,
                 "num_pages": pages,
-            }
+            },
         )
 
     return {"has_outline": True, "outline_items": outline_items, "chapters": chapters}

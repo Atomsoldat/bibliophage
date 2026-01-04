@@ -13,11 +13,10 @@ The table schema stores:
 - created_at: Timestamp of when the chunk was embedded
 """
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from langchain_huggingface import HuggingFaceEmbeddings
-from pgvector.psycopg import register_vector_async
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
@@ -39,12 +38,13 @@ def get_vector_database() -> VectorDatabase:
 
     Raises:
         Exception: If database initialization fails
+
     """
     global _vector_db
     if _vector_db is None:
         settings = get_settings()
         _vector_db = VectorDatabase(
-            connection_url=str(settings.database.vector_db_url)
+            connection_url=str(settings.database.vector_db_url),
         )
         logger.info("Vector database instance created")
     return _vector_db
@@ -59,6 +59,7 @@ def get_embeddings_model() -> HuggingFaceEmbeddings:
     Note:
         The model is loaded lazily on first use and cached for subsequent calls.
         Model loading can take several seconds on first call.
+
     """
     global _embeddings_model
     if _embeddings_model is None:
@@ -68,7 +69,7 @@ def get_embeddings_model() -> HuggingFaceEmbeddings:
         _embeddings_model = HuggingFaceEmbeddings(
             model_name=model_name,
             model_kwargs={"device": "cpu"},  # TODO: Add GPU support via config
-            encode_kwargs={"normalize_embeddings": True}
+            encode_kwargs={"normalize_embeddings": True},
         )
         logger.info(f"Embeddings model loaded: {model_name}")
     return _embeddings_model
@@ -143,7 +144,7 @@ async def ensure_schema_exists():
 
 async def embed_chunks(
     document_id: str,
-    chunks: list[dict[str, Any]]
+    chunks: list[dict[str, Any]],
 ) -> int:
     """Embed document chunks and store them in the vector database.
 
@@ -171,6 +172,7 @@ async def embed_chunks(
     Note:
         This function will delete any existing chunks for the document_id before
         inserting new ones to ensure consistency.
+
     """
     if not chunks:
         raise ValueError("Chunks list cannot be empty")
@@ -195,12 +197,11 @@ async def embed_chunks(
     vector_db = get_vector_database()
     # TODO: think about how we handle time in generel
     # personally, i think UTC is pretty neat, but maybe people find that weird
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
 
     async def insert_chunks(cursor):
         """Insert chunks with embeddings into database."""
-        
         # define query using psycopg formatting
         insert_sql = sql.SQL("""
             INSERT INTO document_chunks
@@ -226,20 +227,20 @@ async def embed_chunks(
         rows = []
         for i, chunk in enumerate(chunks):
             rows.append({
-                'document_id': document_id,
-                'chunk_id': chunk['chunk_id'],
-                'content': chunk['content'],
-                'embedding': embeddings[i],  # The embedding vector
-                'metadata': Jsonb(chunk.get('metadata', {})),  # Wrap dict in Jsonb for PostgreSQL
-                'created_at': now
+                "document_id": document_id,
+                "chunk_id": chunk["chunk_id"],
+                "content": chunk["content"],
+                "embedding": embeddings[i],  # The embedding vector
+                "metadata": Jsonb(chunk.get("metadata", {})),  # Wrap dict in Jsonb for PostgreSQL
+                "created_at": now,
             })
 
 
         await cursor.executemany(
             insert_sql,
-            rows
+            rows,
         )
-        
+
         return cursor.rowcount
 
     count = await vector_db.execute("", callback=insert_chunks)
@@ -259,6 +260,7 @@ async def delete_document_chunks(document_id: str) -> int:
     Note:
         This function is idempotent - calling it multiple times with the same
         document_id is safe and will return 0 on subsequent calls.
+
     """
     vector_db = get_vector_database()
 
@@ -276,7 +278,7 @@ async def delete_document_chunks(document_id: str) -> int:
 async def search_similar(
     query: str,
     top_k: int = 10,
-    document_id: str | None = None
+    document_id: str | None = None,
 ) -> list[dict[str, Any]]:
     """Search for chunks similar to the query using vector similarity.
 
@@ -298,6 +300,7 @@ async def search_similar(
     Note:
         Results are ordered by similarity (highest first).
         Uses cosine similarity as we normalize embeddings.
+
     """
     if top_k <= 0:
         raise ValueError("top_k must be positive")
@@ -349,7 +352,7 @@ async def search_similar(
                 "document_id": row[1],
                 "content": row[2],
                 "metadata": row[3],
-                "similarity": float(row[4])
+                "similarity": float(row[4]),
             })
         return results
 
@@ -366,6 +369,7 @@ async def get_chunk_count(document_id: str) -> int:
 
     Returns:
         int: Number of chunks stored for this document
+
     """
     vector_db = get_vector_database()
 

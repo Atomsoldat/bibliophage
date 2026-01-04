@@ -8,9 +8,11 @@ References:
     - https://www.psycopg.org/psycopg3/docs/advanced/pool.html
     - https://www.psycopg.org/psycopg3/docs/advanced/async.html
     - https://www.psycopg.org/psycopg3/docs/api/pool.html#the-connectionpool-class
+
 """
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
+
 from psycopg import Connection
 from psycopg_pool import AsyncConnectionPool
 
@@ -48,9 +50,9 @@ class PostgresRepository:
     def __init__(
         self,
         connection_url: str,
-        configure_callback: Optional[Callable[[Connection], None]] = None,
+        configure_callback: Callable[[Connection], None] | None = None,
         min_size: int = 4,
-        max_size: int = 100
+        max_size: int = 100,
     ):
         """Initialise the repository with connection parameters.
 
@@ -60,12 +62,13 @@ class PostgresRepository:
                                (e.g., for registering custom types)
             min_size: Minimum number of connections in the pool
             max_size: Maximum number of connections in the pool
+
         """
         self._connection_url = connection_url
         self._configure_callback = configure_callback
         self._min_size = min_size
         self._max_size = max_size
-        self._pool: Optional[AsyncConnectionPool] = None
+        self._pool: AsyncConnectionPool | None = None
 
     async def ensure_initialised(self):
         """Initialise the database connection pool if not already initialised.
@@ -81,6 +84,7 @@ class PostgresRepository:
 
         Thread-safe for async contexts - multiple concurrent calls will only
         initialise the pool once.
+
         """
         if self._pool is None:
             try:
@@ -91,8 +95,8 @@ class PostgresRepository:
                     "max_size": self._max_size,
                     "close_returns": True,
                     "kwargs": {
-                        "autocommit": True
-                    }
+                        "autocommit": True,
+                    },
                 }
 
                 # Add configure callback if provided
@@ -103,7 +107,7 @@ class PostgresRepository:
                 await self._pool.open()
                 # wait until min_size connections are available (default timeout 30s)
                 await self._pool.wait()
-                logger.info(f"PostgreSQL connection pool initialised successfully")
+                logger.info("PostgreSQL connection pool initialised successfully")
             except Exception as e:
                 logger.error(f"Failed to initialise PostgreSQL pool: {e}")
                 self._pool = None
@@ -136,6 +140,7 @@ class PostgresRepository:
                 params=(user_id,),
                 callback=process_results
             )
+
         """
         await self.ensure_initialised()
         async with self._pool.connection() as conn:

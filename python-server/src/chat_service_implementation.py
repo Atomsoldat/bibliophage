@@ -1,17 +1,17 @@
-"""
-Chat service implementation for Bibliophage.
+"""Chat service implementation for Bibliophage.
 
 Provides streaming LLM chat with document context awareness.
 Uses LangChain's streaming API for token-by-token responses.
 """
 
 import logging
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
+
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from bibliophage.v1alpha3 import chat_pb2 as api
 from database import get_database
 from llm_access import DocumentContext, get_llm_client
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +32,7 @@ class ChatServiceImplementation:
         # Disables: ANN001 (missing type annotation), ARG002 (unused argument)
         ctx,  # noqa: ANN001, ARG002
     ) -> AsyncIterator[api.ChatResponseChunk]:
-        """
-        Stream chat responses token-by-token using LangChain's astream.
+        """Stream chat responses token-by-token using LangChain's astream.
 
         This is a server-streaming RPC that yields ChatResponseChunk messages
         as the LLM generates tokens.
@@ -45,7 +44,7 @@ class ChatServiceImplementation:
             context_documents = []
             if request.context_document_ids:
                 context_documents = await self._fetch_context_documents(
-                    request.context_document_ids
+                    request.context_document_ids,
                 )
 
             # Send metadata chunk first (before tokens)
@@ -89,7 +88,7 @@ class ChatServiceImplementation:
             yield error_chunk
 
     async def _fetch_context_documents(
-        self, document_ids: list[str]
+        self, document_ids: list[str],
     ) -> list[DocumentContext]:
         """Fetch and convert documents to DocumentContext format."""
         context_documents = []
@@ -103,10 +102,10 @@ class ChatServiceImplementation:
                         name=doc_data["name"],
                         content=doc_data["content"],
                         source_type=doc_data.get(
-                            "source_type", "SOURCE_TYPE_UNSPECIFIED"
+                            "source_type", "SOURCE_TYPE_UNSPECIFIED",
                         ),
                         document_type=doc_data["type"],
-                    )
+                    ),
                 )
             else:
                 logger.warning("Document %s not found in database", doc_id)
@@ -114,7 +113,7 @@ class ChatServiceImplementation:
         return context_documents
 
     def _build_metadata_chunk(
-        self, context_documents: list[DocumentContext]
+        self, context_documents: list[DocumentContext],
     ) -> api.ChatResponseChunk:
         """Build metadata chunk with context document info."""
         metadata = api.ChunkMetadata(

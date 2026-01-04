@@ -10,10 +10,10 @@ from bibliophage.v1alpha3.document_connect import DocumentServiceASGIApplication
 from bibliophage.v1alpha3.embedding_connect import EmbeddingServiceASGIApplication
 from bibliophage.v1alpha3.pdf_connect import PdfServiceASGIApplication
 from chat_service_implementation import ChatServiceImplementation
+from database import get_database
 from document_service_implementation import DocumentServiceImplementation
 from embedding_service_implementation import EmbeddingServiceImplementation
 from loading_service_implementation import LoadingServiceImplementation
-from database import get_database
 
 
 def configure_logging():

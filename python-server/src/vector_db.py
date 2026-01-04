@@ -6,8 +6,10 @@ Extends the base PostgresRepository with vector-specific functionality.
 References:
     - https://github.com/pgvector/pgvector-python
     - https://www.psycopg.org/psycopg3/docs/advanced/pool.html
+
 """
 import logging
+
 from pgvector.psycopg import register_vector_async
 
 from postgres_repository import PostgresRepository
@@ -23,6 +25,7 @@ async def _configure_vector_connection(conn):
 
     Args:
         conn: The async connection to configure
+
     """
     await register_vector_async(conn)
 
@@ -61,7 +64,7 @@ class VectorDatabase(PostgresRepository):
         self,
         connection_url: str,
         min_size: int = 4,
-        max_size: int = 100
+        max_size: int = 100,
     ):
         """Initialise the vector database repository.
 
@@ -69,12 +72,13 @@ class VectorDatabase(PostgresRepository):
             connection_url: PostgreSQL connection string
             min_size: Minimum number of connections in the pool
             max_size: Maximum number of connections in the pool
+
         """
         super().__init__(
             connection_url=connection_url,
             configure_callback=_configure_vector_connection,
             min_size=min_size,
-            max_size=max_size
+            max_size=max_size,
         )
 
     async def ensure_initialised(self):
@@ -88,6 +92,7 @@ class VectorDatabase(PostgresRepository):
 
         Raises:
             Exception: Any exception from pool creation, opening, or connection acquisition
+
         """
         if self._pool is None:
             await super().ensure_initialised()

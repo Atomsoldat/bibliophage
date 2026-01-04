@@ -1,5 +1,4 @@
-"""
-Batch Size Calculator for Docling PDF Processing
+"""Batch Size Calculator for Docling PDF Processing.
 
 Calculates optimal batch size based on available system memory and PDF characteristics.
 
@@ -12,8 +11,7 @@ import psutil
 
 
 def get_available_memory_gb() -> float:
-    """
-    Get available system memory in GB.
+    """Get available system memory in GB.
 
     Returns the amount of memory that can safely be used without
     causing the system to swap.
@@ -34,8 +32,7 @@ def calculate_batch_size(
     min_batch_size: int = 1,
     max_batch_size: int = 500,
 ) -> dict:
-    """
-    Calculate optimal batch size for Docling PDF processing.
+    """Calculate optimal batch size for Docling PDF processing.
 
     Args:
         available_ram_gb: Available RAM in GB. If None, auto-detect from system.
@@ -54,6 +51,7 @@ def calculate_batch_size(
             - peak_memory_gb: Expected peak memory usage in GB
             - available_ram_gb: Available RAM in GB
             - memory_per_page_mb: Memory per page used in calculation
+
     """
     # Auto-detect available RAM if not provided
     if available_ram_gb is None:
@@ -65,7 +63,7 @@ def calculate_batch_size(
     if usable_gb <= 0:
         raise ValueError(
             f"Insufficient RAM: {available_ram_gb:.1f}GB available, "
-            f"but {overhead_gb:.1f}GB needed for overhead. "
+            f"but {overhead_gb:.1f}GB needed for overhead. ",
         )
 
     # Convert to MB for calculation
@@ -80,7 +78,7 @@ def calculate_batch_size(
     # Clamp to [min_batch_size, max_batch_size]
     safe_max_batch_size = int(safe_max_pages)
     recommended_batch_size: int = max(
-        min(max_batch_size, safe_max_batch_size), min_batch_size
+        min(max_batch_size, safe_max_batch_size), min_batch_size,
     )
 
     # Calculate expected peak memory

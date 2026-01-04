@@ -1,5 +1,4 @@
-"""
-Docling-based PDF processing pipeline.
+"""Docling-based PDF processing pipeline.
 
 This module isolates all Docling-specific code for PDF processing.
 The service layer should only interact with this module's public API,
@@ -49,8 +48,7 @@ class PdfProcessingResult(TypedDict):
 
 
 class DoclingPipeline:
-    """
-    Encapsulates the Docling PDF processing pipeline.
+    """Encapsulates the Docling PDF processing pipeline.
 
     This class handles all Docling-specific logic for converting PDFs to markdown,
     including batch processing, memory management, and smart batching based on
@@ -64,14 +62,14 @@ class DoclingPipeline:
         table_batch_size: int = 4,
         do_ocr: bool = False,
     ):
-        """
-        Initialize the Docling pipeline.
+        """Initialize the Docling pipeline.
 
         Args:
             ocr_batch_size: Batch size for OCR processing
             layout_batch_size: Batch size for layout analysis
             table_batch_size: Batch size for table extraction
             do_ocr: Whether to perform OCR on the PDF
+
         """
         self.pipeline_options = ThreadedPdfPipelineOptions(
             accelerator_options=AcceleratorOptions(
@@ -90,8 +88,7 @@ class DoclingPipeline:
         use_smart_batching: bool = True,
         memory_per_page_mb: float = 67.8,
     ) -> PdfProcessingResult:
-        """
-        Process a PDF file and return the extracted markdown content.
+        """Process a PDF file and return the extracted markdown content.
 
         Args:
             pdf_bytes: Raw PDF file data
@@ -101,6 +98,7 @@ class DoclingPipeline:
 
         Returns:
             PdfProcessingResult with content and metadata
+
         """
         logger.info(f"Processing PDF: {pdf_name}")
 
@@ -124,7 +122,7 @@ class DoclingPipeline:
 
             # Determine batches
             batches = self._determine_batches(
-                tmp_path, total_pages, batch_size, use_smart_batching
+                tmp_path, total_pages, batch_size, use_smart_batching,
             )
             num_batches = len(batches)
             logger.info(f"Will process in {num_batches} batches")
@@ -141,8 +139,7 @@ class DoclingPipeline:
         batch_size: int,
         use_smart_batching: bool,
     ) -> list[tuple[int, int, str]]:
-        """
-        Determine batch boundaries for PDF processing.
+        """Determine batch boundaries for PDF processing.
 
         Args:
             pdf_path: Path to the PDF file
@@ -152,6 +149,7 @@ class DoclingPipeline:
 
         Returns:
             List of (start_page, end_page, description) tuples
+
         """
         batches = []
 
@@ -161,14 +159,14 @@ class DoclingPipeline:
                 outline_result = inspect_pdf_outline(pdf_path)
                 if outline_result["has_outline"]:
                     batches = analyze_outline_for_batching(
-                        outline_result["outline_items"], total_pages, batch_size
+                        outline_result["outline_items"], total_pages, batch_size,
                     )
                     if batches:
                         logger.info(
-                            f"✓ Smart batching enabled: {len(batches)} chapter-based batches"
+                            f"✓ Smart batching enabled: {len(batches)} chapter-based batches",
                         )
                         logger.info(
-                            f"  Batch sizes range from {min(b[1] - b[0] + 1 for b in batches)} to {max(b[1] - b[0] + 1 for b in batches)} pages"
+                            f"  Batch sizes range from {min(b[1] - b[0] + 1 for b in batches)} to {max(b[1] - b[0] + 1 for b in batches)} pages",
                         )
                     else:
                         logger.warning("Could not create smart batches from outline")
@@ -194,8 +192,7 @@ class DoclingPipeline:
         batches: list[tuple[int, int, str]],
         total_pages: int,
     ) -> PdfProcessingResult:
-        """
-        Process PDF batches using Docling.
+        """Process PDF batches using Docling.
 
         Args:
             pdf_path: Path to the PDF file
@@ -204,6 +201,7 @@ class DoclingPipeline:
 
         Returns:
             PdfProcessingResult with content and metadata
+
         """
         num_batches = len(batches)
 
@@ -212,8 +210,8 @@ class DoclingPipeline:
             format_options={
                 InputFormat.PDF: PdfFormatOption(
                     pipeline_options=self.pipeline_options,
-                )
-            }
+                ),
+            },
         )
 
         # Initialize pipeline once (reused across batches)
@@ -231,7 +229,7 @@ class DoclingPipeline:
 
             logger.info("=" * 60)
             logger.info(
-                f"BATCH {batch_num + 1}/{num_batches}: Pages {start_page}-{end_page} ({pages_in_batch} pages)"
+                f"BATCH {batch_num + 1}/{num_batches}: Pages {start_page}-{end_page} ({pages_in_batch} pages)",
             )
             logger.info(f"  Content: {description}")
             logger.info("=" * 60)
@@ -239,12 +237,12 @@ class DoclingPipeline:
             try:
                 # Convert this batch of pages
                 conv_result = doc_converter.convert(
-                    pdf_path, page_range=(start_page, end_page)
+                    pdf_path, page_range=(start_page, end_page),
                 )
 
                 if conv_result.status != ConversionStatus.SUCCESS:
                     logger.warning(
-                        f"Batch {batch_num + 1} conversion status: {conv_result.status}"
+                        f"Batch {batch_num + 1} conversion status: {conv_result.status}",
                     )
                     failed_batches += 1
                     processed_batches.append(
@@ -255,7 +253,7 @@ class DoclingPipeline:
                             description=description,
                             status=str(conv_result.status),
                             success=False,
-                        )
+                        ),
                     )
                     continue
 
@@ -271,7 +269,7 @@ class DoclingPipeline:
                         description=description,
                         status="SUCCESS",
                         success=True,
-                    )
+                    ),
                 )
 
                 successful_batches += 1
@@ -293,14 +291,14 @@ class DoclingPipeline:
                         description=description,
                         status="ERROR",
                         success=False,
-                    )
+                    ),
                 )
                 gc.collect()
 
         # Concatenate markdown from all successful batches
         concatenated_content = "\n\n".join(markdown_parts)
         logger.info(
-            f"Concatenated {len(markdown_parts)} batches into {len(concatenated_content)} characters of markdown"
+            f"Concatenated {len(markdown_parts)} batches into {len(concatenated_content)} characters of markdown",
         )
 
         return PdfProcessingResult(

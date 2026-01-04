@@ -1,7 +1,9 @@
-import pytest
-from pathlib import Path
-import subprocess
 import os
+import subprocess
+from pathlib import Path
+
+import pytest
+
 import bibliophage.v1alpha3.pdf_pb2 as pdf_api
 
 
@@ -15,7 +17,7 @@ def sample_pdf(tmp_path):
     md_file = fixture_dir / "bestiary_sample.md"
     pdf_file = tmp_path / "bestiary_sample.pdf"
 
-    subprocess.run(['pandoc', str(md_file), '-o', str(pdf_file)], check=True)
+    subprocess.run(["pandoc", str(md_file), "-o", str(pdf_file)], check=True)
     return pdf_file
 
 def test_pdf_creation(sample_pdf):
@@ -29,7 +31,7 @@ def test_pdf_creation(sample_pdf):
 async def test_load_pdf_integration(sample_pdf, pdf_client):
     """Integration test: Load a PDF via the PDF service API."""
     # Read PDF bytes
-    with open(sample_pdf, 'rb') as f:
+    with Path.open(sample_pdf, "rb") as f:
         pdf_bytes = f.read()
 
     request = pdf_api.LoadPdfRequest()
@@ -41,6 +43,6 @@ async def test_load_pdf_integration(sample_pdf, pdf_client):
     # Call service
     response = await pdf_client.load_pdf(request)
 
-    assert response.success == True
+    assert response.success
     assert response.pdf.page_count > 0
     assert response.pdf.name == "Test Bestiary"

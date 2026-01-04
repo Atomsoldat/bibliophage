@@ -1,12 +1,11 @@
 import logging
 import traceback
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from google.protobuf import timestamp_pb2
 
 import bibliophage.v1alpha3.pdf_pb2 as pdf_api
-import bibliophage.v1alpha3.document_pb2 as doc_api
 from config import get_settings
 from database import get_database
 from docling_pipeline import DoclingPipeline
@@ -15,8 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class LoadingServiceImplementation:
-    """
-    Loading service implementation using Docling for PDF processing.
+    """Loading service implementation using Docling for PDF processing.
 
     This service processes PDFs using docling's batch-based pipeline and stores
     them as Documents in the unified documents collection. The LoadPdf RPC
@@ -40,12 +38,11 @@ class LoadingServiceImplementation:
         )
 
         logger.info(
-            "Loading service initialised with Docling pipeline and database repository"
+            "Loading service initialised with Docling pipeline and database repository",
         )
 
     async def load_pdf(self, request: pdf_api.LoadPdfRequest, ctx):
-        """
-        Load a PDF using docling's batch processing pipeline.
+        """Load a PDF using docling's batch processing pipeline.
 
         This method:
         1. Validates the request
@@ -60,6 +57,7 @@ class LoadingServiceImplementation:
 
         Returns:
             LoadPdfResponse with stored document metadata
+
         """
         try:
             logger.info(f"Received LoadPdf request for file: {request.pdf.name}")
@@ -83,12 +81,12 @@ class LoadingServiceImplementation:
             )
 
             logger.info(
-                f"PDF processing complete: {processing_result['successful_batches']}/{len(processing_result['processed_batches'])} batches succeeded"
+                f"PDF processing complete: {processing_result['successful_batches']}/{len(processing_result['processed_batches'])} batches succeeded",
             )
 
             # Store as Document in unified documents collection
             document_id = str(uuid.uuid4())
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
             # Convert protobuf tags to dict format for database storage
             tags = []

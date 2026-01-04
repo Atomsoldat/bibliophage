@@ -20,7 +20,7 @@ Usage:
 
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pymongo import ASCENDING, DESCENDING, AsyncMongoClient
 
@@ -42,6 +42,7 @@ class DocumentDatabase:
 
         Args:
             mongo_client: PyMongo async MongoDB client
+
         """
         self.client = mongo_client
         self.db = mongo_client.bibliophage
@@ -66,7 +67,7 @@ class DocumentDatabase:
 
         # Chunk boundaries indexes
         await self.chunk_boundaries_collection.create_index(
-            [("document_id", ASCENDING)], unique=True
+            [("document_id", ASCENDING)], unique=True,
         )
         await self.chunk_boundaries_collection.create_index([("created_at", DESCENDING)])
 
@@ -86,7 +87,7 @@ class DocumentDatabase:
         doc_type: str,
         tags: list[dict[str, Any]],
         created_at: datetime,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """Store a document in the database.
 
@@ -106,6 +107,7 @@ class DocumentDatabase:
 
         Returns:
             The document_id of the stored document
+
         """
         # Create snippet for search results (max 200 characters)
         content_snippet = content[:200] + "..." if len(content) > 200 else content
@@ -132,7 +134,7 @@ class DocumentDatabase:
         logger.info(f"Document stored with ID: {document_id}")
         return document_id
 
-    async def get_document_by_id(self, document_id: str) -> Optional[dict[str, Any]]:
+    async def get_document_by_id(self, document_id: str) -> dict[str, Any] | None:
         """Retrieve a document by its ID.
 
         Args:
@@ -140,6 +142,7 @@ class DocumentDatabase:
 
         Returns:
             The document dictionary if found, None otherwise
+
         """
         document = await self.documents_collection.find_one({"_id": document_id})
         return document
@@ -147,14 +150,14 @@ class DocumentDatabase:
     async def update_document(
         self,
         document_id: str,
-        name: Optional[str] = None,
-        systems: Optional[list[str]] = None,
-        source_type: Optional[str] = None,
-        content: Optional[str] = None,
-        doc_type: Optional[str] = None,
-        tags: Optional[list[dict[str, Any]]] = None,
-        metadata: Optional[dict[str, Any]] = None,
-    ) -> Optional[dict[str, Any]]:
+        name: str | None = None,
+        systems: list[str] | None = None,
+        source_type: str | None = None,
+        content: str | None = None,
+        doc_type: str | None = None,
+        tags: list[dict[str, Any]] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
         """Update a document.
 
         Args:
@@ -169,6 +172,7 @@ class DocumentDatabase:
 
         Returns:
             The updated document if found, None otherwise
+
         """
         updates = {"updated_at": datetime.now()}
 
@@ -202,11 +206,11 @@ class DocumentDatabase:
 
     async def search_documents(
         self,
-        name_query: Optional[str] = None,
-        content_query: Optional[str] = None,
-        type_filter: Optional[str] = None,
-        system_filters: Optional[list[str]] = None,
-        tag_filters: Optional[list[dict[str, str]]] = None,
+        name_query: str | None = None,
+        content_query: str | None = None,
+        type_filter: str | None = None,
+        system_filters: list[str] | None = None,
+        tag_filters: list[dict[str, str]] | None = None,
         page_size: int = 50,
         page_number: int = 0,
     ) -> tuple[list[dict[str, Any]], int]:
@@ -223,6 +227,7 @@ class DocumentDatabase:
 
         Returns:
             Tuple of (list of matching documents, total count)
+
         """
         query = {}
 
@@ -246,9 +251,9 @@ class DocumentDatabase:
                             "$elemMatch": {
                                 "name": tag_filter["name"],
                                 "values": tag_filter["value"],
-                            }
-                        }
-                    }
+                            },
+                        },
+                    },
                 )
             if tag_conditions:
                 query["$and"] = tag_conditions
@@ -274,6 +279,7 @@ class DocumentDatabase:
 
         Returns:
             True if document was deleted, False if not found
+
         """
         result = await self.documents_collection.delete_one({"_id": document_id})
         return result.deleted_count > 0
@@ -316,6 +322,7 @@ class DocumentDatabase:
             This uses upsert behavior - if boundaries exist for this document,
             they will be replaced. This also marks embeddings as stale since
             chunk boundaries changed.
+
         """
         now = datetime.now()
 
@@ -346,7 +353,7 @@ class DocumentDatabase:
         logger.info(f"Stored {len(chunk_boundaries)} chunk boundaries for document {document_id}")
         return document_id
 
-    async def get_chunk_boundaries(self, document_id: str) -> Optional[dict[str, Any]]:
+    async def get_chunk_boundaries(self, document_id: str) -> dict[str, Any] | None:
         """Retrieve chunk boundaries for a document.
 
         Args:
@@ -363,6 +370,7 @@ class DocumentDatabase:
                 "created_at": datetime,
                 "updated_at": datetime
             }
+
         """
         return await self.chunk_boundaries_collection.find_one({"_id": document_id})
 
@@ -374,6 +382,7 @@ class DocumentDatabase:
 
         Returns:
             True if boundaries were deleted, False if not found
+
         """
         result = await self.chunk_boundaries_collection.delete_one({"_id": document_id})
         deleted = result.deleted_count > 0
@@ -392,6 +401,7 @@ class DocumentDatabase:
 
         Returns:
             True if boundaries were found and updated, False otherwise
+
         """
         result = await self.chunk_boundaries_collection.update_one(
             {"_id": document_id},
@@ -399,7 +409,7 @@ class DocumentDatabase:
                 "$set": {
                     "embedding_status.embeddings_current": False,
                     "updated_at": datetime.now(),
-                }
+                },
             },
         )
         if result.modified_count > 0:
@@ -421,6 +431,7 @@ class DocumentDatabase:
 
         Returns:
             True if boundaries were found and updated, False otherwise
+
         """
         now = datetime.now()
 
@@ -434,7 +445,7 @@ class DocumentDatabase:
                     "embedding_status.embedding_model": embedding_model,
                     "embedding_status.total_chunks": total_chunks,
                     "updated_at": now,
-                }
+                },
             },
         )
         if result.modified_count > 0:
@@ -446,8 +457,8 @@ class DocumentDatabase:
 # Repository Pattern - Entire application reuses the same DB methods
 # ============================================================================
 
-_database: Optional[DocumentDatabase] = None
-_mongo_client: Optional[AsyncMongoClient] = None
+_database: DocumentDatabase | None = None
+_mongo_client: AsyncMongoClient | None = None
 
 
 def get_database() -> DocumentDatabase:
@@ -463,6 +474,7 @@ def get_database() -> DocumentDatabase:
     Example:
         db = get_database()
         await db.store_document(...)
+
     """
     # global keyword used to modify module level variables instead of
     # locally scoped ones

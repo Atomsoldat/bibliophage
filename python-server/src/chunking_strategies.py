@@ -31,9 +31,11 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from bibliophage.v1alpha3.embedding_pb2 import (
     ChunkBoundary,
     ChunkingConfig,
-    ChunkingStrategy as ChunkingStrategyEnum,
     MarkdownReference,
     PdfPageReference,
+)
+from bibliophage.v1alpha3.embedding_pb2 import (
+    ChunkingStrategy as ChunkingStrategyEnum,
 )
 
 logger = logging.getLogger(__name__)
@@ -75,6 +77,7 @@ class ChunkingStrategy(ABC):
 
         Returns:
             List of ChunkBoundary protobuf messages with all metadata populated
+
         """
 
 
@@ -202,7 +205,7 @@ class MarkdownStructureStrategy(ChunkingStrategy):
         chunks: list[ChunkData] = []
         heading_stack: list[tuple[int, str]] = []  # Stack of (level, text)
 
-        for i, (pos, level, end_pos, text) in enumerate(headings):
+        for i, (pos, level, _end_pos, text) in enumerate(headings):
             # Update heading stack (pop higher or equal levels)
             while heading_stack and heading_stack[-1][0] >= level:
                 heading_stack.pop()
@@ -377,7 +380,7 @@ class PdfPageBasedStrategy(ChunkingStrategy):
         # Build chunks between page markers
         boundaries: list[ChunkBoundary] = []
 
-        for i, (pos, page_num, end_pos) in enumerate(page_markers):
+        for i, (pos, page_num, _end_pos) in enumerate(page_markers):
             chunk_start = pos
             chunk_end = (
                 page_markers[i + 1][0] if i + 1 < len(page_markers) else len(content)
@@ -422,6 +425,7 @@ def get_strategy(strategy_enum: ChunkingStrategyEnum) -> ChunkingStrategy:
 
     Raises:
         ValueError: If strategy_enum is invalid, unspecified, or USER_DEFINED
+
     """
     strategy_map: dict[ChunkingStrategyEnum, type[ChunkingStrategy]] = {
         ChunkingStrategyEnum.TOKEN_BASED: TokenBasedStrategy,

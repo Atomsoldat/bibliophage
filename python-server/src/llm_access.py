@@ -1,16 +1,15 @@
-"""
-LLM access module for Bibliophage.
+"""LLM access module for Bibliophage.
 
 Provides LLM operations with document source authority awareness.
 Uses LangChain for provider abstraction (currently Ollama).
 """
 
 import logging
-from typing import Any
 from dataclasses import dataclass
+from typing import Any
 
 from langchain_community.chat_models import ChatOllama
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 
 from config import get_settings
 
@@ -32,8 +31,7 @@ class DocumentContext:
 
     @property
     def authority_weight(self) -> float:
-        """
-        Calculate authority weight based on source type.
+        """Calculate authority weight based on source type.
 
         Higher values = more authoritative sources.
         """
@@ -73,10 +71,9 @@ class LLMClient:
         )
 
     def _build_context_prompt(
-        self, documents: list[DocumentContext], sort_by_authority: bool = True
+        self, documents: list[DocumentContext], sort_by_authority: bool = True,
     ) -> str:
-        """
-        Build a formatted context string from documents.
+        """Build a formatted context string from documents.
 
         Args:
             documents: List of document contexts
@@ -84,6 +81,7 @@ class LLMClient:
 
         Returns:
             Formatted context string with source attribution
+
         """
         if sort_by_authority:
             documents = sorted(
@@ -97,7 +95,7 @@ class LLMClient:
             # Format each document with clear source attribution
             authority_label = self._get_authority_label(doc.source_type)
             context_parts.append(
-                f"--- Source: {doc.name} ({authority_label}) ---\n{doc.content}\n"
+                f"--- Source: {doc.name} ({authority_label}) ---\n{doc.content}\n",
             )
 
         return "\n".join(context_parts)
@@ -121,8 +119,7 @@ class LLMClient:
         context_documents: list[DocumentContext],
         system_prompt: str | None = None,
     ) -> dict[str, Any]:
-        """
-        Generate new content based on context documents.
+        """Generate new content based on context documents.
 
         Args:
             prompt: User's generation request
@@ -131,6 +128,7 @@ class LLMClient:
 
         Returns:
             Dict with 'content' (generated text) and 'metadata' (model info, etc.)
+
         """
         try:
             # Build context from documents
@@ -174,8 +172,7 @@ class LLMClient:
         max_length: int | None = None,
         style: str = "concise",
     ) -> dict[str, Any]:
-        """
-        Summarise text content.
+        """Summarise text content.
 
         Args:
             content: Text to summarise
@@ -184,6 +181,7 @@ class LLMClient:
 
         Returns:
             Dict with 'summary' text and 'metadata'
+
         """
         try:
             # Build style-specific prompt
@@ -200,7 +198,7 @@ class LLMClient:
 
             messages = [
                 SystemMessage(
-                    content="You are a helpful assistant that summarises text."
+                    content="You are a helpful assistant that summarises text.",
                 ),
                 HumanMessage(content=f"{instruction}\n\nText to summarise:\n{content}"),
             ]
@@ -232,8 +230,7 @@ class LLMClient:
         context_documents: list[DocumentContext],
         system_prompt: str | None = None,
     ) -> dict[str, Any]:
-        """
-        Answer a question using context documents (RAG-style).
+        """Answer a question using context documents (RAG-style).
 
         Args:
             question: User's question
@@ -242,6 +239,7 @@ class LLMClient:
 
         Returns:
             Dict with 'answer' and 'metadata' (including source document IDs)
+
         """
         try:
             # Build context

@@ -1,12 +1,12 @@
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from google.protobuf import timestamp_pb2
 
 import bibliophage.v1alpha3.document_pb2 as api
-from database import get_database
 import vector_operations
+from database import get_database
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class DocumentServiceImplementation:
 
         # Generate document ID and store in database
         document_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Validate systems array (must have at least one value)
         if not request.document.systems:
@@ -128,7 +128,7 @@ class DocumentServiceImplementation:
         # Convert source_type string to enum
         source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
         document.source_type = getattr(
-            api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED
+            api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED,
         )
 
         # Convert metadata if present
@@ -142,10 +142,10 @@ class DocumentServiceImplementation:
             if "pdf" in doc_data["metadata"]:
                 pdf_data = api.PdfData()
                 pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
-                    "loading_batch_count", 0
+                    "loading_batch_count", 0,
                 )
                 pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get(
-                    "vector_chunk_count", 0
+                    "vector_chunk_count", 0,
                 )
                 pdf_data.page_count = doc_data["metadata"]["pdf"].get("page_count", 0)
                 metadata.pdf.CopyFrom(pdf_data)
@@ -261,7 +261,7 @@ class DocumentServiceImplementation:
         if request.document.content:
             await self.db.mark_embeddings_stale(request.document.id)
             logger.info(
-                f"Marked embeddings as stale for document {request.document.id} due to content update"
+                f"Marked embeddings as stale for document {request.document.id} due to content update",
             )
 
         # Convert updated database document to protobuf Document
@@ -270,7 +270,7 @@ class DocumentServiceImplementation:
         updated_document.name = doc_data["name"]
         updated_document.content = doc_data["content"]
         updated_document.type = getattr(
-            api, doc_data["type"], api.DOCUMENT_TYPE_UNSPECIFIED
+            api, doc_data["type"], api.DOCUMENT_TYPE_UNSPECIFIED,
         )
         updated_document.character_count = doc_data["character_count"]
 
@@ -280,7 +280,7 @@ class DocumentServiceImplementation:
         # Convert source_type string to enum
         source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
         updated_document.source_type = getattr(
-            api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED
+            api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED,
         )
 
         # Convert metadata if present
@@ -294,10 +294,10 @@ class DocumentServiceImplementation:
             if "pdf" in doc_data["metadata"]:
                 pdf_data = api.PdfData()
                 pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
-                    "loading_batch_count", 0
+                    "loading_batch_count", 0,
                 )
                 pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get(
-                    "vector_chunk_count", 0
+                    "vector_chunk_count", 0,
                 )
                 pdf_data.page_count = doc_data["metadata"]["pdf"].get("page_count", 0)
                 metadata.pdf.CopyFrom(pdf_data)
@@ -372,12 +372,12 @@ class DocumentServiceImplementation:
                         {
                             "name": tag_filter.name,
                             "value": tag_filter.value,
-                        }
+                        },
                     )
 
         # Set page size with a reasonable default
         page_size = request.page_size if request.page_size > 0 else 50
-        page_number = request.page_number if request.page_number >= 0 else 0
+        page_number = max(request.page_number, 0)
 
         # Call database search method
         documents, total_count = await self.db.search_documents(
@@ -398,7 +398,7 @@ class DocumentServiceImplementation:
             list_item.name = doc_data["name"]
             list_item.content_snippet = doc_data.get("content_snippet", "")
             list_item.type = getattr(
-                api, doc_data["type"], api.DOCUMENT_TYPE_UNSPECIFIED
+                api, doc_data["type"], api.DOCUMENT_TYPE_UNSPECIFIED,
             )
             list_item.character_count = doc_data["character_count"]
 
@@ -408,7 +408,7 @@ class DocumentServiceImplementation:
             # Convert source_type string to enum
             source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
             list_item.source_type = getattr(
-                api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED
+                api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED,
             )
 
             # Convert metadata if present
@@ -422,13 +422,13 @@ class DocumentServiceImplementation:
                 if "pdf" in doc_data["metadata"]:
                     pdf_data = api.PdfData()
                     pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
-                        "loading_batch_count", 0
+                        "loading_batch_count", 0,
                     )
                     pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get(
-                        "vector_chunk_count", 0
+                        "vector_chunk_count", 0,
                     )
                     pdf_data.page_count = doc_data["metadata"]["pdf"].get(
-                        "page_count", 0
+                        "page_count", 0,
                     )
                     metadata.pdf.CopyFrom(pdf_data)
 

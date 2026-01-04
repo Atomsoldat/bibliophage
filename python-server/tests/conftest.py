@@ -12,15 +12,16 @@ Fixtures:
     - embedded_document: Creates a document and embeds it, cleans up both
     - token_embedded_document: Creates a document with token-based embeddings
 """
-import pytest
 import logging
 import os
+
+import pytest
+
 import bibliophage.v1alpha3.document_pb2 as doc_api
 import bibliophage.v1alpha3.embedding_pb2 as emb_api
 from bibliophage.v1alpha3.document_connect import DocumentServiceClient
 from bibliophage.v1alpha3.embedding_connect import EmbeddingServiceClient
 from bibliophage.v1alpha3.pdf_connect import PdfServiceClient
-
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ def sample_pdf(tmp_path):
     md_file = fixture_dir / "bestiary_sample.md"
     pdf_file = tmp_path / "bestiary_sample.pdf"
 
-    subprocess.run(['pandoc', str(md_file), '-o', str(pdf_file)], check=True)
+    subprocess.run(["pandoc", str(md_file), "-o", str(pdf_file)], check=True)
     return pdf_file
 
 
@@ -50,6 +51,7 @@ async def document_client():
 
     Note:
         The client connection is automatically cleaned up after the test.
+
     """
     async with DocumentServiceClient(TEST_SERVER_URL) as client:
         yield client
@@ -64,6 +66,7 @@ async def embedding_client():
 
     Note:
         The client connection is automatically cleaned up after the test.
+
     """
     async with EmbeddingServiceClient(TEST_SERVER_URL) as client:
         yield client
@@ -78,6 +81,7 @@ async def pdf_client():
 
     Note:
         The client connection is automatically cleaned up after the test.
+
     """
     async with PdfServiceClient(TEST_SERVER_URL) as client:
         yield client
@@ -104,6 +108,7 @@ async def test_document(document_client):
             # Document already exists, just use it
             assert test_document.id is not None
             # Automatic cleanup happens after test
+
     """
     # Setup: Create test document
     doc_request = doc_api.StoreDocumentRequest()
@@ -135,7 +140,7 @@ async def test_document(document_client):
     except Exception as e:
         logger.warning(
             f"Failed to cleanup test document {document.id}: {e}",
-            exc_info=True
+            exc_info=True,
         )
 
 @pytest.fixture
@@ -159,6 +164,7 @@ async def embedded_document(test_document, embedding_client):
             document, embed_response = embedded_document
             # Document is already embedded, test search functionality
             assert embed_response.embedding_status.is_embedded == True
+
     """
     # Setup: Embed the test document
     emb_request = emb_api.EmbedDocumentRequest()
@@ -180,7 +186,7 @@ async def embedded_document(test_document, embedding_client):
     except Exception as e:
         logger.warning(
             f"Failed to cleanup embeddings for {test_document.id}: {e}",
-            exc_info=True
+            exc_info=True,
         )
 
 
@@ -198,6 +204,7 @@ async def token_embedded_document(test_document, embedding_client):
 
     Yields:
         tuple[Document, EmbedDocumentResponse]: The document and embedding response
+
     """
     # Setup: Embed with token-based strategy
     emb_request = emb_api.EmbedDocumentRequest()
@@ -219,5 +226,5 @@ async def token_embedded_document(test_document, embedding_client):
     except Exception as e:
         logger.warning(
             f"Failed to cleanup embeddings for {test_document.id}: {e}",
-            exc_info=True
+            exc_info=True,
         )

@@ -4,6 +4,7 @@ Tests cover embedding creation, deletion, and status verification using
 pytest fixtures for automatic setup and teardown.
 """
 import pytest
+
 import bibliophage.v1alpha3.embedding_pb2 as emb_api
 
 
