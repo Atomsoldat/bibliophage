@@ -1,5 +1,6 @@
-
+# https://docs.astral.sh/ruff/settings/
 # https://docs.astral.sh/ruff/configuration/
+# https://docs.astral.sh/ruff/rules/
 exclude = [
     # ignore auto generated
     "src/bibliophage",
@@ -31,3 +32,16 @@ exclude = [
     "site-packages",
     "venv",
 ]
+
+
+
+[lint]
+select = ["ALL"]
+
+ignore = [
+    # we use TODO and friends for documentation purposes
+    "FIX001",
+]
+
+[lint.per-file-ignores]
+"tests/**.py" = ["S101"]
