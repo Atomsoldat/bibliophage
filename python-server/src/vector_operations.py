@@ -19,6 +19,7 @@ from typing import Any
 from langchain_huggingface import HuggingFaceEmbeddings
 from pgvector.psycopg import register_vector_async
 from psycopg import sql
+from psycopg.types.json import Jsonb
 
 from config import get_settings
 from vector_db import VectorDatabase
@@ -133,7 +134,7 @@ async def ensure_schema_exists():
         return True
 
     try:
-        await vector_db.execute(create_table_sql, execute_schema)
+        await vector_db.execute(create_table_sql, callback=execute_schema)
         logger.info("Vector database schema verified/created successfully")
     except Exception as e:
         logger.error(f"Failed to create vector database schema: {e}")
@@ -229,7 +230,7 @@ async def embed_chunks(
                 'chunk_id': chunk['chunk_id'],
                 'content': chunk['content'],
                 'embedding': embeddings[i],  # The embedding vector
-                'metadata': chunk.get('metadata', {}),
+                'metadata': Jsonb(chunk.get('metadata', {})),  # Wrap dict in Jsonb for PostgreSQL
                 'created_at': now
             })
 
@@ -241,7 +242,7 @@ async def embed_chunks(
         
         return cursor.rowcount
 
-    count = await vector_db.execute("", insert_chunks)
+    count = await vector_db.execute("", callback=insert_chunks)
     logger.info(f"Inserted {count} chunks for document {document_id}")
     return count
 
@@ -263,12 +264,11 @@ async def delete_document_chunks(document_id: str) -> int:
 
     delete_sql = "DELETE FROM document_chunks WHERE document_id = %s"
 
-    async def execute_delete(cursor):
-        """Execute delete and return count."""
-        await cursor.execute(delete_sql, (document_id,))
+    async def get_rowcount(cursor):
+        """Return the number of deleted rows."""
         return cursor.rowcount
 
-    count = await vector_db.execute(delete_sql, execute_delete)
+    count = await vector_db.execute(delete_sql, params=(document_id,), callback=get_rowcount)
     logger.info(f"Deleted {count} chunks for document {document_id}")
     return count
 
@@ -338,9 +338,8 @@ async def search_similar(
 
     vector_db = get_vector_database()
 
-    async def execute_search(cursor):
-        """Execute search and return results."""
-        await cursor.execute(search_sql, params)
+    async def fetch_results(cursor):
+        """Fetch search results from cursor."""
         rows = await cursor.fetchall()
 
         results = []
@@ -354,7 +353,7 @@ async def search_similar(
             })
         return results
 
-    results = await vector_db.execute(search_sql, execute_search)
+    results = await vector_db.execute(search_sql, params=params, callback=fetch_results)
     logger.info(f"Found {len(results)} similar chunks")
     return results
 
@@ -372,13 +371,12 @@ async def get_chunk_count(document_id: str) -> int:
 
     count_sql = "SELECT COUNT(*) FROM document_chunks WHERE document_id = %s"
 
-    async def execute_count(cursor):
-        """Execute count and return result."""
-        await cursor.execute(count_sql, (document_id,))
+    async def fetch_count(cursor):
+        """Fetch count result from cursor."""
         row = await cursor.fetchone()
         return row[0] if row else 0
 
-    count = await vector_db.execute(count_sql, execute_count)
+    count = await vector_db.execute(count_sql, params=(document_id,), callback=fetch_count)
     return count
 
 

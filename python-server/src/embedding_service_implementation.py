@@ -67,13 +67,12 @@ class EmbeddingServiceImplementation:
                 message=f"Document {request.document_id} has no content to chunk",
             )
 
-        # Convert protobuf config to dict for chunking strategy
-        config_dict = self._proto_config_to_dict(request.config)
-
         # Get chunking strategy and generate boundaries
         try:
             strategy = chunking_strategies.get_strategy(request.config.strategy)
-            chunk_boundaries = strategy.propose_chunks(content, config_dict)
+            proto_boundaries = await strategy.propose_chunks(
+                content, request.config, request.document_id
+            )
         except ValueError as e:
             return api.ProposeChunksResponse(
                 success=False,
@@ -86,38 +85,8 @@ class EmbeddingServiceImplementation:
                 message=f"Failed to generate chunks: {str(e)}",
             )
 
-        # Convert chunk boundaries to protobuf and calculate statistics
-        proto_boundaries = []
-        chunk_sizes = []
-
-        for chunk in chunk_boundaries:
-            boundary = api.ChunkBoundary()
-            boundary.chunk_id = chunk["chunk_id"]
-            boundary.char_start = chunk["char_start"]
-            boundary.char_end = chunk["char_end"]
-            boundary.description = chunk.get("description", "")
-            boundary.preview = chunk.get("preview", "")
-
-            # Add optional fields
-            if "token_start" in chunk:
-                boundary.token_start = chunk["token_start"]
-            if "token_end" in chunk:
-                boundary.token_end = chunk["token_end"]
-
-            if "markdown_ref" in chunk:
-                md_ref = api.MarkdownReference()
-                md_ref.heading_path.extend(chunk["markdown_ref"]["heading_path"])
-                md_ref.start_heading_level = chunk["markdown_ref"]["start_heading_level"]
-                boundary.markdown_ref.CopyFrom(md_ref)
-
-            if "pdf_ref" in chunk:
-                pdf_ref = api.PdfPageReference()
-                pdf_ref.start_page = chunk["pdf_ref"]["start_page"]
-                pdf_ref.end_page = chunk["pdf_ref"]["end_page"]
-                boundary.pdf_ref.CopyFrom(pdf_ref)
-
-            proto_boundaries.append(boundary)
-            chunk_sizes.append(chunk["char_end"] - chunk["char_start"])
+        # Calculate statistics directly from protobuf objects
+        chunk_sizes = [b.char_end - b.char_start for b in proto_boundaries]
 
         # Calculate statistics
         stats = api.ChunkStatistics()
@@ -188,15 +157,16 @@ class EmbeddingServiceImplementation:
         if request.boundaries:
             # User provided boundaries
             logger.info(f"Using {len(request.boundaries)} provided boundaries")
-            chunk_boundaries = [self._proto_boundary_to_dict(b) for b in request.boundaries]
+            proto_boundaries = list(request.boundaries)
         else:
             # Generate boundaries from config
             logger.info("Generating boundaries from config")
-            config_dict = self._proto_config_to_dict(request.config)
 
             try:
                 strategy = chunking_strategies.get_strategy(request.config.strategy)
-                chunk_boundaries = strategy.propose_chunks(content, config_dict)
+                proto_boundaries = await strategy.propose_chunks(
+                    content, request.config, request.document_id
+                )
             except Exception as e:
                 logger.error(f"Error generating chunks: {e}", exc_info=True)
                 return api.EmbedDocumentResponse(
@@ -206,15 +176,15 @@ class EmbeddingServiceImplementation:
 
         # Extract chunk content for embedding
         chunks_with_content = []
-        for boundary in chunk_boundaries:
-            chunk_content = content[boundary["char_start"]:boundary["char_end"]]
+        for boundary in proto_boundaries:
+            chunk_content = content[boundary.char_start:boundary.char_end]
             chunks_with_content.append({
-                "chunk_id": boundary["chunk_id"],
+                "chunk_id": boundary.chunk_id,
                 "content": chunk_content,
                 "metadata": {
-                    "char_start": boundary["char_start"],
-                    "char_end": boundary["char_end"],
-                    "description": boundary.get("description", ""),
+                    "char_start": boundary.char_start,
+                    "char_end": boundary.char_end,
+                    "description": boundary.description,
                 }
             })
 
@@ -236,12 +206,13 @@ class EmbeddingServiceImplementation:
                 message=f"Failed to embed chunks: {str(e)}",
             )
 
-        # Store chunk boundaries in FerretDB
+        # Store chunk boundaries in FerretDB (convert to dicts for database storage)
         config_dict = self._proto_config_to_dict(request.config)
+        boundaries_dicts = [self._proto_boundary_to_dict(b) for b in proto_boundaries]
         await self.db.store_chunk_boundaries(
             request.document_id,
             config_dict,
-            chunk_boundaries
+            boundaries_dicts
         )
 
         # Mark embeddings as current
@@ -335,27 +306,25 @@ class EmbeddingServiceImplementation:
                 message=f"Document with ID {request.document_id} not found",
             )
 
-        # Convert boundaries to dict
-        chunk_boundaries = [self._proto_boundary_to_dict(b) for b in request.boundaries]
-
         # Validate boundaries (basic checks)
         try:
-            self._validate_boundaries(chunk_boundaries, len(doc_data["content"]))
+            self._validate_boundaries(request.boundaries, len(doc_data["content"]))
         except ValueError as e:
             return api.UpdateChunkBoundariesResponse(
                 success=False,
                 message=f"Invalid boundaries: {str(e)}",
             )
 
-        # Store updated boundaries (this will mark as stale)
+        # Store updated boundaries in database (convert to dicts for storage)
         config_dict = self._proto_config_to_dict(request.config)
+        boundaries_dicts = [self._proto_boundary_to_dict(b) for b in request.boundaries]
         await self.db.store_chunk_boundaries(
             request.document_id,
             config_dict,
-            chunk_boundaries
+            boundaries_dicts
         )
 
-        logger.info(f"Updated {len(chunk_boundaries)} boundaries for document {request.document_id}")
+        logger.info(f"Updated {len(request.boundaries)} boundaries for document {request.document_id}")
 
         # Fetch updated status
         boundaries_doc = await self.db.get_chunk_boundaries(request.document_id)
@@ -524,7 +493,7 @@ class EmbeddingServiceImplementation:
 
         return status
 
-    def _validate_boundaries(self, boundaries: list[dict[str, Any]], content_length: int):
+    def _validate_boundaries(self, boundaries: list[api.ChunkBoundary], content_length: int):
         """Validate chunk boundaries for consistency.
 
         Checks:
@@ -534,7 +503,7 @@ class EmbeddingServiceImplementation:
         - All boundaries within content length
 
         Args:
-            boundaries: List of chunk boundary dicts
+            boundaries: List of ChunkBoundary protobuf objects
             content_length: Total length of document content
 
         Raises:
@@ -544,32 +513,32 @@ class EmbeddingServiceImplementation:
             return
 
         # Sort by char_start
-        sorted_boundaries = sorted(boundaries, key=lambda x: x["char_start"])
+        sorted_boundaries = sorted(boundaries, key=lambda x: x.char_start)
 
         # Check each boundary
         for i, boundary in enumerate(sorted_boundaries):
             # Check within content bounds
-            if boundary["char_start"] < 0 or boundary["char_end"] > content_length:
+            if boundary.char_start < 0 or boundary.char_end > content_length:
                 raise ValueError(
-                    f"Boundary {boundary['chunk_id']} out of content bounds "
-                    f"({boundary['char_start']}-{boundary['char_end']} vs 0-{content_length})"
+                    f"Boundary {boundary.chunk_id} out of content bounds "
+                    f"({boundary.char_start}-{boundary.char_end} vs 0-{content_length})"
                 )
 
             # Check start < end
-            if boundary["char_start"] >= boundary["char_end"]:
+            if boundary.char_start >= boundary.char_end:
                 raise ValueError(
-                    f"Boundary {boundary['chunk_id']} has invalid range "
-                    f"({boundary['char_start']}-{boundary['char_end']})"
+                    f"Boundary {boundary.chunk_id} has invalid range "
+                    f"({boundary.char_start}-{boundary.char_end})"
                 )
 
             # Check for gaps and overlaps with next boundary
             if i < len(sorted_boundaries) - 1:
                 next_boundary = sorted_boundaries[i + 1]
-                if boundary["char_end"] < next_boundary["char_start"]:
+                if boundary.char_end < next_boundary.char_start:
                     raise ValueError(
-                        f"Gap between chunks {boundary['chunk_id']} and {next_boundary['chunk_id']}"
+                        f"Gap between chunks {boundary.chunk_id} and {next_boundary.chunk_id}"
                     )
-                if boundary["char_end"] > next_boundary["char_start"]:
+                if boundary.char_end > next_boundary.char_start:
                     raise ValueError(
-                        f"Overlap between chunks {boundary['chunk_id']} and {next_boundary['chunk_id']}"
+                        f"Overlap between chunks {boundary.chunk_id} and {next_boundary.chunk_id}"
                     )
