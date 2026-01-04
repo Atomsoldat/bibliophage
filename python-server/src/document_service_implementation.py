@@ -4,7 +4,8 @@ from datetime import UTC, datetime
 
 from google.protobuf import timestamp_pb2
 
-import bibliophage.v1alpha3.document_pb2 as api
+import bibliophage.v1alpha3.document_pb2 as document_api
+import bibliophage.v1alpha3.embedding_pb2 as embedding_api
 import vector_operations
 from database import get_database
 
@@ -20,9 +21,9 @@ class DocumentServiceImplementation:
     # TODO: figure out where the type of ctx is defined, we  don't use it in the loading service either
     async def store_document(
         self,
-        request: api.StoreDocumentRequest,
+        request: document_api.StoreDocumentRequest,
         ctx,
-    ) -> api.StoreDocumentResponse:
+    ) -> document_api.StoreDocumentResponse:
         logger.info(
             f"Received StoreDocumentRequest for document: {request.document.name}",
         )
@@ -33,7 +34,7 @@ class DocumentServiceImplementation:
 
         # Validate systems array (must have at least one value)
         if not request.document.systems:
-            return api.StoreDocumentResponse(
+            return document_api.StoreDocumentResponse(
                 success=False,
                 message="Document must belong to at least one system",
             )
@@ -44,10 +45,10 @@ class DocumentServiceImplementation:
             tags.append({"name": tag.name, "values": list(tag.values)})
 
         # Convert enum to string name for database storage
-        doc_type = api.DocumentType.Name(request.document.type)
+        doc_type = document_api.DocumentType.Name(request.document.type)
 
         # Convert source_type enum to string
-        source_type = api.SourceType.Name(request.document.source_type)
+        source_type = document_api.SourceType.Name(request.document.source_type)
 
         # Convert metadata if provided
         metadata = None
@@ -79,7 +80,7 @@ class DocumentServiceImplementation:
         )
 
         # Create response with stored document metadata
-        stored_document = api.Document()
+        stored_document = document_api.Document()
         stored_document.CopyFrom(request.document)
         stored_document.id = document_id
 
@@ -92,7 +93,7 @@ class DocumentServiceImplementation:
         # Set character count
         stored_document.character_count = len(request.document.content)
 
-        return api.StoreDocumentResponse(
+        return document_api.StoreDocumentResponse(
             success=True,
             message=f"Document '{stored_document.name}' stored successfully",
             document=stored_document,
@@ -100,26 +101,26 @@ class DocumentServiceImplementation:
 
     async def get_document(
         self,
-        request: api.GetDocumentRequest,
+        request: document_api.GetDocumentRequest,
         ctx,
-    ) -> api.GetDocumentResponse:
+    ) -> document_api.GetDocumentResponse:
         logger.info(f"Received GetDocumentRequest for ID: {request.id}")
 
         # Retrieve document from database
         doc_data = await self.db.get_document_by_id(request.id)
 
         if doc_data is None:
-            return api.GetDocumentResponse(
+            return document_api.GetDocumentResponse(
                 success=False,
                 message=f"Document with ID {request.id} not found",
             )
 
         # Convert database document to protobuf Document
-        document = api.Document()
+        document = document_api.Document()
         document.id = doc_data["_id"]
         document.name = doc_data["name"]
         document.content = doc_data["content"]
-        document.type = getattr(api, doc_data["type"], api.DOCUMENT_TYPE_UNSPECIFIED)
+        document.type = getattr(document_api, doc_data["type"], document_api.DOCUMENT_TYPE_UNSPECIFIED)
         document.character_count = doc_data["character_count"]
 
         # Add systems array
@@ -128,19 +129,19 @@ class DocumentServiceImplementation:
         # Convert source_type string to enum
         source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
         document.source_type = getattr(
-            api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED,
+            document_api, source_type_str, document_api.SOURCE_TYPE_UNSPECIFIED,
         )
 
         # Convert metadata if present
         if "metadata" in doc_data:
-            metadata = api.Metadata()
+            metadata = document_api.Metadata()
             metadata.file_size = doc_data["metadata"].get("file_size", 0)
 
             if "publication_type" in doc_data["metadata"]:
                 metadata.publication_type = doc_data["metadata"]["publication_type"]
 
             if "pdf" in doc_data["metadata"]:
-                pdf_data = api.PdfData()
+                pdf_data = document_api.PdfData()
                 pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
                     "loading_batch_count", 0,
                 )
@@ -154,7 +155,7 @@ class DocumentServiceImplementation:
 
         # Convert dict tags to protobuf tags
         for tag_data in doc_data.get("tags", []):
-            tag = api.Tag()
+            tag = document_api.Tag()
             tag.name = tag_data.get("name", "")
             tag.values.extend(tag_data.get("values", []))
             document.tags.append(tag)
@@ -168,7 +169,7 @@ class DocumentServiceImplementation:
         updated_timestamp.FromDatetime(doc_data["updated_at"])
         document.updated_at.CopyFrom(updated_timestamp)
 
-        return api.GetDocumentResponse(
+        return document_api.GetDocumentResponse(
             success=True,
             message=f"Document '{document.name}' retrieved successfully",
             document=document,
@@ -183,16 +184,16 @@ class DocumentServiceImplementation:
     # Using git for this seems heavy...
     async def update_document(
         self,
-        request: api.UpdateDocumentRequest,
+        request: document_api.UpdateDocumentRequest,
         ctx,
-    ) -> api.UpdateDocumentResponse:
+    ) -> document_api.UpdateDocumentResponse:
         logger.info(f"Received UpdateDocumentRequest for ID: {request.document.id}")
 
         # Validate systems array if provided (must have at least one value)
         systems = None
         if request.document.systems:
             if len(request.document.systems) == 0:
-                return api.UpdateDocumentResponse(
+                return document_api.UpdateDocumentResponse(
                     success=False,
                     message="Document must belong to at least one system",
                 )
@@ -209,17 +210,17 @@ class DocumentServiceImplementation:
         doc_type = None
         if (
             request.document.type
-            and request.document.type != api.DOCUMENT_TYPE_UNSPECIFIED
+            and request.document.type != document_api.DOCUMENT_TYPE_UNSPECIFIED
         ):
-            doc_type = api.DocumentType.Name(request.document.type)
+            doc_type = document_api.DocumentType.Name(request.document.type)
 
         # Convert source_type enum to string if provided
         source_type = None
         if (
             request.document.source_type
-            and request.document.source_type != api.SOURCE_TYPE_UNSPECIFIED
+            and request.document.source_type != document_api.SOURCE_TYPE_UNSPECIFIED
         ):
-            source_type = api.SourceType.Name(request.document.source_type)
+            source_type = document_api.SourceType.Name(request.document.source_type)
 
         # Convert metadata if provided
         metadata = None
@@ -251,7 +252,7 @@ class DocumentServiceImplementation:
         )
 
         if doc_data is None:
-            return api.UpdateDocumentResponse(
+            return document_api.UpdateDocumentResponse(
                 success=False,
                 message=f"Document with ID {request.document.id} not found",
             )
@@ -265,12 +266,12 @@ class DocumentServiceImplementation:
             )
 
         # Convert updated database document to protobuf Document
-        updated_document = api.Document()
+        updated_document = document_api.Document()
         updated_document.id = doc_data["_id"]
         updated_document.name = doc_data["name"]
         updated_document.content = doc_data["content"]
         updated_document.type = getattr(
-            api, doc_data["type"], api.DOCUMENT_TYPE_UNSPECIFIED,
+            document_api, doc_data["type"], document_api.DOCUMENT_TYPE_UNSPECIFIED,
         )
         updated_document.character_count = doc_data["character_count"]
 
@@ -280,19 +281,19 @@ class DocumentServiceImplementation:
         # Convert source_type string to enum
         source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
         updated_document.source_type = getattr(
-            api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED,
+            document_api, source_type_str, document_api.SOURCE_TYPE_UNSPECIFIED,
         )
 
         # Convert metadata if present
         if "metadata" in doc_data:
-            metadata = api.Metadata()
+            metadata = document_api.Metadata()
             metadata.file_size = doc_data["metadata"].get("file_size", 0)
 
             if "publication_type" in doc_data["metadata"]:
                 metadata.publication_type = doc_data["metadata"]["publication_type"]
 
             if "pdf" in doc_data["metadata"]:
-                pdf_data = api.PdfData()
+                pdf_data = document_api.PdfData()
                 pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
                     "loading_batch_count", 0,
                 )
@@ -306,7 +307,7 @@ class DocumentServiceImplementation:
 
         # Convert dict tags to protobuf tags
         for tag_data in doc_data.get("tags", []):
-            tag = api.Tag()
+            tag = document_api.Tag()
             tag.name = tag_data.get("name", "")
             tag.values.extend(tag_data.get("values", []))
             updated_document.tags.append(tag)
@@ -320,7 +321,7 @@ class DocumentServiceImplementation:
         updated_timestamp.FromDatetime(doc_data["updated_at"])
         updated_document.updated_at.CopyFrom(updated_timestamp)
 
-        return api.UpdateDocumentResponse(
+        return document_api.UpdateDocumentResponse(
             success=True,
             message=f"Document '{updated_document.name}' updated successfully",
             document=updated_document,
@@ -328,9 +329,9 @@ class DocumentServiceImplementation:
 
     async def search_documents(
         self,
-        request: api.SearchDocumentsRequest,
+        request: document_api.SearchDocumentsRequest,
         ctx,
-    ) -> api.SearchDocumentsResponse:
+    ) -> document_api.SearchDocumentsResponse:
         logger.info("Received SearchDocumentsRequest")
 
         # Extract filter parameters if filter is provided
@@ -356,9 +357,9 @@ class DocumentServiceImplementation:
             # Convert DocumentType enum to string for database query
             if (
                 request.filter.HasField("type_filter")
-                and request.filter.type_filter != api.DOCUMENT_TYPE_UNSPECIFIED
+                and request.filter.type_filter != document_api.DOCUMENT_TYPE_UNSPECIFIED
             ):
-                type_filter = api.DocumentType.Name(request.filter.type_filter)
+                type_filter = document_api.DocumentType.Name(request.filter.type_filter)
 
             # Extract system filters (matches ANY)
             if request.filter.system_filters:
@@ -390,15 +391,23 @@ class DocumentServiceImplementation:
             page_number=page_number,
         )
 
+        # Fetch chunk boundaries for all documents to populate embedding status
+        document_ids = [doc["_id"] for doc in documents]
+        chunk_boundaries_map = {}
+        for doc_id in document_ids:
+            boundaries_doc = await self.db.get_chunk_boundaries(doc_id)
+            if boundaries_doc:
+                chunk_boundaries_map[doc_id] = boundaries_doc
+
         # Convert database documents to DocumentListItem protobuf objects
         document_list_items = []
         for doc_data in documents:
-            list_item = api.DocumentListItem()
+            list_item = document_api.DocumentListItem()
             list_item.id = doc_data["_id"]
             list_item.name = doc_data["name"]
             list_item.content_snippet = doc_data.get("content_snippet", "")
             list_item.type = getattr(
-                api, doc_data["type"], api.DOCUMENT_TYPE_UNSPECIFIED,
+                document_api, doc_data["type"], document_api.DOCUMENT_TYPE_UNSPECIFIED,
             )
             list_item.character_count = doc_data["character_count"]
 
@@ -408,19 +417,19 @@ class DocumentServiceImplementation:
             # Convert source_type string to enum
             source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
             list_item.source_type = getattr(
-                api, source_type_str, api.SOURCE_TYPE_UNSPECIFIED,
+                document_api, source_type_str, document_api.SOURCE_TYPE_UNSPECIFIED,
             )
 
             # Convert metadata if present
             if "metadata" in doc_data:
-                metadata = api.Metadata()
+                metadata = document_api.Metadata()
                 metadata.file_size = doc_data["metadata"].get("file_size", 0)
 
                 if "publication_type" in doc_data["metadata"]:
                     metadata.publication_type = doc_data["metadata"]["publication_type"]
 
                 if "pdf" in doc_data["metadata"]:
-                    pdf_data = api.PdfData()
+                    pdf_data = document_api.PdfData()
                     pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
                         "loading_batch_count", 0,
                     )
@@ -445,16 +454,40 @@ class DocumentServiceImplementation:
 
             # Add tags (tags are stored as dicts in the database)
             for tag_data in doc_data.get("tags", []):
-                tag = api.Tag()
+                tag = document_api.Tag()
                 tag.name = tag_data.get("name", "")
                 tag.values.extend(tag_data.get("values", []))
                 list_item.tags.append(tag)
+
+            # Populate embedding status if chunk boundaries exist
+            doc_id = doc_data["_id"]
+            if doc_id in chunk_boundaries_map:
+                boundaries_data = chunk_boundaries_map[doc_id]
+                embedding_status = embedding_api.EmbeddingStatus()
+                embedding_status.is_embedded = boundaries_data.get(
+                    "embedding_status", {},
+                ).get("is_embedded", False)
+                embedding_status.embeddings_current = boundaries_data.get(
+                    "embedding_status", {},
+                ).get("embeddings_current", False)
+                embedding_status.total_chunks = len(
+                    boundaries_data.get("chunk_boundaries", []),
+                )
+
+                if "embedding_status" in boundaries_data and "embedded_at" in boundaries_data["embedding_status"]:
+                    embedded_timestamp = timestamp_pb2.Timestamp()
+                    embedded_timestamp.FromDatetime(
+                        boundaries_data["embedding_status"]["embedded_at"],
+                    )
+                    embedding_status.embedded_at.CopyFrom(embedded_timestamp)
+
+                list_item.embedding_status.CopyFrom(embedding_status)
 
             document_list_items.append(list_item)
 
         # Calculate if there are more results
         has_more = (page_number + 1) * page_size < total_count
-        return api.SearchDocumentsResponse(
+        return document_api.SearchDocumentsResponse(
             success=True,
             message=f"Found {total_count} document(s)",
             matches=document_list_items,
@@ -465,16 +498,16 @@ class DocumentServiceImplementation:
 
     async def delete_document(
         self,
-        request: api.DeleteDocumentRequest,
+        request: document_api.DeleteDocumentRequest,
         ctx,
-    ) -> api.DeleteDocumentResponse:
+    ) -> document_api.DeleteDocumentResponse:
         logger.info(f"Received DeleteDocumentRequest for ID: {request.id}")
 
         # Delete document from database
         deleted = await self.db.delete_document(request.id)
 
         if not deleted:
-            return api.DeleteDocumentResponse(
+            return document_api.DeleteDocumentResponse(
                 success=False,
                 message=f"Document with ID {request.id} not found",
             )
@@ -488,7 +521,7 @@ class DocumentServiceImplementation:
         deleted_chunks = await vector_operations.delete_document_chunks(request.id)
         logger.info(f"Deleted {deleted_chunks} vector chunks for document {request.id}")
 
-        return api.DeleteDocumentResponse(
+        return document_api.DeleteDocumentResponse(
             success=True,
             message=f"Document with ID {request.id} deleted successfully",
         )

@@ -3,6 +3,7 @@ syntax = "proto3";
 package bibliophage.v1alpha3;
 
 import "bibliophage/v1alpha3/common.proto";
+import "bibliophage/v1alpha3/embedding.proto";
 import "google/protobuf/timestamp.proto";
 
 // Service definitions - the API endpoints
@@ -119,6 +120,11 @@ message DocumentListItem {
 
   // Character count of full document (not the snippet)
   int32 character_count = 11;
+
+  // Embedding status (optional, populated if chunk boundaries exist)
+  // TODO: we  should think about whether we want to calculcate this at each search
+  // I think it's better to have a field in the database representing this information
+  optional EmbeddingStatus embedding_status = 12;
 }
 
 // Enums for strict classification of data

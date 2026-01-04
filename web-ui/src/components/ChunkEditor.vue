@@ -296,7 +296,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- Embedding status -->
+        <!-- Embedding status badges -->
         <div v-if="embeddingStatus" class="flex gap-2 items-center">
           <div
             v-if="!embeddingStatus.isEmbedded"
@@ -319,17 +319,18 @@ onMounted(async () => {
             <Icon icon="heroicons:check-circle" />
             <span>Embeddings current ({{ embeddingStatus.totalChunks }} chunks)</span>
           </div>
-
-          <button
-            class="btn btn-accent"
-            :disabled="isEmbedding || boundaries.length === 0"
-            @click="embedDocument"
-          >
-            <Icon v-if="!isEmbedding" icon="heroicons:cube" />
-            <span v-if="isEmbedding" class="loading loading-spinner loading-sm" />
-            {{ isEmbedding ? 'Embedding...' : (embeddingStatus.isEmbedded ? 'Re-embed' : 'Embed Document') }}
-          </button>
         </div>
+
+        <!-- Embed button (always visible when boundaries exist) -->
+        <button
+          class="btn btn-accent"
+          :disabled="isEmbedding || boundaries.length === 0"
+          @click="embedDocument"
+        >
+          <Icon v-if="!isEmbedding" icon="heroicons:cube" />
+          <span v-if="isEmbedding" class="loading loading-spinner loading-sm" />
+          {{ isEmbedding ? 'Embedding...' : (embeddingStatus?.isEmbedded ? 'Re-embed' : 'Embed Document') }}
+        </button>
       </div>
     </div>
 

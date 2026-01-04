@@ -23,50 +23,51 @@ _sym_db = _symbol_database.Default()
 
 
 from bibliophage.v1alpha3 import common_pb2 as bibliophage_dot_v1alpha3_dot_common__pb2
+from bibliophage.v1alpha3 import embedding_pb2 as bibliophage_dot_v1alpha3_dot_embedding__pb2
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n#bibliophage/v1alpha3/document.proto\x12\x14\x62ibliophage.v1alpha3\x1a!bibliophage/v1alpha3/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"V\n\x07PdfData\x12\x1b\n\x13loading_batch_count\x18\x01 \x01(\x05\x12\x1a\n\x12vector_chunk_count\x18\x02 \x01(\x05\x12\x12\n\npage_count\x18\x03 \x01(\x05\"\x8a\x01\n\x08Metadata\x12\x11\n\tfile_size\x18\x01 \x01(\x03\x12\x1d\n\x10publication_type\x18\x02 \x01(\tH\x00\x88\x01\x01\x12/\n\x03pdf\x18\x03 \x01(\x0b\x32\x1d.bibliophage.v1alpha3.PdfDataH\x01\x88\x01\x01\x42\x13\n\x11_publication_typeB\x06\n\x04_pdf\"\x95\x03\n\x08\x44ocument\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x35\n\x0bsource_type\x18\x03 \x01(\x0e\x32 .bibliophage.v1alpha3.SourceType\x12\x35\n\x08metadata\x18\x04 \x01(\x0b\x32\x1e.bibliophage.v1alpha3.MetadataH\x00\x88\x01\x01\x12\x0f\n\x07\x63ontent\x18\x05 \x01(\t\x12\x30\n\x04type\x18\x06 \x01(\x0e\x32\".bibliophage.v1alpha3.DocumentType\x12\x0f\n\x07systems\x18\x07 \x03(\t\x12.\n\ncreated_at\x18\x08 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\t \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\'\n\x04tags\x18\n \x03(\x0b\x32\x19.bibliophage.v1alpha3.Tag\x12\x17\n\x0f\x63haracter_count\x18\x0b \x01(\x05\x42\x0b\n\t_metadata\"\xa5\x03\n\x10\x44ocumentListItem\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x35\n\x0bsource_type\x18\x03 \x01(\x0e\x32 .bibliophage.v1alpha3.SourceType\x12\x35\n\x08metadata\x18\x04 \x01(\x0b\x32\x1e.bibliophage.v1alpha3.MetadataH\x00\x88\x01\x01\x12\x17\n\x0f\x63ontent_snippet\x18\x05 \x01(\t\x12\x30\n\x04type\x18\x06 \x01(\x0e\x32\".bibliophage.v1alpha3.DocumentType\x12\x0f\n\x07systems\x18\x07 \x03(\t\x12.\n\ncreated_at\x18\x08 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\t \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\'\n\x04tags\x18\n \x03(\x0b\x32\x19.bibliophage.v1alpha3.Tag\x12\x17\n\x0f\x63haracter_count\x18\x0b \x01(\x05\x42\x0b\n\t_metadata\"H\n\x14StoreDocumentRequest\x12\x30\n\x08\x64ocument\x18\x01 \x01(\x0b\x32\x1e.bibliophage.v1alpha3.Document\"k\n\x15StoreDocumentResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x30\n\x08\x64ocument\x18\x03 \x01(\x0b\x32\x1e.bibliophage.v1alpha3.Document\" \n\x12GetDocumentRequest\x12\n\n\x02id\x18\x01 \x01(\t\"{\n\x13GetDocumentResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x35\n\x08\x64ocument\x18\x03 \x01(\x0b\x32\x1e.bibliophage.v1alpha3.DocumentH\x00\x88\x01\x01\x42\x0b\n\t_document\"I\n\x15UpdateDocumentRequest\x12\x30\n\x08\x64ocument\x18\x01 \x01(\x0b\x32\x1e.bibliophage.v1alpha3.Document\"l\n\x16UpdateDocumentResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x30\n\x08\x64ocument\x18\x03 \x01(\x0b\x32\x1e.bibliophage.v1alpha3.Document\"\x82\x02\n\x0e\x44ocumentFilter\x12\x17\n\nname_query\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x1a\n\rcontent_query\x18\x02 \x01(\tH\x01\x88\x01\x01\x12<\n\x0btype_filter\x18\x03 \x01(\x0e\x32\".bibliophage.v1alpha3.DocumentTypeH\x02\x88\x01\x01\x12\x34\n\x0btag_filters\x18\x04 \x03(\x0b\x32\x1f.bibliophage.v1alpha3.TagFilter\x12\x16\n\x0esystem_filters\x18\x05 \x03(\tB\r\n\x0b_name_queryB\x10\n\x0e_content_queryB\x0e\n\x0c_type_filter\"\xf7\x01\n\x16SearchDocumentsRequest\x12\x39\n\x06\x66ilter\x18\x01 \x01(\x0b\x32$.bibliophage.v1alpha3.DocumentFilterH\x00\x88\x01\x01\x12\x16\n\tpage_size\x18\x02 \x01(\x05H\x01\x88\x01\x01\x12\x18\n\x0bpage_number\x18\x03 \x01(\x05H\x02\x88\x01\x01\x12\x38\n\nsort_order\x18\x04 \x01(\x0e\x32\x1f.bibliophage.v1alpha3.SortOrderH\x03\x88\x01\x01\x42\t\n\x07_filterB\x0c\n\n_page_sizeB\x0e\n\x0c_page_numberB\r\n\x0b_sort_order\"\xb0\x01\n\x17SearchDocumentsResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x37\n\x07matches\x18\x03 \x03(\x0b\x32&.bibliophage.v1alpha3.DocumentListItem\x12\x13\n\x0btotal_count\x18\x04 \x01(\x05\x12\x13\n\x0bpage_number\x18\x05 \x01(\x05\x12\x10\n\x08has_more\x18\x06 \x01(\x08\"#\n\x15\x44\x65leteDocumentRequest\x12\n\n\x02id\x18\x01 \x01(\t\":\n\x16\x44\x65leteDocumentResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t*\xc9\x01\n\x0c\x44ocumentType\x12\x1d\n\x19\x44OCUMENT_TYPE_UNSPECIFIED\x10\x00\x12\x08\n\x04NOTE\x10\x01\x12\x11\n\rLORE_FRAGMENT\x10\x02\x12\r\n\tCHARACTER\x10\x03\x12\x0c\n\x08LOCATION\x10\x04\x12\n\n\x06OBJECT\x10\x05\x12\t\n\x05QUEST\x10\x06\x12\x0f\n\x0bSESSION_LOG\x10\x07\x12\x0c\n\x08RULEBOOK\x10\x08\x12\r\n\tEXPANSION\x10\t\x12\r\n\tADVENTURE\x10\n\x12\x0c\n\x08\x42\x45STIARY\x10\x0b*\x99\x01\n\nSourceType\x12\x1b\n\x17SOURCE_TYPE_UNSPECIFIED\x10\x00\x12\x08\n\x04\x43ORE\x10\x01\x12\x0e\n\nSUPPLEMENT\x10\x02\x12\x0c\n\x08GM_NOTES\x10\x03\x12\x10\n\x0cPLAYER_NOTES\x10\x04\x12\x16\n\x12SESSION_LOG_RECORD\x10\x05\x12\r\n\tGENERATED\x10\x06\x12\r\n\tCOMMUNITY\x10\x07\x32\xa9\x04\n\x0f\x44ocumentService\x12h\n\rStoreDocument\x12*.bibliophage.v1alpha3.StoreDocumentRequest\x1a+.bibliophage.v1alpha3.StoreDocumentResponse\x12\x62\n\x0bGetDocument\x12(.bibliophage.v1alpha3.GetDocumentRequest\x1a).bibliophage.v1alpha3.GetDocumentResponse\x12k\n\x0eUpdateDocument\x12+.bibliophage.v1alpha3.UpdateDocumentRequest\x1a,.bibliophage.v1alpha3.UpdateDocumentResponse\x12n\n\x0fSearchDocuments\x12,.bibliophage.v1alpha3.SearchDocumentsRequest\x1a-.bibliophage.v1alpha3.SearchDocumentsResponse\x12k\n\x0e\x44\x65leteDocument\x12+.bibliophage.v1alpha3.DeleteDocumentRequest\x1a,.bibliophage.v1alpha3.DeleteDocumentResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n#bibliophage/v1alpha3/document.proto\x12\x14\x62ibliophage.v1alpha3\x1a!bibliophage/v1alpha3/common.proto\x1a$bibliophage/v1alpha3/embedding.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"V\n\x07PdfData\x12\x1b\n\x13loading_batch_count\x18\x01 \x01(\x05\x12\x1a\n\x12vector_chunk_count\x18\x02 \x01(\x05\x12\x12\n\npage_count\x18\x03 \x01(\x05\"\x8a\x01\n\x08Metadata\x12\x11\n\tfile_size\x18\x01 \x01(\x03\x12\x1d\n\x10publication_type\x18\x02 \x01(\tH\x00\x88\x01\x01\x12/\n\x03pdf\x18\x03 \x01(\x0b\x32\x1d.bibliophage.v1alpha3.PdfDataH\x01\x88\x01\x01\x42\x13\n\x11_publication_typeB\x06\n\x04_pdf\"\x95\x03\n\x08\x44ocument\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x35\n\x0bsource_type\x18\x03 \x01(\x0e\x32 .bibliophage.v1alpha3.SourceType\x12\x35\n\x08metadata\x18\x04 \x01(\x0b\x32\x1e.bibliophage.v1alpha3.MetadataH\x00\x88\x01\x01\x12\x0f\n\x07\x63ontent\x18\x05 \x01(\t\x12\x30\n\x04type\x18\x06 \x01(\x0e\x32\".bibliophage.v1alpha3.DocumentType\x12\x0f\n\x07systems\x18\x07 \x03(\t\x12.\n\ncreated_at\x18\x08 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\t \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\'\n\x04tags\x18\n \x03(\x0b\x32\x19.bibliophage.v1alpha3.Tag\x12\x17\n\x0f\x63haracter_count\x18\x0b \x01(\x05\x42\x0b\n\t_metadata\"\x80\x04\n\x10\x44ocumentListItem\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x35\n\x0bsource_type\x18\x03 \x01(\x0e\x32 .bibliophage.v1alpha3.SourceType\x12\x35\n\x08metadata\x18\x04 \x01(\x0b\x32\x1e.bibliophage.v1alpha3.MetadataH\x00\x88\x01\x01\x12\x17\n\x0f\x63ontent_snippet\x18\x05 \x01(\t\x12\x30\n\x04type\x18\x06 \x01(\x0e\x32\".bibliophage.v1alpha3.DocumentType\x12\x0f\n\x07systems\x18\x07 \x03(\t\x12.\n\ncreated_at\x18\x08 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\t \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\'\n\x04tags\x18\n \x03(\x0b\x32\x19.bibliophage.v1alpha3.Tag\x12\x17\n\x0f\x63haracter_count\x18\x0b \x01(\x05\x12\x44\n\x10\x65mbedding_status\x18\x0c \x01(\x0b\x32%.bibliophage.v1alpha3.EmbeddingStatusH\x01\x88\x01\x01\x42\x0b\n\t_metadataB\x13\n\x11_embedding_status\"H\n\x14StoreDocumentRequest\x12\x30\n\x08\x64ocument\x18\x01 \x01(\x0b\x32\x1e.bibliophage.v1alpha3.Document\"k\n\x15StoreDocumentResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x30\n\x08\x64ocument\x18\x03 \x01(\x0b\x32\x1e.bibliophage.v1alpha3.Document\" \n\x12GetDocumentRequest\x12\n\n\x02id\x18\x01 \x01(\t\"{\n\x13GetDocumentResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x35\n\x08\x64ocument\x18\x03 \x01(\x0b\x32\x1e.bibliophage.v1alpha3.DocumentH\x00\x88\x01\x01\x42\x0b\n\t_document\"I\n\x15UpdateDocumentRequest\x12\x30\n\x08\x64ocument\x18\x01 \x01(\x0b\x32\x1e.bibliophage.v1alpha3.Document\"l\n\x16UpdateDocumentResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x30\n\x08\x64ocument\x18\x03 \x01(\x0b\x32\x1e.bibliophage.v1alpha3.Document\"\x82\x02\n\x0e\x44ocumentFilter\x12\x17\n\nname_query\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x1a\n\rcontent_query\x18\x02 \x01(\tH\x01\x88\x01\x01\x12<\n\x0btype_filter\x18\x03 \x01(\x0e\x32\".bibliophage.v1alpha3.DocumentTypeH\x02\x88\x01\x01\x12\x34\n\x0btag_filters\x18\x04 \x03(\x0b\x32\x1f.bibliophage.v1alpha3.TagFilter\x12\x16\n\x0esystem_filters\x18\x05 \x03(\tB\r\n\x0b_name_queryB\x10\n\x0e_content_queryB\x0e\n\x0c_type_filter\"\xf7\x01\n\x16SearchDocumentsRequest\x12\x39\n\x06\x66ilter\x18\x01 \x01(\x0b\x32$.bibliophage.v1alpha3.DocumentFilterH\x00\x88\x01\x01\x12\x16\n\tpage_size\x18\x02 \x01(\x05H\x01\x88\x01\x01\x12\x18\n\x0bpage_number\x18\x03 \x01(\x05H\x02\x88\x01\x01\x12\x38\n\nsort_order\x18\x04 \x01(\x0e\x32\x1f.bibliophage.v1alpha3.SortOrderH\x03\x88\x01\x01\x42\t\n\x07_filterB\x0c\n\n_page_sizeB\x0e\n\x0c_page_numberB\r\n\x0b_sort_order\"\xb0\x01\n\x17SearchDocumentsResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x37\n\x07matches\x18\x03 \x03(\x0b\x32&.bibliophage.v1alpha3.DocumentListItem\x12\x13\n\x0btotal_count\x18\x04 \x01(\x05\x12\x13\n\x0bpage_number\x18\x05 \x01(\x05\x12\x10\n\x08has_more\x18\x06 \x01(\x08\"#\n\x15\x44\x65leteDocumentRequest\x12\n\n\x02id\x18\x01 \x01(\t\":\n\x16\x44\x65leteDocumentResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t*\xc9\x01\n\x0c\x44ocumentType\x12\x1d\n\x19\x44OCUMENT_TYPE_UNSPECIFIED\x10\x00\x12\x08\n\x04NOTE\x10\x01\x12\x11\n\rLORE_FRAGMENT\x10\x02\x12\r\n\tCHARACTER\x10\x03\x12\x0c\n\x08LOCATION\x10\x04\x12\n\n\x06OBJECT\x10\x05\x12\t\n\x05QUEST\x10\x06\x12\x0f\n\x0bSESSION_LOG\x10\x07\x12\x0c\n\x08RULEBOOK\x10\x08\x12\r\n\tEXPANSION\x10\t\x12\r\n\tADVENTURE\x10\n\x12\x0c\n\x08\x42\x45STIARY\x10\x0b*\x99\x01\n\nSourceType\x12\x1b\n\x17SOURCE_TYPE_UNSPECIFIED\x10\x00\x12\x08\n\x04\x43ORE\x10\x01\x12\x0e\n\nSUPPLEMENT\x10\x02\x12\x0c\n\x08GM_NOTES\x10\x03\x12\x10\n\x0cPLAYER_NOTES\x10\x04\x12\x16\n\x12SESSION_LOG_RECORD\x10\x05\x12\r\n\tGENERATED\x10\x06\x12\r\n\tCOMMUNITY\x10\x07\x32\xa9\x04\n\x0f\x44ocumentService\x12h\n\rStoreDocument\x12*.bibliophage.v1alpha3.StoreDocumentRequest\x1a+.bibliophage.v1alpha3.StoreDocumentResponse\x12\x62\n\x0bGetDocument\x12(.bibliophage.v1alpha3.GetDocumentRequest\x1a).bibliophage.v1alpha3.GetDocumentResponse\x12k\n\x0eUpdateDocument\x12+.bibliophage.v1alpha3.UpdateDocumentRequest\x1a,.bibliophage.v1alpha3.UpdateDocumentResponse\x12n\n\x0fSearchDocuments\x12,.bibliophage.v1alpha3.SearchDocumentsRequest\x1a-.bibliophage.v1alpha3.SearchDocumentsResponse\x12k\n\x0e\x44\x65leteDocument\x12+.bibliophage.v1alpha3.DeleteDocumentRequest\x1a,.bibliophage.v1alpha3.DeleteDocumentResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'bibliophage.v1alpha3.document_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_DOCUMENTTYPE']._serialized_start=2505
-  _globals['_DOCUMENTTYPE']._serialized_end=2706
-  _globals['_SOURCETYPE']._serialized_start=2709
-  _globals['_SOURCETYPE']._serialized_end=2862
-  _globals['_PDFDATA']._serialized_start=129
-  _globals['_PDFDATA']._serialized_end=215
-  _globals['_METADATA']._serialized_start=218
-  _globals['_METADATA']._serialized_end=356
-  _globals['_DOCUMENT']._serialized_start=359
-  _globals['_DOCUMENT']._serialized_end=764
-  _globals['_DOCUMENTLISTITEM']._serialized_start=767
-  _globals['_DOCUMENTLISTITEM']._serialized_end=1188
-  _globals['_STOREDOCUMENTREQUEST']._serialized_start=1190
-  _globals['_STOREDOCUMENTREQUEST']._serialized_end=1262
-  _globals['_STOREDOCUMENTRESPONSE']._serialized_start=1264
-  _globals['_STOREDOCUMENTRESPONSE']._serialized_end=1371
-  _globals['_GETDOCUMENTREQUEST']._serialized_start=1373
-  _globals['_GETDOCUMENTREQUEST']._serialized_end=1405
-  _globals['_GETDOCUMENTRESPONSE']._serialized_start=1407
-  _globals['_GETDOCUMENTRESPONSE']._serialized_end=1530
-  _globals['_UPDATEDOCUMENTREQUEST']._serialized_start=1532
-  _globals['_UPDATEDOCUMENTREQUEST']._serialized_end=1605
-  _globals['_UPDATEDOCUMENTRESPONSE']._serialized_start=1607
-  _globals['_UPDATEDOCUMENTRESPONSE']._serialized_end=1715
-  _globals['_DOCUMENTFILTER']._serialized_start=1718
-  _globals['_DOCUMENTFILTER']._serialized_end=1976
-  _globals['_SEARCHDOCUMENTSREQUEST']._serialized_start=1979
-  _globals['_SEARCHDOCUMENTSREQUEST']._serialized_end=2226
-  _globals['_SEARCHDOCUMENTSRESPONSE']._serialized_start=2229
-  _globals['_SEARCHDOCUMENTSRESPONSE']._serialized_end=2405
-  _globals['_DELETEDOCUMENTREQUEST']._serialized_start=2407
-  _globals['_DELETEDOCUMENTREQUEST']._serialized_end=2442
-  _globals['_DELETEDOCUMENTRESPONSE']._serialized_start=2444
-  _globals['_DELETEDOCUMENTRESPONSE']._serialized_end=2502
-  _globals['_DOCUMENTSERVICE']._serialized_start=2865
-  _globals['_DOCUMENTSERVICE']._serialized_end=3418
+  _globals['_DOCUMENTTYPE']._serialized_start=2634
+  _globals['_DOCUMENTTYPE']._serialized_end=2835
+  _globals['_SOURCETYPE']._serialized_start=2838
+  _globals['_SOURCETYPE']._serialized_end=2991
+  _globals['_PDFDATA']._serialized_start=167
+  _globals['_PDFDATA']._serialized_end=253
+  _globals['_METADATA']._serialized_start=256
+  _globals['_METADATA']._serialized_end=394
+  _globals['_DOCUMENT']._serialized_start=397
+  _globals['_DOCUMENT']._serialized_end=802
+  _globals['_DOCUMENTLISTITEM']._serialized_start=805
+  _globals['_DOCUMENTLISTITEM']._serialized_end=1317
+  _globals['_STOREDOCUMENTREQUEST']._serialized_start=1319
+  _globals['_STOREDOCUMENTREQUEST']._serialized_end=1391
+  _globals['_STOREDOCUMENTRESPONSE']._serialized_start=1393
+  _globals['_STOREDOCUMENTRESPONSE']._serialized_end=1500
+  _globals['_GETDOCUMENTREQUEST']._serialized_start=1502
+  _globals['_GETDOCUMENTREQUEST']._serialized_end=1534
+  _globals['_GETDOCUMENTRESPONSE']._serialized_start=1536
+  _globals['_GETDOCUMENTRESPONSE']._serialized_end=1659
+  _globals['_UPDATEDOCUMENTREQUEST']._serialized_start=1661
+  _globals['_UPDATEDOCUMENTREQUEST']._serialized_end=1734
+  _globals['_UPDATEDOCUMENTRESPONSE']._serialized_start=1736
+  _globals['_UPDATEDOCUMENTRESPONSE']._serialized_end=1844
+  _globals['_DOCUMENTFILTER']._serialized_start=1847
+  _globals['_DOCUMENTFILTER']._serialized_end=2105
+  _globals['_SEARCHDOCUMENTSREQUEST']._serialized_start=2108
+  _globals['_SEARCHDOCUMENTSREQUEST']._serialized_end=2355
+  _globals['_SEARCHDOCUMENTSRESPONSE']._serialized_start=2358
+  _globals['_SEARCHDOCUMENTSRESPONSE']._serialized_end=2534
+  _globals['_DELETEDOCUMENTREQUEST']._serialized_start=2536
+  _globals['_DELETEDOCUMENTREQUEST']._serialized_end=2571
+  _globals['_DELETEDOCUMENTRESPONSE']._serialized_start=2573
+  _globals['_DELETEDOCUMENTRESPONSE']._serialized_end=2631
+  _globals['_DOCUMENTSERVICE']._serialized_start=2994
+  _globals['_DOCUMENTSERVICE']._serialized_end=3547
 # @@protoc_insertion_point(module_scope)

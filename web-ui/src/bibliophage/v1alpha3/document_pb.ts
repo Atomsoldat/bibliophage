@@ -6,6 +6,7 @@
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3, protoInt64, Timestamp } from "@bufbuild/protobuf";
 import { SortOrder, Tag, TagFilter } from "./common_pb.js";
+import { EmbeddingStatus } from "./embedding_pb.js";
 
 /**
  * Enums for strict classification of data
@@ -517,6 +518,13 @@ export class DocumentListItem extends Message<DocumentListItem> {
    */
   characterCount = 0;
 
+  /**
+   * Embedding status (optional, populated if chunk boundaries exist)
+   *
+   * @generated from field: optional bibliophage.v1alpha3.EmbeddingStatus embedding_status = 12;
+   */
+  embeddingStatus?: EmbeddingStatus;
+
   constructor(data?: PartialMessage<DocumentListItem>) {
     super();
     proto3.util.initPartial(data, this);
@@ -536,6 +544,7 @@ export class DocumentListItem extends Message<DocumentListItem> {
     { no: 9, name: "updated_at", kind: "message", T: Timestamp },
     { no: 10, name: "tags", kind: "message", T: Tag, repeated: true },
     { no: 11, name: "character_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 12, name: "embedding_status", kind: "message", T: EmbeddingStatus, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DocumentListItem {

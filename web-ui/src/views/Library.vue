@@ -11,6 +11,7 @@ import { computed, onBeforeMount, ref, watch } from 'vue'
 import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
 import { DocumentService } from '../bibliophage/v1alpha3/document_connect.ts'
 import { SearchDocumentsRequest, DocumentFilter } from '../bibliophage/v1alpha3/document_pb.ts'
+import ChunkEditorModal from '../components/ChunkEditorModal.vue'
 import DataTable from '../components/DataTable.vue'
 import { useConfig } from '../composables/useConfig.ts'
 import { useEditorWindows } from '../composables/useEditorWindows.ts'
@@ -33,6 +34,10 @@ const showBulkEditModal = ref(false)
 const bulkEditSystems = ref('')
 const bulkEditType = ref('')
 const bulkEditTags = ref('')
+
+// Embed modal state
+const showEmbedModal = ref(false)
+const embedDocumentId = ref<string | null>(null)
 
 // Search filter parameters
 const titleQuery = ref('')
@@ -147,6 +152,10 @@ const columns = computed<TableColumn<DocumentListItem>[]>(() => [
     label: 'Chunks',
   },
   {
+    key: 'embeddingStatus',
+    label: 'Embedding Status',
+  },
+  {
     key: 'tags',
     label: 'Tags',
   },
@@ -254,6 +263,19 @@ async function handleEditDocument(pdf: DocumentListItem) {
   catch (error) {
     logger.error(`Error fetching PDF: ${(error as Error).message}`)
   }
+}
+
+// Open embed modal for a document
+function handleEmbedDocument(pdf: DocumentListItem) {
+  embedDocumentId.value = pdf.id
+  showEmbedModal.value = true
+  logger.info(`Opening chunk editor for: ${pdf.name}`)
+}
+
+// Close embed modal
+function closeEmbedModal() {
+  showEmbedModal.value = false
+  embedDocumentId.value = null
 }
 
 // Open bulk edit modal
@@ -495,16 +517,56 @@ async function handleBulkUpdate() {
         </div>
       </template>
 
-      <!-- Custom rendering for Actions column with Edit button -->
+      <!-- Custom rendering for Embedding Status column with badges -->
+      <template #cell-embeddingStatus="{ row }">
+        <div class="flex gap-1 flex-wrap">
+          <span
+            v-if="!row.embeddingStatus"
+            class="badge badge-sm badge-ghost"
+          >
+            Not Embedded
+          </span>
+          <span
+            v-else-if="!row.embeddingStatus.isEmbedded"
+            class="badge badge-sm badge-info"
+          >
+            Not Embedded
+          </span>
+          <span
+            v-else-if="!row.embeddingStatus.embeddingsCurrent"
+            class="badge badge-sm badge-warning"
+          >
+            Stale
+          </span>
+          <span
+            v-else
+            class="badge badge-sm badge-success"
+          >
+            Current ({{ row.embeddingStatus.totalChunks }})
+          </span>
+        </div>
+      </template>
+
+      <!-- Custom rendering for Actions column with Edit and Embed buttons -->
       <template #cell-actions="{ row }">
-        <button
-          type="button"
-          class="btn btn-sm btn-primary gap-1"
-          @click.stop="handleEditDocument(row)"
-        >
-          <Icon icon="heroicons:pencil" />
-          Edit
-        </button>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="btn btn-sm btn-primary gap-1"
+            @click.stop="handleEditDocument(row)"
+          >
+            <Icon icon="heroicons:pencil" />
+            Edit
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-accent gap-1"
+            @click.stop="handleEmbedDocument(row)"
+          >
+            <Icon icon="heroicons:cube" />
+            Embed
+          </button>
+        </div>
       </template>
     </DataTable>
   </div>
@@ -582,4 +644,12 @@ async function handleBulkUpdate() {
       <button type="button">close</button>
     </form>
   </dialog>
+
+  <!-- Chunk Editor Modal -->
+  <ChunkEditorModal
+    v-if="embedDocumentId"
+    v-bind:show="showEmbedModal"
+    v-bind:document-id="embedDocumentId"
+    @close="closeEmbedModal"
+  />
 </template>

@@ -1,6 +1,7 @@
 import datetime
 
 from bibliophage.v1alpha3 import common_pb2 as _common_pb2
+from bibliophage.v1alpha3 import embedding_pb2 as _embedding_pb2
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
@@ -104,7 +105,7 @@ class Document(_message.Message):
     def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., source_type: _Optional[_Union[SourceType, str]] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., systems: _Optional[_Iterable[str]] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ...) -> None: ...
 
 class DocumentListItem(_message.Message):
-    __slots__ = ("id", "name", "source_type", "metadata", "content_snippet", "type", "systems", "created_at", "updated_at", "tags", "character_count")
+    __slots__ = ("id", "name", "source_type", "metadata", "content_snippet", "type", "systems", "created_at", "updated_at", "tags", "character_count", "embedding_status")
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     SOURCE_TYPE_FIELD_NUMBER: _ClassVar[int]
@@ -116,6 +117,7 @@ class DocumentListItem(_message.Message):
     UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
     TAGS_FIELD_NUMBER: _ClassVar[int]
     CHARACTER_COUNT_FIELD_NUMBER: _ClassVar[int]
+    EMBEDDING_STATUS_FIELD_NUMBER: _ClassVar[int]
     id: str
     name: str
     source_type: SourceType
@@ -127,7 +129,8 @@ class DocumentListItem(_message.Message):
     updated_at: _timestamp_pb2.Timestamp
     tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
     character_count: int
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., source_type: _Optional[_Union[SourceType, str]] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content_snippet: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., systems: _Optional[_Iterable[str]] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ...) -> None: ...
+    embedding_status: _embedding_pb2.EmbeddingStatus
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., source_type: _Optional[_Union[SourceType, str]] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content_snippet: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., systems: _Optional[_Iterable[str]] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ..., embedding_status: _Optional[_Union[_embedding_pb2.EmbeddingStatus, _Mapping]] = ...) -> None: ...
 
 class StoreDocumentRequest(_message.Message):
     __slots__ = ("document",)
