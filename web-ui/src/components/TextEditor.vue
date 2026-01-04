@@ -11,6 +11,7 @@ import type { ChunkBoundary } from '../bibliophage/v1alpha3/embedding_pb'
 
 const props = defineProps<{
   boundaries?: ChunkBoundary[]
+  selectedChunkId?: string | null
 }>()
 
 const defaultContent = defineModel('defaultContent', { type: String, default: '' })
@@ -26,6 +27,39 @@ const renderedMarkdown = ref<string>('')
 
 // State effect for updating chunk boundaries
 const updateBoundariesEffect = StateEffect.define<ChunkBoundary[]>()
+
+// State effect for updating selected chunk
+const updateSelectedChunkEffect = StateEffect.define<string | null>()
+
+// StateField to track currently selected chunk ID
+const selectedChunkIdField = StateField.define<string | null>({
+  create() {
+    return null
+  },
+  update(value, tr) {
+    for (const effect of tr.effects) {
+      if (effect.is(updateSelectedChunkEffect)) {
+        return effect.value
+      }
+    }
+    return value
+  },
+})
+
+// StateField to track current boundaries
+const boundariesField = StateField.define<ChunkBoundary[]>({
+  create() {
+    return []
+  },
+  update(value, tr) {
+    for (const effect of tr.effects) {
+      if (effect.is(updateBoundariesEffect)) {
+        return effect.value
+      }
+    }
+    return value
+  },
+})
 
 // Chunk boundary widget for visual overlays
 class ChunkBoundaryWidget extends WidgetType {
@@ -46,6 +80,60 @@ class ChunkBoundaryWidget extends WidgetType {
   }
 }
 
+// TODO: Future enhancement - derive colors from DaisyUI theme variables
+// Currently using static dark colors for good contrast with light text on dark backgrounds
+// Would be nice to compute from --p, --s, --a, --in, --su, --wa theme variables
+
+// Chunk background colors - dark with transparency for light text on dark backgrounds
+const chunkHighlightTheme = EditorView.baseTheme({
+  '.cm-chunk-bg-0': { backgroundColor: 'rgba(80, 60, 120, 0.25)' },   // Dark purple
+  '.cm-chunk-bg-1': { backgroundColor: 'rgba(120, 60, 100, 0.25)' },  // Dark pink
+  '.cm-chunk-bg-2': { backgroundColor: 'rgba(60, 100, 120, 0.25)' },  // Dark cyan
+  '.cm-chunk-bg-3': { backgroundColor: 'rgba(60, 80, 120, 0.25)' },   // Dark blue
+  '.cm-chunk-bg-4': { backgroundColor: 'rgba(60, 120, 80, 0.25)' },   // Dark green
+  '.cm-chunk-bg-5': { backgroundColor: 'rgba(120, 80, 60, 0.25)' },   // Dark orange
+  '.cm-chunk-bg-selected': { backgroundColor: 'rgba(100, 80, 140, 0.4)' }, // Selected (more prominent)
+})
+
+// Helper function to build decorations from boundaries
+function buildDecorations(boundaries: ChunkBoundary[], selectedChunkId: string | null, doc: any) {
+  const newDecos: any[] = []
+
+  for (let i = 0; i < boundaries.length; i++) {
+    const boundary = boundaries[i]
+
+    try {
+      // Determine CSS class based on selection state
+      const isSelected = boundary.chunkId === selectedChunkId
+      const cssClass = isSelected ? 'cm-chunk-bg-selected' : `cm-chunk-bg-${i % 6}`
+
+      // Add mark decoration with CSS class
+      newDecos.push(
+        Decoration.mark({
+          class: cssClass,
+          attributes: { 'data-chunk-id': boundary.chunkId },
+        }).range(boundary.charStart, boundary.charEnd),
+      )
+
+      // Add widget decoration for boundary marker
+      const line = doc.lineAt(boundary.charStart)
+      newDecos.push(
+        Decoration.widget({
+          widget: new ChunkBoundaryWidget(boundary),
+          block: true,
+          side: -1,
+        }).range(line.from),
+      )
+    }
+    catch (e) {
+      // Boundary position out of range, skip
+      console.warn(`Chunk boundary ${boundary.chunkId} out of range`, e)
+    }
+  }
+
+  return Decoration.set(newDecos, true)
+}
+
 // StateField for managing chunk boundary decorations
 const chunkBoundaryField = StateField.define<DecorationSet>({
   create() {
@@ -56,31 +144,21 @@ const chunkBoundaryField = StateField.define<DecorationSet>({
     // Map existing decorations through document changes
     decorations = decorations.map(tr.changes)
 
-    // Check for boundary update effects
+    let needsRebuild = false
+
+    // Check for effects that require decoration rebuild
     for (const effect of tr.effects) {
-      if (effect.is(updateBoundariesEffect)) {
-        const boundaries = effect.value
-        const newDecos: any[] = []
-
-        for (const boundary of boundaries) {
-          try {
-            const line = tr.state.doc.lineAt(boundary.charStart)
-            newDecos.push(
-              Decoration.widget({
-                widget: new ChunkBoundaryWidget(boundary),
-                block: true,
-                side: -1,
-              }).range(line.from),
-            )
-          }
-          catch (e) {
-            // Boundary position out of range, skip
-            console.warn(`Chunk boundary ${boundary.chunkId} out of range`, e)
-          }
-        }
-
-        decorations = Decoration.set(newDecos, true)
+      if (effect.is(updateBoundariesEffect) || effect.is(updateSelectedChunkEffect)) {
+        needsRebuild = true
+        break
       }
+    }
+
+    // Rebuild decorations if needed
+    if (needsRebuild) {
+      const boundaries = tr.state.field(boundariesField)
+      const selectedChunkId = tr.state.field(selectedChunkIdField)
+      decorations = buildDecorations(boundaries, selectedChunkId, tr.state.doc)
     }
 
     return decorations
@@ -100,7 +178,10 @@ onMounted(() => {
       markdown(),
       history(),
       keymap.of([...defaultKeymap, ...historyKeymap]),
+      boundariesField,
+      selectedChunkIdField,
       chunkBoundaryField,
+      chunkHighlightTheme,
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           defaultContent.value = update.state.doc.toString()
@@ -160,6 +241,15 @@ watch(() => props.boundaries, (newBoundaries) => {
     })
   }
 }, { deep: true })
+
+// Watch for selected chunk changes
+watch(() => props.selectedChunkId, (newSelectedId) => {
+  if (editorView.value) {
+    editorView.value.dispatch({
+      effects: updateSelectedChunkEffect.of(newSelectedId ?? null),
+    })
+  }
+}, { immediate: true })
 
 // Toggle between edit and preview modes
 function toggleViewMode() {

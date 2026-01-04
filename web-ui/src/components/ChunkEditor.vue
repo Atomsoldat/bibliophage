@@ -342,6 +342,7 @@ onMounted(async () => {
           ref="textEditorRef"
           v-model:default-content="documentContent"
           :boundaries="boundaries"
+          :selected-chunk-id="selectedChunkId"
         />
       </div>
 
