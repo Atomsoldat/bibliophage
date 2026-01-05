@@ -10,7 +10,7 @@ import { computed, onBeforeMount, ref, watch } from 'vue'
 
 import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
 import { DocumentService } from '../bibliophage/v1alpha3/document_connect.ts'
-import { SearchDocumentsRequest, DocumentFilter } from '../bibliophage/v1alpha3/document_pb.ts'
+import { DocumentFilter, SearchDocumentsRequest } from '../bibliophage/v1alpha3/document_pb.ts'
 import ChunkEditorModal from '../components/ChunkEditorModal.vue'
 import DataTable from '../components/DataTable.vue'
 import { useConfig } from '../composables/useConfig.ts'
@@ -327,7 +327,7 @@ async function handleBulkUpdate() {
 
     // Parse tags format: "name:value1|value2, name2:value3"
     const newTags = bulkEditTags.value.trim()
-      ? bulkEditTags.value.split(',').map(tagStr => {
+      ? bulkEditTags.value.split(',').map((tagStr) => {
           const [name, valuesStr] = tagStr.trim().split(':')
           if (!name || !valuesStr)
             return null
@@ -369,7 +369,7 @@ async function handleBulkUpdate() {
         }
 
         if (newTags !== null) {
-          doc.tags = newTags.map(tagData => {
+          doc.tags = newTags.map((tagData) => {
             const tag = new Tag()
             tag.name = tagData!.name
             tag.values = tagData!.values
@@ -426,7 +426,7 @@ async function handleBulkUpdate() {
     </p>
   </div>
 
-  <form @submit.prevent="handleSearchSubmit" class="card bg-base-200 shadow-xl p-6 mb-6">
+  <form class="card bg-base-200 shadow-xl p-6 mb-6" @submit.prevent="handleSearchSubmit">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
       <!-- Name Search Input -->
       <div class="form-control">
@@ -439,7 +439,7 @@ async function handleBulkUpdate() {
           type="text"
           placeholder="Search by name..."
           class="input input-bordered w-full"
-        />
+        >
       </div>
 
       <!-- System Filters Input -->
@@ -453,7 +453,7 @@ async function handleBulkUpdate() {
           type="text"
           placeholder="e.g., Pathfinder 1e, Call of Cthulhu"
           class="input input-bordered w-full"
-        />
+        >
       </div>
     </div>
 
@@ -583,7 +583,7 @@ async function handleBulkUpdate() {
         <span>Only non-empty fields will be updated. Leave a field empty to keep existing values.</span>
       </div>
 
-      <form @submit.prevent="handleBulkUpdate" class="space-y-4">
+      <form class="space-y-4" @submit.prevent="handleBulkUpdate">
         <!-- Systems Input -->
         <div class="form-control">
           <label class="label" for="bulk-systems">
@@ -596,7 +596,7 @@ async function handleBulkUpdate() {
             type="text"
             placeholder="Leave empty to keep existing values"
             class="input input-bordered w-full"
-          />
+          >
         </div>
 
         <!-- Type Input -->
@@ -611,7 +611,7 @@ async function handleBulkUpdate() {
             type="text"
             placeholder="Leave empty to keep existing values"
             class="input input-bordered w-full"
-          />
+          >
         </div>
 
         <!-- Tags Input -->
@@ -626,7 +626,7 @@ async function handleBulkUpdate() {
             type="text"
             placeholder="Leave empty to keep existing values"
             class="input input-bordered w-full"
-          />
+          >
         </div>
 
         <!-- Action Buttons -->
@@ -641,7 +641,9 @@ async function handleBulkUpdate() {
       </form>
     </div>
     <form method="dialog" class="modal-backdrop" @click="showBulkEditModal = false">
-      <button type="button">close</button>
+      <button type="button">
+        close
+      </button>
     </form>
   </dialog>
 

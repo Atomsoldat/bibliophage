@@ -35,7 +35,7 @@ export function useLogger() {
     message: string,
     level: LogLevel = 'info',
     destination: LogDestination = 'both',
-    data?: unknown
+    data?: unknown,
   ): void {
     const shouldLogToBrowser = destination === 'both' || destination === 'browserOnly'
     const shouldLogToUI = destination === 'both' || destination === 'uiOnly'

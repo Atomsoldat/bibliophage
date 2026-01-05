@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DecorationSet } from '@codemirror/view'
+import type { ChunkBoundary } from '../bibliophage/v1alpha3/embedding_pb'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown } from '@codemirror/lang-markdown'
 import { EditorState, StateEffect, StateField } from '@codemirror/state'
@@ -7,7 +8,6 @@ import { Decoration, EditorView, keymap, WidgetType } from '@codemirror/view'
 import { Icon } from '@iconify/vue'
 import { marked } from 'marked'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import type { ChunkBoundary } from '../bibliophage/v1alpha3/embedding_pb'
 
 const props = defineProps<{
   boundaries?: ChunkBoundary[]
@@ -86,12 +86,12 @@ class ChunkBoundaryWidget extends WidgetType {
 
 // Chunk background colors - dark with transparency for light text on dark backgrounds
 const chunkHighlightTheme = EditorView.baseTheme({
-  '.cm-chunk-bg-0': { backgroundColor: 'rgba(80, 60, 120, 0.25)' },   // Dark purple
-  '.cm-chunk-bg-1': { backgroundColor: 'rgba(120, 60, 100, 0.25)' },  // Dark pink
-  '.cm-chunk-bg-2': { backgroundColor: 'rgba(60, 100, 120, 0.25)' },  // Dark cyan
-  '.cm-chunk-bg-3': { backgroundColor: 'rgba(60, 80, 120, 0.25)' },   // Dark blue
-  '.cm-chunk-bg-4': { backgroundColor: 'rgba(60, 120, 80, 0.25)' },   // Dark green
-  '.cm-chunk-bg-5': { backgroundColor: 'rgba(120, 80, 60, 0.25)' },   // Dark orange
+  '.cm-chunk-bg-0': { backgroundColor: 'rgba(80, 60, 120, 0.25)' }, // Dark purple
+  '.cm-chunk-bg-1': { backgroundColor: 'rgba(120, 60, 100, 0.25)' }, // Dark pink
+  '.cm-chunk-bg-2': { backgroundColor: 'rgba(60, 100, 120, 0.25)' }, // Dark cyan
+  '.cm-chunk-bg-3': { backgroundColor: 'rgba(60, 80, 120, 0.25)' }, // Dark blue
+  '.cm-chunk-bg-4': { backgroundColor: 'rgba(60, 120, 80, 0.25)' }, // Dark green
+  '.cm-chunk-bg-5': { backgroundColor: 'rgba(120, 80, 60, 0.25)' }, // Dark orange
   '.cm-chunk-bg-selected': { backgroundColor: 'rgba(100, 80, 140, 0.4)' }, // Selected (more prominent)
 })
 

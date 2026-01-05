@@ -1,6 +1,7 @@
 import type { Client } from '@connectrpc/connect'
 
 import type {
+  ChunkBoundary,
   DeleteEmbeddingsResponse,
   EmbedDocumentResponse,
   GetChunkBoundariesResponse,
@@ -12,7 +13,6 @@ import { createConnectTransport } from '@connectrpc/connect-web'
 
 import { ref } from 'vue'
 import { EmbeddingService } from '../bibliophage/v1alpha3/embedding_connect'
-import type { ChunkBoundary } from '../bibliophage/v1alpha3/embedding_pb'
 import {
   ChunkingConfig,
   DeleteEmbeddingsRequest,

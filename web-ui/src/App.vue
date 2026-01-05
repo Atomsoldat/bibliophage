@@ -13,7 +13,7 @@ const { isVisible } = useAppConsole()
     <!-- Main content area that adjusts height based on console visibility -->
     <main
       class="ml-16 p-8 overflow-auto transition-all duration-300"
-      :style="{ height: isVisible ? '50vh' : '100vh' }"
+      v-bind:style="{ height: isVisible ? '50vh' : '100vh' }"
     >
       <router-view />
     </main>

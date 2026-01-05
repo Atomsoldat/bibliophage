@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import type { ChunkBoundary, ChunkingConfig } from '../bibliophage/v1alpha3/embedding_pb'
 import { Icon } from '@iconify/vue'
 import { computed, onMounted, ref } from 'vue'
-import type { ChunkBoundary } from '../bibliophage/v1alpha3/embedding_pb'
-import { ChunkingConfig, ChunkingStrategy } from '../bibliophage/v1alpha3/embedding_pb'
+import { ChunkingStrategy } from '../bibliophage/v1alpha3/embedding_pb'
 import { useDocumentApi } from '../composables/useDocumentApi'
 import { useEmbeddingApi } from '../composables/useEmbeddingApi'
 import TextEditor from './TextEditor.vue'
@@ -203,7 +203,7 @@ onMounted(async () => {
             <span class="label-text font-semibold">Chunking Strategy</span>
           </label>
           <select v-model="selectedStrategy" class="select select-bordered">
-            <option v-for="opt in strategyOptions" :key="opt.value" :value="opt.value">
+            <option v-for="opt in strategyOptions" v-bind:key="opt.value" v-bind:value="opt.value">
               {{ opt.label }}
             </option>
           </select>
@@ -262,7 +262,7 @@ onMounted(async () => {
         <!-- Propose Button -->
         <button
           class="btn btn-primary"
-          :disabled="isProposing"
+          v-bind:disabled="isProposing"
           @click="proposeChunks"
         >
           <Icon v-if="!isProposing" icon="heroicons:sparkles" />
@@ -324,7 +324,7 @@ onMounted(async () => {
         <!-- Embed button (always visible when boundaries exist) -->
         <button
           class="btn btn-accent"
-          :disabled="isEmbedding || boundaries.length === 0"
+          v-bind:disabled="isEmbedding || boundaries.length === 0"
           @click="embedDocument"
         >
           <Icon v-if="!isEmbedding" icon="heroicons:cube" />
@@ -341,8 +341,8 @@ onMounted(async () => {
         <TextEditor
           ref="textEditorRef"
           v-model:default-content="documentContent"
-          :boundaries="boundaries"
-          :selected-chunk-id="selectedChunkId"
+          v-bind:boundaries="boundaries"
+          v-bind:selected-chunk-id="selectedChunkId"
         />
       </div>
 
@@ -363,9 +363,9 @@ onMounted(async () => {
         <div v-else class="space-y-2">
           <div
             v-for="(boundary, index) in boundaries"
-            :key="boundary.chunkId"
+            v-bind:key="boundary.chunkId"
             class="card bg-base-200 p-3 hover:bg-base-300 transition-colors cursor-pointer"
-            :class="{ 'ring-2 ring-primary': selectedChunkId === boundary.chunkId }"
+            v-bind:class="{ 'ring-2 ring-primary': selectedChunkId === boundary.chunkId }"
             @click="handleChunkClick(boundary)"
           >
             <div class="flex justify-between items-start mb-2">

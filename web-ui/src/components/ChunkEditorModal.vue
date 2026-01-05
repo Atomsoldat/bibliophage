@@ -59,7 +59,7 @@ function handleBackdropClick(event: MouseEvent) {
 
         <!-- Modal Body -->
         <div class="modal-body flex-1 overflow-hidden p-4">
-          <ChunkEditor :document-id="documentId" />
+          <ChunkEditor v-bind:document-id="documentId" />
         </div>
 
         <!-- Modal Footer -->

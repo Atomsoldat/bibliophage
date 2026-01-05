@@ -367,7 +367,7 @@ async function handleBulkDelete() {
             v-model="docType.enabled.value"
             type="checkbox"
             class="checkbox checkbox-sm checkbox-primary"
-          />
+          >
           <span class="label-text">{{ docType.label }}</span>
         </label>
       </div>

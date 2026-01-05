@@ -18,6 +18,6 @@ onMounted(() => {
       <span>No document ID provided. Use /chunks?id=YOUR_DOCUMENT_ID</span>
     </div>
 
-    <ChunkEditor v-else :document-id="documentId" />
+    <ChunkEditor v-else v-bind:document-id="documentId" />
   </div>
 </template>
