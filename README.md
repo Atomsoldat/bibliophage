@@ -7,7 +7,8 @@ Currently, there's a rudimentary web-ui which is in the process of being hooked 
 ## Toolchain Requirements
 
 - [Tilt](https://docs.tilt.dev/) - orchestration
-- [Docker](https://docs.docker.com/engine/install/) - containerised databases
+- [Docker](https://docs.docker.com/engine/install/) - containerised services
+- [Docker Compose](https://docs.docker.com/compose/install/) - container management
 - [pixi](https://pixi.sh/latest/installation/) - Python dependency management
 - [Yarn](https://yarnpkg.com/getting-started/install) - JavaScript dependency management
 
