@@ -76,15 +76,6 @@ services:
       - ./containers/ollama/init-ollama.sh:/init-ollama.sh:ro
     environment:
       - OLLAMA_HOST=0.0.0.0
-    # GPU configuration for NVIDIA GPUs
-    # If no GPU available, Ollama falls back to CPU
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     healthcheck:
       test: ["CMD", "ollama", "ps"]
       interval: 30s
