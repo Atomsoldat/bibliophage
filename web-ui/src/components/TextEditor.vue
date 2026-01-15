@@ -86,13 +86,13 @@ class ChunkBoundaryWidget extends WidgetType {
 
 // Chunk background colors - dark with transparency for light text on dark backgrounds
 const chunkHighlightTheme = EditorView.baseTheme({
-  '.cm-chunk-bg-0': { backgroundColor: 'rgba(80, 60, 120, 0.25)' }, // Dark purple
-  '.cm-chunk-bg-1': { backgroundColor: 'rgba(120, 60, 100, 0.25)' }, // Dark pink
-  '.cm-chunk-bg-2': { backgroundColor: 'rgba(60, 100, 120, 0.25)' }, // Dark cyan
-  '.cm-chunk-bg-3': { backgroundColor: 'rgba(60, 80, 120, 0.25)' }, // Dark blue
-  '.cm-chunk-bg-4': { backgroundColor: 'rgba(60, 120, 80, 0.25)' }, // Dark green
-  '.cm-chunk-bg-5': { backgroundColor: 'rgba(120, 80, 60, 0.25)' }, // Dark orange
-  '.cm-chunk-bg-selected': { backgroundColor: 'rgba(100, 80, 140, 0.4)' }, // Selected (more prominent)
+  '.cm-chunk-bg-0': { backgroundColor: 'rgba(80, 60, 120, 0.8)' }, // Dark purple
+  '.cm-chunk-bg-1': { backgroundColor: 'rgba(120, 60, 100, 0.8)' }, // Dark pink
+  '.cm-chunk-bg-2': { backgroundColor: 'rgba(60, 100, 120, 0.8)' }, // Dark cyan
+  '.cm-chunk-bg-3': { backgroundColor: 'rgba(60, 80, 120, 0.8)' }, // Dark blue
+  '.cm-chunk-bg-4': { backgroundColor: 'rgba(60, 120, 80, 0.8)' }, // Dark green
+  '.cm-chunk-bg-5': { backgroundColor: 'rgba(120, 80, 60, 0.8)' }, // Dark orange
+  '.cm-chunk-bg-selected': { backgroundColor: 'rgba(100, 80, 140, 1.0)' }, // Selected (more prominent)
 })
 
 // Helper function to build decorations from boundaries
