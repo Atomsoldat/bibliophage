@@ -95,20 +95,19 @@ class ChatServiceImplementation:
 
         for doc_id in document_ids:
             doc_data = await self.db.get_document_by_id(doc_id)
-            if doc_data:
-                context_documents.append(
-                    DocumentContext(
-                        id=doc_data["_id"],
-                        name=doc_data["name"],
-                        content=doc_data["content"],
-                        source_type=doc_data.get(
-                            "source_type", "SOURCE_TYPE_UNSPECIFIED",
-                        ),
-                        document_type=doc_data["type"],
-                    ),
-                )
-            else:
+            if not doc_data:
                 logger.warning("Document %s not found in database", doc_id)
+                continue
+
+            context_documents.append(
+                DocumentContext(
+                    id=doc_data["_id"],
+                    name=doc_data["name"],
+                    content=doc_data["content"],
+                    source_type=doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED"),
+                    document_type=doc_data["type"],
+                ),
+            )
 
         return context_documents
 
@@ -118,15 +117,15 @@ class ChatServiceImplementation:
         """Build metadata chunk with context document info."""
         metadata = api.ChunkMetadata(
             model=self.llm.chat_model.model,
+            context_documents=[
+                api.ContextDocumentInfo(
+                    id=doc.id,
+                    name=doc.name,
+                    authority=doc.authority_weight,
+                )
+                for doc in context_documents
+            ],
         )
-
-        for doc in context_documents:
-            doc_info = api.ContextDocumentInfo(
-                id=doc.id,
-                name=doc.name,
-                authority=doc.authority_weight,
-            )
-            metadata.context_documents.append(doc_info)
 
         return api.ChatResponseChunk(
             type=api.METADATA,
@@ -144,7 +143,10 @@ class ChatServiceImplementation:
         """Build LangChain message list with context and history."""
         messages = []
 
-        # 1. System prompt with context
+        # System prompt with context
+        # TODO: Outputting the sources should not be done by the LLM by default (if the user specifically asks for it, that may be a different situation), because it is not good at that
+        # and it adds another responsibility with the opportunity to get things wrong
+        # by default, we should just have an expandable section below the messages in which all referenced documents and chunks are listed
         if system_prompt is None:
             system_prompt = (
                 "You are a knowledgeable minion for tabletop RPG questions. "
@@ -161,14 +163,13 @@ class ChatServiceImplementation:
 
         messages.append(SystemMessage(content=system_prompt))
 
-        # 2. Add conversation history
+        # Add conversation history
+        message_types = {"user": HumanMessage, "assistant": AIMessage}
         for msg in conversation_history:
-            if msg.role == "user":
-                messages.append(HumanMessage(content=msg.content))
-            elif msg.role == "assistant":
-                messages.append(AIMessage(content=msg.content))
+            if msg.role in message_types:
+                messages.append(message_types[msg.role](content=msg.content))
 
-        # 3. Add current user message
+        # Add current user message
         messages.append(HumanMessage(content=user_message))
 
         return messages

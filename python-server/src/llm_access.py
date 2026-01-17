@@ -18,6 +18,30 @@ logger = logging.getLogger(__name__)
 # Singleton instance
 _llm_client: "LLMClient | None" = None
 
+# Authority weights determine how prominently documents appear in context
+# Higher values = more authoritative sources
+AUTHORITY_WEIGHTS: dict[str, float] = {
+    "GM_NOTES": 1.2,
+    "RULEBOOK": 1.0,
+    "SUPPLEMENT": 0.9,
+    "SESSION_LOG_RECORD": 0.6,
+    "PLAYER_NOTES": 0.5,
+    "GENERATED": 0.3,
+    "COMMUNITY": 0.4,
+    "SOURCE_TYPE_UNSPECIFIED": 0.5,
+}
+
+# Human-readable labels for source types
+AUTHORITY_LABELS: dict[str, str] = {
+    "RULEBOOK": "Official Rules",
+    "SUPPLEMENT": "Official Supplement",
+    "GM_NOTES": "GM Notes",
+    "PLAYER_NOTES": "Player Notes",
+    "SESSION_LOG_RECORD": "Session Log",
+    "GENERATED": "LLM-Generated",
+    "COMMUNITY": "Community Content",
+}
+
 
 @dataclass
 class DocumentContext:
@@ -31,22 +55,8 @@ class DocumentContext:
 
     @property
     def authority_weight(self) -> float:
-        """Calculate authority weight based on source type.
-
-        Higher values = more authoritative sources.
-        """
-        # These weights determine how prominently documents appear in context
-        weights = {
-            "GM_NOTES": 1.2,
-            "RULEBOOK": 1.0,
-            "SUPPLEMENT": 0.9,
-            "SESSION_LOG_RECORD": 0.6,
-            "PLAYER_NOTES": 0.5,
-            "GENERATED": 0.3,
-            "COMMUNITY": 0.4,
-            "SOURCE_TYPE_UNSPECIFIED": 0.5,
-        }
-        return weights.get(self.source_type, 0.5)
+        """Calculate authority weight based on source type."""
+        return AUTHORITY_WEIGHTS.get(self.source_type, 0.5)
 
 
 class LLMClient:
@@ -102,16 +112,7 @@ class LLMClient:
 
     def _get_authority_label(self, source_type: str) -> str:
         """Get human-readable authority label for source type."""
-        labels = {
-            "RULEBOOK": "Official Rules",
-            "SUPPLEMENT": "Official Supplement",
-            "GM_NOTES": "GM Notes",
-            "PLAYER_NOTES": "Player Notes",
-            "SESSION_LOG_RECORD": "Session Log",
-            "GENERATED": "LLM-Generated",
-            "COMMUNITY": "Community Content",
-        }
-        return labels.get(source_type, "Unknown Source")
+        return AUTHORITY_LABELS.get(source_type, "Unknown Source")
 
     async def generate_content(
         self,
