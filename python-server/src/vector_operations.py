@@ -384,7 +384,7 @@ async def get_chunk_count(document_id: str) -> int:
     return count
 
 
-async def close_connections():
+async def close_connections() -> None:
     """Close all database connections and clean up resources.
 
     This should be called when the application shuts down.
