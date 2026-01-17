@@ -1,20 +1,19 @@
 <script setup lang="ts">
 import type { Client } from '@connectrpc/connect'
 import type { DocumentListItem } from '../bibliophage/v1alpha3/document_pb.ts'
-import type { TableColumn } from '../components/DataTable.vue'
 
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { Icon } from '@iconify/vue'
-import { computed, onBeforeMount, ref } from 'vue'
+import { onBeforeMount, ref } from 'vue'
 
 import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
 import { DocumentService } from '../bibliophage/v1alpha3/document_connect.ts'
 import { DocumentFilter, DocumentType, SearchDocumentsRequest } from '../bibliophage/v1alpha3/document_pb.ts'
 import ChunkEditorModal from '../components/ChunkEditorModal.vue'
-import DataTable from '../components/DataTable.vue'
 import DocumentBasicFilter from '../components/DocumentBasicFilter.vue'
 import type { DocumentBasicFilterValue } from '../components/DocumentBasicFilter.vue'
+import DocumentTable from '../components/DocumentTable.vue'
 import DocumentTypeFilter from '../components/DocumentTypeFilter.vue'
 import { useConfig } from '../composables/useConfig.ts'
 import { useEditorWindows } from '../composables/useEditorWindows.ts'
@@ -52,112 +51,6 @@ const pageNumber = ref(0)
 
 // Document type filter - initialize with all types enabled
 const enabledDocumentTypes = ref<DocumentType[]>(Object.values(DocumentType).filter(v => typeof v === 'number') as DocumentType[])
-
-/**
- * Format file size in bytes to human-readable format (KB, MB, GB)
- */
-function formatFileSize(bytes: number | bigint): string {
-  if (bytes === 0 || bytes === 0n)
-    return '0 B'
-
-  const numBytes = typeof bytes === 'bigint' ? Number(bytes) : bytes
-  const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
-  const kibibyte = 1024
-  const magnitude = Math.floor(Math.log(numBytes) / Math.log(kibibyte))
-
-  return `${(numBytes / kibibyte ** magnitude).toFixed(2)} ${units[magnitude]}`
-}
-
-/**
- * Format timestamp for display
- */
-function formatDate(timestamp: any): string {
-  if (!timestamp)
-    return 'N/A'
-  try {
-    const date = timestamp.toDate()
-    return new Intl.DateTimeFormat('de-DE', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date)
-  }
-  catch {
-    return 'N/A'
-  }
-}
-
-/**
- * Define table columns for PDF list
- */
-const columns = computed<TableColumn<DocumentListItem>[]>(() => [
-  {
-    key: 'index',
-    label: 'Index',
-    formatter: (_value, _row, index) => index,
-    required: true,
-  },
-  {
-    key: 'name',
-    label: 'Name',
-    required: true,
-  },
-  {
-    key: 'id',
-    label: 'ID',
-    cellClass: 'text-xs font-mono',
-  },
-  {
-    key: 'systems',
-    label: 'Systems',
-  },
-  {
-    key: 'type',
-    label: 'Type',
-  },
-  //{
-  //  key: 'pageCount',
-  //  label: 'Page Count',
-  //},
-  {
-    key: 'createdAt',
-    label: 'Created',
-    formatter: value => formatDate(value),
-  },
-  {
-    key: 'updatedAt',
-    label: 'Updated',
-    formatter: value => formatDate(value),
-  },
-  //{
-  //  key: 'fileSize',
-  //  label: 'Size',
-  //  formatter: value => formatFileSize(value),
-  //},
-  //{
-  //  key: 'batchCount',
-  //  label: 'Batches',
-  //},
-  //{
-  //  key: 'vectorChunkCount',
-  //  label: 'Chunks',
-  //},
-  {
-    key: 'embeddingStatus',
-    label: 'Embedding Status',
-  },
-  {
-    key: 'tags',
-    label: 'Tags',
-  },
-  {
-    key: 'actions',
-    label: 'Actions',
-    required: true,
-  },
-])
 
 onBeforeMount(async () => {
   // Load configuration first
@@ -418,6 +311,7 @@ async function handleBulkUpdate() {
 }
 </script>
 
+
 <template>
   <div>
     <h1 class="text-4xl font-bold mb-4">
@@ -484,87 +378,13 @@ async function handleBulkUpdate() {
     </div>
   </div>
 
-  <div>
-    <DataTable
-      v-model="selectedIds"
-      v-bind:data="documents"
-      v-bind:columns="columns"
-      v-bind:loading="loading"
-      v-bind:enable-column-visibility="true"
-      v-bind:selectable="true"
-      v-bind:select-on-row-click="false"
-      table-id="document-list"
-      row-key="id"
-      empty-message="No PDFs found"
-      empty-description="Upload a PDF to get started"
-      empty-icon="heroicons:document"
-      @row-click="handleEditDocument"
-    >
-      <!-- Custom rendering for Systems column with badges -->
-      <template #cell-systems="{ row }">
-        <div class="flex gap-1 flex-wrap">
-          <span v-for="system in row.systems" v-bind:key="system" class="badge badge-sm badge-primary">
-            {{ system }}
-          </span>
-          <span v-if="row.systems.length === 0" class="text-sm text-base-content/50">
-            -
-          </span>
-        </div>
-      </template>
-
-      <!-- Custom rendering for Embedding Status column with badges -->
-      <template #cell-embeddingStatus="{ row }">
-        <div class="flex gap-1 flex-wrap">
-          <span
-            v-if="!row.embeddingStatus"
-            class="badge badge-sm badge-ghost"
-          >
-            Not Embedded
-          </span>
-          <span
-            v-else-if="!row.embeddingStatus.isEmbedded"
-            class="badge badge-sm badge-info"
-          >
-            Not Embedded
-          </span>
-          <span
-            v-else-if="!row.embeddingStatus.embeddingsCurrent"
-            class="badge badge-sm badge-warning"
-          >
-            Stale
-          </span>
-          <span
-            v-else
-            class="badge badge-sm badge-success"
-          >
-            Current ({{ row.embeddingStatus.totalChunks }})
-          </span>
-        </div>
-      </template>
-
-      <!-- Custom rendering for Actions column with Edit and Embed buttons -->
-      <template #cell-actions="{ row }">
-        <div class="flex gap-2">
-          <button
-            type="button"
-            class="btn btn-sm btn-primary gap-1"
-            @click.stop="handleEditDocument(row)"
-          >
-            <Icon icon="heroicons:pencil" />
-            Edit
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm btn-accent gap-1"
-            @click.stop="handleEmbedDocument(row)"
-          >
-            <Icon icon="heroicons:cube" />
-            Embed
-          </button>
-        </div>
-      </template>
-    </DataTable>
-  </div>
+  <DocumentTable
+    v-model="selectedIds"
+    v-bind:data="documents"
+    v-bind:loading="loading"
+    @edit="handleEditDocument"
+    @embed="handleEmbedDocument"
+  />
 
   <!-- Bulk Edit Modal -->
   <dialog v-bind:open="showBulkEditModal" class="modal">
