@@ -13,13 +13,13 @@ import { DeleteDocumentRequest, DocumentType, GetDocumentRequest, SearchDocument
 import DataTable from '../components/DataTable.vue'
 import { useConfig } from '../composables/useConfig'
 import { useEditorWindows } from '../composables/useEditorWindows'
-import { useJournalRefresh } from '../composables/useJournalRefresh'
+import { useDocumentTableRefresh } from '../composables/useDocumentTableRefresh.ts'
 import { useLogger } from '../composables/useLogger'
 
 const { config, loadConfig } = useConfig()
 const logger = useLogger()
 const { openWindow } = useEditorWindows()
-const { onRefreshTriggered } = useJournalRefresh()
+const { onRefreshTriggered } = useDocumentTableRefresh()
 
 // Client will be initialized after config loads
 const client = ref<Client<typeof DocumentService> | null>(null)

@@ -11,7 +11,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
 }>()
-
 // Handle ESC key to close
 function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape' && props.show) {

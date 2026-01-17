@@ -7,7 +7,7 @@ const refreshTrigger = ref(0)
  * Minimal composable for triggering journal refreshes across components
  * No state management - just a signal to refetch from backend
  */
-export function useJournalRefresh() {
+export function useDocumentTableRefresh() {
   /**
    * Trigger a refresh of the journal list
    * Call this after creating/updating/deleting journal documents

@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useDocumentApi } from '../composables/useDocumentApi'
 import { useEditorWindows } from '../composables/useEditorWindows'
-import { useJournalRefresh } from '../composables/useJournalRefresh'
+import { useDocumentTableRefresh } from '../composables/useDocumentTableRefresh.ts'
 import { useLogger } from '../composables/useLogger'
 import TextEditorWindow from './TextEditorWindow.vue'
 
@@ -18,7 +18,7 @@ const {
 
 const api = useDocumentApi()
 const logger = useLogger()
-const { triggerRefresh } = useJournalRefresh()
+const { triggerRefresh } = useDocumentTableRefresh()
 
 // Store refs to editor window components
 const editorWindowRefs = ref<Map<string, InstanceType<typeof TextEditorWindow>>>(new Map())

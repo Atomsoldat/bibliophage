@@ -18,10 +18,12 @@ import DocumentTypeFilter from '../components/DocumentTypeFilter.vue'
 import { useConfig } from '../composables/useConfig.ts'
 import { useEditorWindows } from '../composables/useEditorWindows.ts'
 import { useLogger } from '../composables/useLogger.ts'
+import { useDocumentTableRefresh } from '../composables/useDocumentTableRefresh.ts'
 
 const { config, loadConfig } = useConfig()
 const logger = useLogger()
 const { openWindow } = useEditorWindows()
+const { onRefreshTriggered } = useDocumentTableRefresh()
 
 // Client will be initialized after config loads
 // see https://connectrpc.com/docs/node/using-clients/#connect
@@ -64,6 +66,11 @@ onBeforeMount(async () => {
 
   // Send initial search to populate table
   handleSearchSubmit()
+  
+  // Watch for refresh triggers from other components (e.g., after save in GlobalEditorWindows)
+  onRefreshTriggered(() => {
+    handleSearchSubmit()
+  })
 })
 
 function buildSearchDocumentsRequest(): SearchDocumentsRequest {
