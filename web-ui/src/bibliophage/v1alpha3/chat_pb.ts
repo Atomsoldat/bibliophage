@@ -88,6 +88,20 @@ export class ChatRequest extends Message<ChatRequest> {
    */
   conversationHistory: ChatMessage[] = [];
 
+  /**
+   * Optional: Enable automatic vector retrieval (default: true)
+   *
+   * @generated from field: optional bool enable_auto_retrieval = 5;
+   */
+  enableAutoRetrieval?: boolean;
+
+  /**
+   * Optional: Number of chunks to retrieve (default: 5)
+   *
+   * @generated from field: optional int32 retrieval_top_k = 6;
+   */
+  retrievalTopK?: number;
+
   constructor(data?: PartialMessage<ChatRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -100,6 +114,8 @@ export class ChatRequest extends Message<ChatRequest> {
     { no: 2, name: "context_document_ids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 3, name: "system_prompt", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 4, name: "conversation_history", kind: "message", T: ChatMessage, repeated: true },
+    { no: 5, name: "enable_auto_retrieval", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 6, name: "retrieval_top_k", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ChatRequest {
@@ -253,6 +269,13 @@ export class ChunkMetadata extends Message<ChunkMetadata> {
    */
   contextDocuments: ContextDocumentInfo[] = [];
 
+  /**
+   * Auto-retrieved chunks from vector search
+   *
+   * @generated from field: repeated bibliophage.v1alpha3.RetrievedChunk retrieved_chunks = 3;
+   */
+  retrievedChunks: RetrievedChunk[] = [];
+
   constructor(data?: PartialMessage<ChunkMetadata>) {
     super();
     proto3.util.initPartial(data, this);
@@ -263,6 +286,7 @@ export class ChunkMetadata extends Message<ChunkMetadata> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "model", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "context_documents", kind: "message", T: ContextDocumentInfo, repeated: true },
+    { no: 3, name: "retrieved_chunks", kind: "message", T: RetrievedChunk, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ChunkMetadata {
@@ -336,6 +360,79 @@ export class ContextDocumentInfo extends Message<ContextDocumentInfo> {
 
   static equals(a: ContextDocumentInfo | PlainMessage<ContextDocumentInfo> | undefined, b: ContextDocumentInfo | PlainMessage<ContextDocumentInfo> | undefined): boolean {
     return proto3.util.equals(ContextDocumentInfo, a, b);
+  }
+}
+
+/**
+ * A chunk retrieved via vector similarity search
+ *
+ * @generated from message bibliophage.v1alpha3.RetrievedChunk
+ */
+export class RetrievedChunk extends Message<RetrievedChunk> {
+  /**
+   * Unique chunk identifier
+   *
+   * @generated from field: string chunk_id = 1;
+   */
+  chunkId = "";
+
+  /**
+   * Source document ID
+   *
+   * @generated from field: string document_id = 2;
+   */
+  documentId = "";
+
+  /**
+   * Source document name
+   *
+   * @generated from field: string document_name = 3;
+   */
+  documentName = "";
+
+  /**
+   * Chunk text content
+   *
+   * @generated from field: string content = 4;
+   */
+  content = "";
+
+  /**
+   * Cosine similarity score (0-1)
+   *
+   * @generated from field: float similarity = 5;
+   */
+  similarity = 0;
+
+  constructor(data?: PartialMessage<RetrievedChunk>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.RetrievedChunk";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "chunk_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "document_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "document_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "content", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "similarity", kind: "scalar", T: 2 /* ScalarType.FLOAT */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RetrievedChunk {
+    return new RetrievedChunk().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RetrievedChunk {
+    return new RetrievedChunk().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RetrievedChunk {
+    return new RetrievedChunk().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RetrievedChunk | PlainMessage<RetrievedChunk> | undefined, b: RetrievedChunk | PlainMessage<RetrievedChunk> | undefined): boolean {
+    return proto3.util.equals(RetrievedChunk, a, b);
   }
 }
 

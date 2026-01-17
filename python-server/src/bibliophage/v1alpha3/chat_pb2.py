@@ -25,25 +25,27 @@ _sym_db = _symbol_database.Default()
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1f\x62ibliophage/v1alpha3/chat.proto\x12\x14\x62ibliophage.v1alpha3\x1a\x1fgoogle/protobuf/timestamp.proto\"\xab\x01\n\x0b\x43hatRequest\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x1c\n\x14\x63ontext_document_ids\x18\x02 \x03(\t\x12\x1a\n\rsystem_prompt\x18\x03 \x01(\tH\x00\x88\x01\x01\x12?\n\x14\x63onversation_history\x18\x04 \x03(\x0b\x32!.bibliophage.v1alpha3.ChatMessageB\x10\n\x0e_system_prompt\"[\n\x0b\x43hatMessage\x12\x0c\n\x04role\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\x12-\n\ttimestamp\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"\x9c\x01\n\x11\x43hatResponseChunk\x12-\n\x04type\x18\x01 \x01(\x0e\x32\x1f.bibliophage.v1alpha3.ChunkType\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\x12:\n\x08metadata\x18\x03 \x01(\x0b\x32#.bibliophage.v1alpha3.ChunkMetadataH\x00\x88\x01\x01\x42\x0b\n\t_metadata\"d\n\rChunkMetadata\x12\r\n\x05model\x18\x01 \x01(\t\x12\x44\n\x11\x63ontext_documents\x18\x02 \x03(\x0b\x32).bibliophage.v1alpha3.ContextDocumentInfo\"B\n\x13\x43ontextDocumentInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x11\n\tauthority\x18\x03 \x01(\x02*U\n\tChunkType\x12\x1a\n\x16\x43HUNK_TYPE_UNSPECIFIED\x10\x00\x12\t\n\x05TOKEN\x10\x01\x12\x0c\n\x08METADATA\x10\x02\x12\t\n\x05\x45RROR\x10\x03\x12\x08\n\x04\x44ONE\x10\x04\x32i\n\x0b\x43hatService\x12Z\n\nStreamChat\x12!.bibliophage.v1alpha3.ChatRequest\x1a\'.bibliophage.v1alpha3.ChatResponseChunk0\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1f\x62ibliophage/v1alpha3/chat.proto\x12\x14\x62ibliophage.v1alpha3\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9b\x02\n\x0b\x43hatRequest\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x1c\n\x14\x63ontext_document_ids\x18\x02 \x03(\t\x12\x1a\n\rsystem_prompt\x18\x03 \x01(\tH\x00\x88\x01\x01\x12?\n\x14\x63onversation_history\x18\x04 \x03(\x0b\x32!.bibliophage.v1alpha3.ChatMessage\x12\"\n\x15\x65nable_auto_retrieval\x18\x05 \x01(\x08H\x01\x88\x01\x01\x12\x1c\n\x0fretrieval_top_k\x18\x06 \x01(\x05H\x02\x88\x01\x01\x42\x10\n\x0e_system_promptB\x18\n\x16_enable_auto_retrievalB\x12\n\x10_retrieval_top_k\"[\n\x0b\x43hatMessage\x12\x0c\n\x04role\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\x12-\n\ttimestamp\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"\x9c\x01\n\x11\x43hatResponseChunk\x12-\n\x04type\x18\x01 \x01(\x0e\x32\x1f.bibliophage.v1alpha3.ChunkType\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\x12:\n\x08metadata\x18\x03 \x01(\x0b\x32#.bibliophage.v1alpha3.ChunkMetadataH\x00\x88\x01\x01\x42\x0b\n\t_metadata\"\xa4\x01\n\rChunkMetadata\x12\r\n\x05model\x18\x01 \x01(\t\x12\x44\n\x11\x63ontext_documents\x18\x02 \x03(\x0b\x32).bibliophage.v1alpha3.ContextDocumentInfo\x12>\n\x10retrieved_chunks\x18\x03 \x03(\x0b\x32$.bibliophage.v1alpha3.RetrievedChunk\"B\n\x13\x43ontextDocumentInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x11\n\tauthority\x18\x03 \x01(\x02\"s\n\x0eRetrievedChunk\x12\x10\n\x08\x63hunk_id\x18\x01 \x01(\t\x12\x13\n\x0b\x64ocument_id\x18\x02 \x01(\t\x12\x15\n\rdocument_name\x18\x03 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x04 \x01(\t\x12\x12\n\nsimilarity\x18\x05 \x01(\x02*U\n\tChunkType\x12\x1a\n\x16\x43HUNK_TYPE_UNSPECIFIED\x10\x00\x12\t\n\x05TOKEN\x10\x01\x12\x0c\n\x08METADATA\x10\x02\x12\t\n\x05\x45RROR\x10\x03\x12\x08\n\x04\x44ONE\x10\x04\x32i\n\x0b\x43hatService\x12Z\n\nStreamChat\x12!.bibliophage.v1alpha3.ChatRequest\x1a\'.bibliophage.v1alpha3.ChatResponseChunk0\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'bibliophage.v1alpha3.chat_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_CHUNKTYPE']._serialized_start=686
-  _globals['_CHUNKTYPE']._serialized_end=771
+  _globals['_CHUNKTYPE']._serialized_start=980
+  _globals['_CHUNKTYPE']._serialized_end=1065
   _globals['_CHATREQUEST']._serialized_start=91
-  _globals['_CHATREQUEST']._serialized_end=262
-  _globals['_CHATMESSAGE']._serialized_start=264
-  _globals['_CHATMESSAGE']._serialized_end=355
-  _globals['_CHATRESPONSECHUNK']._serialized_start=358
-  _globals['_CHATRESPONSECHUNK']._serialized_end=514
-  _globals['_CHUNKMETADATA']._serialized_start=516
-  _globals['_CHUNKMETADATA']._serialized_end=616
-  _globals['_CONTEXTDOCUMENTINFO']._serialized_start=618
-  _globals['_CONTEXTDOCUMENTINFO']._serialized_end=684
-  _globals['_CHATSERVICE']._serialized_start=773
-  _globals['_CHATSERVICE']._serialized_end=878
+  _globals['_CHATREQUEST']._serialized_end=374
+  _globals['_CHATMESSAGE']._serialized_start=376
+  _globals['_CHATMESSAGE']._serialized_end=467
+  _globals['_CHATRESPONSECHUNK']._serialized_start=470
+  _globals['_CHATRESPONSECHUNK']._serialized_end=626
+  _globals['_CHUNKMETADATA']._serialized_start=629
+  _globals['_CHUNKMETADATA']._serialized_end=793
+  _globals['_CONTEXTDOCUMENTINFO']._serialized_start=795
+  _globals['_CONTEXTDOCUMENTINFO']._serialized_end=861
+  _globals['_RETRIEVEDCHUNK']._serialized_start=863
+  _globals['_RETRIEVEDCHUNK']._serialized_end=978
+  _globals['_CHATSERVICE']._serialized_start=1067
+  _globals['_CHATSERVICE']._serialized_end=1172
 # @@protoc_insertion_point(module_scope)

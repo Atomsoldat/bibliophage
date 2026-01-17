@@ -24,16 +24,20 @@ ERROR: ChunkType
 DONE: ChunkType
 
 class ChatRequest(_message.Message):
-    __slots__ = ("message", "context_document_ids", "system_prompt", "conversation_history")
+    __slots__ = ("message", "context_document_ids", "system_prompt", "conversation_history", "enable_auto_retrieval", "retrieval_top_k")
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
     CONTEXT_DOCUMENT_IDS_FIELD_NUMBER: _ClassVar[int]
     SYSTEM_PROMPT_FIELD_NUMBER: _ClassVar[int]
     CONVERSATION_HISTORY_FIELD_NUMBER: _ClassVar[int]
+    ENABLE_AUTO_RETRIEVAL_FIELD_NUMBER: _ClassVar[int]
+    RETRIEVAL_TOP_K_FIELD_NUMBER: _ClassVar[int]
     message: str
     context_document_ids: _containers.RepeatedScalarFieldContainer[str]
     system_prompt: str
     conversation_history: _containers.RepeatedCompositeFieldContainer[ChatMessage]
-    def __init__(self, message: _Optional[str] = ..., context_document_ids: _Optional[_Iterable[str]] = ..., system_prompt: _Optional[str] = ..., conversation_history: _Optional[_Iterable[_Union[ChatMessage, _Mapping]]] = ...) -> None: ...
+    enable_auto_retrieval: bool
+    retrieval_top_k: int
+    def __init__(self, message: _Optional[str] = ..., context_document_ids: _Optional[_Iterable[str]] = ..., system_prompt: _Optional[str] = ..., conversation_history: _Optional[_Iterable[_Union[ChatMessage, _Mapping]]] = ..., enable_auto_retrieval: bool = ..., retrieval_top_k: _Optional[int] = ...) -> None: ...
 
 class ChatMessage(_message.Message):
     __slots__ = ("role", "content", "timestamp")
@@ -56,12 +60,14 @@ class ChatResponseChunk(_message.Message):
     def __init__(self, type: _Optional[_Union[ChunkType, str]] = ..., content: _Optional[str] = ..., metadata: _Optional[_Union[ChunkMetadata, _Mapping]] = ...) -> None: ...
 
 class ChunkMetadata(_message.Message):
-    __slots__ = ("model", "context_documents")
+    __slots__ = ("model", "context_documents", "retrieved_chunks")
     MODEL_FIELD_NUMBER: _ClassVar[int]
     CONTEXT_DOCUMENTS_FIELD_NUMBER: _ClassVar[int]
+    RETRIEVED_CHUNKS_FIELD_NUMBER: _ClassVar[int]
     model: str
     context_documents: _containers.RepeatedCompositeFieldContainer[ContextDocumentInfo]
-    def __init__(self, model: _Optional[str] = ..., context_documents: _Optional[_Iterable[_Union[ContextDocumentInfo, _Mapping]]] = ...) -> None: ...
+    retrieved_chunks: _containers.RepeatedCompositeFieldContainer[RetrievedChunk]
+    def __init__(self, model: _Optional[str] = ..., context_documents: _Optional[_Iterable[_Union[ContextDocumentInfo, _Mapping]]] = ..., retrieved_chunks: _Optional[_Iterable[_Union[RetrievedChunk, _Mapping]]] = ...) -> None: ...
 
 class ContextDocumentInfo(_message.Message):
     __slots__ = ("id", "name", "authority")
@@ -72,3 +78,17 @@ class ContextDocumentInfo(_message.Message):
     name: str
     authority: float
     def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., authority: _Optional[float] = ...) -> None: ...
+
+class RetrievedChunk(_message.Message):
+    __slots__ = ("chunk_id", "document_id", "document_name", "content", "similarity")
+    CHUNK_ID_FIELD_NUMBER: _ClassVar[int]
+    DOCUMENT_ID_FIELD_NUMBER: _ClassVar[int]
+    DOCUMENT_NAME_FIELD_NUMBER: _ClassVar[int]
+    CONTENT_FIELD_NUMBER: _ClassVar[int]
+    SIMILARITY_FIELD_NUMBER: _ClassVar[int]
+    chunk_id: str
+    document_id: str
+    document_name: str
+    content: str
+    similarity: float
+    def __init__(self, chunk_id: _Optional[str] = ..., document_id: _Optional[str] = ..., document_name: _Optional[str] = ..., content: _Optional[str] = ..., similarity: _Optional[float] = ...) -> None: ...

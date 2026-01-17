@@ -23,6 +23,12 @@ message ChatRequest {
 
   // Optional: Conversation history for multi-turn chat
   repeated ChatMessage conversation_history = 4;
+
+  // Optional: Enable automatic vector retrieval (default: true)
+  optional bool enable_auto_retrieval = 5;
+
+  // Optional: Number of chunks to retrieve (default: 5)
+  optional int32 retrieval_top_k = 6;
 }
 
 // Single message in conversation
@@ -65,6 +71,9 @@ message ChunkMetadata {
 
   // Documents used as context (with authority info)
   repeated ContextDocumentInfo context_documents = 2;
+
+  // Auto-retrieved chunks from vector search
+  repeated RetrievedChunk retrieved_chunks = 3;
 }
 
 // Information about a context document
@@ -77,4 +86,22 @@ message ContextDocumentInfo {
 
   // Authority weight
   float authority = 3;
+}
+
+// A chunk retrieved via vector similarity search
+message RetrievedChunk {
+  // Unique chunk identifier
+  string chunk_id = 1;
+
+  // Source document ID
+  string document_id = 2;
+
+  // Source document name
+  string document_name = 3;
+
+  // Chunk text content
+  string content = 4;
+
+  // Cosine similarity score (0-1)
+  float similarity = 5;
 }
