@@ -23,13 +23,6 @@ import { Icon } from '@iconify/vue'
       </button>
     </router-link>
 
-    <router-link to="/journal">
-      <button class="btn btn-ghost btn-square">
-        <!-- <Icon icon="heroicons:pencil-square" class="text-3xl" /> -->
-        <Icon icon="game-icons:scroll-quill" class="text-3xl" />
-      </button>
-    </router-link>
-
     <router-link to="/chat">
       <button class="btn btn-ghost btn-square">
         <Icon icon="game-icons:talk" class="text-3xl" />

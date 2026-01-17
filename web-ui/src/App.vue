@@ -17,7 +17,6 @@ const { isVisible } = useAppConsole()
     >
       <router-view />
     </main>
-    <!-- Console now part of layout flow, not a modal -->
     <GlobalConsole />
     <GlobalEditorWindows />
   </div>
