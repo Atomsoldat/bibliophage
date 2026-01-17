@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useDocumentApi } from '../composables/useDocumentApi'
-import { useEditorWindows } from '../composables/useEditorWindows'
 import { useDocumentTableRefresh } from '../composables/useDocumentTableRefresh.ts'
+import { useEditorWindows } from '../composables/useEditorWindows'
 import { useLogger } from '../composables/useLogger'
 import TextEditorWindow from './TextEditorWindow.vue'
 

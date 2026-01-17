@@ -2,23 +2,23 @@
 import type { Client } from '@connectrpc/connect'
 import type { DocumentListItem } from '../bibliophage/v1alpha3/document_pb.ts'
 
+import type { DocumentBasicFilterValue } from '../components/DocumentBasicFilter.vue'
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { Icon } from '@iconify/vue'
-import { onBeforeMount, ref } from 'vue'
 
+import { onBeforeMount, ref } from 'vue'
 import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
 import { DocumentService } from '../bibliophage/v1alpha3/document_connect.ts'
 import { DocumentFilter, DocumentType, SearchDocumentsRequest } from '../bibliophage/v1alpha3/document_pb.ts'
 import ChunkEditorModal from '../components/ChunkEditorModal.vue'
 import DocumentBasicFilter from '../components/DocumentBasicFilter.vue'
-import type { DocumentBasicFilterValue } from '../components/DocumentBasicFilter.vue'
 import DocumentTable from '../components/DocumentTable.vue'
 import DocumentTypeFilter from '../components/DocumentTypeFilter.vue'
 import { useConfig } from '../composables/useConfig.ts'
+import { useDocumentTableRefresh } from '../composables/useDocumentTableRefresh.ts'
 import { useEditorWindows } from '../composables/useEditorWindows.ts'
 import { useLogger } from '../composables/useLogger.ts'
-import { useDocumentTableRefresh } from '../composables/useDocumentTableRefresh.ts'
 
 const { config, loadConfig } = useConfig()
 const logger = useLogger()
@@ -66,7 +66,7 @@ onBeforeMount(async () => {
 
   // Send initial search to populate table
   handleSearchSubmit()
-  
+
   // Watch for refresh triggers from other components (e.g., after save in GlobalEditorWindows)
   onRefreshTriggered(() => {
     handleSearchSubmit()
@@ -165,7 +165,6 @@ function handleNewEntry() {
   })
   logger.info('Opened new journal entry')
 }
-
 
 // Open embed modal for a document
 function handleEmbedDocument(pdf: DocumentListItem) {
@@ -318,7 +317,6 @@ async function handleBulkUpdate() {
 }
 </script>
 
-
 <template>
   <div>
     <h1 class="text-4xl font-bold mb-4">
@@ -365,7 +363,6 @@ async function handleBulkUpdate() {
       New Entry
     </button>
   </div>
-
 
   <!-- Bulk actions toolbar (shown when items are selected) -->
   <div v-if="selectedIds.size > 0" class="alert alert-info mb-4 flex justify-between items-center">

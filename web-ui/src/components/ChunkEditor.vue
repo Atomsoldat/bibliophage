@@ -4,9 +4,9 @@ import { Icon } from '@iconify/vue'
 import { computed, onMounted, ref } from 'vue'
 import { ChunkingStrategy } from '../bibliophage/v1alpha3/embedding_pb'
 import { useDocumentApi } from '../composables/useDocumentApi'
-import { useEmbeddingApi } from '../composables/useEmbeddingApi'
-
 import { useDocumentTableRefresh } from '../composables/useDocumentTableRefresh'
+
+import { useEmbeddingApi } from '../composables/useEmbeddingApi'
 import TextEditor from './TextEditor.vue'
 
 const props = defineProps<{

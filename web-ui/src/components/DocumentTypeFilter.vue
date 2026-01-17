@@ -4,6 +4,8 @@ import { computed, ref, watch } from 'vue'
 
 import { DocumentType } from '../bibliophage/v1alpha3/document_pb.ts'
 
+const props = defineProps<Props>()
+
 /**
  * All document types with their human-readable labels
  */
@@ -29,8 +31,6 @@ interface Props {
    */
   allowedTypes?: DocumentType[]
 }
-
-const props = defineProps<Props>()
 
 /**
  * v-model binding for the enabled document types.
