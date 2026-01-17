@@ -28,7 +28,7 @@ const { openWindow } = useEditorWindows()
 // see https://connectrpc.com/docs/node/using-clients/#connect
 const client = ref<Client<typeof DocumentService> | null>(null)
 
-const pdfs = ref([] as DocumentListItem[])
+const documents = ref([] as DocumentListItem[])
 const loading = ref(false)
 const selectedIds = ref<Set<string | number>>(new Set())
 
@@ -117,10 +117,10 @@ const columns = computed<TableColumn<DocumentListItem>[]>(() => [
     key: 'type',
     label: 'Type',
   },
-  {
-    key: 'pageCount',
-    label: 'Page Count',
-  },
+  //{
+  //  key: 'pageCount',
+  //  label: 'Page Count',
+  //},
   {
     key: 'createdAt',
     label: 'Created',
@@ -131,19 +131,19 @@ const columns = computed<TableColumn<DocumentListItem>[]>(() => [
     label: 'Updated',
     formatter: value => formatDate(value),
   },
-  {
-    key: 'fileSize',
-    label: 'Size',
-    formatter: value => formatFileSize(value),
-  },
-  {
-    key: 'batchCount',
-    label: 'Batches',
-  },
-  {
-    key: 'vectorChunkCount',
-    label: 'Chunks',
-  },
+  //{
+  //  key: 'fileSize',
+  //  label: 'Size',
+  //  formatter: value => formatFileSize(value),
+  //},
+  //{
+  //  key: 'batchCount',
+  //  label: 'Batches',
+  //},
+  //{
+  //  key: 'vectorChunkCount',
+  //  label: 'Chunks',
+  //},
   {
     key: 'embeddingStatus',
     label: 'Embedding Status',
@@ -206,13 +206,10 @@ async function handleSearchSubmit() {
 
     const response = await client.value.searchDocuments(request)
 
-    // Filter to only show PDF-sourced documents (those with metadata.pdf)
-    const pdfDocuments = response.matches.filter(doc => doc.metadata?.pdf !== undefined) as typeof response.matches
-
     // Store the results
-    pdfs.value = pdfDocuments
-    logger.success(`Success! Found ${pdfDocuments.length} PDF documents (${response.totalCount} total documents)`)
-    logger.info(`Returned ${pdfDocuments.length} PDF results on page ${response.pageNumber}`)
+    documents.value = response.matches
+    logger.success(`Success! Found ${response.matches.length} PDF documents (${response.totalCount} total documents)`)
+    logger.info(`Returned ${response.matches.length} PDF results on page ${response.pageNumber}`)
   }
   catch (error) {
     logger.error(`Error during document search: ${(error as Error).message}`)
@@ -490,7 +487,7 @@ async function handleBulkUpdate() {
   <div>
     <DataTable
       v-model="selectedIds"
-      v-bind:data="pdfs"
+      v-bind:data="documents"
       v-bind:columns="columns"
       v-bind:loading="loading"
       v-bind:enable-column-visibility="true"
