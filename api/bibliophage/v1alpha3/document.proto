@@ -227,8 +227,8 @@ message DocumentFilter {
   // Search by content (partial match, case-insensitive)
   optional string content_query = 2;
 
-  // Filter by type (exact match)
-  optional DocumentType type_filter = 3;
+  // Filter by type (matches as long as ANY type is matched)
+  repeated DocumentType type_filters = 3;
 
   // Filter by tags (documents must match ALL specified tag filters)
   // Example: [{"name": "genre", "value": "fantasy"}, {"name": "tone", "value": "dark"}]

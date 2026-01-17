@@ -208,7 +208,7 @@ class DocumentDatabase:
         self,
         name_query: str | None = None,
         content_query: str | None = None,
-        type_filter: str | None = None,
+        type_filters: list[str] | None = None,
         system_filters: list[str] | None = None,
         tag_filters: list[dict[str, str]] | None = None,
         page_size: int = 50,
@@ -219,7 +219,7 @@ class DocumentDatabase:
         Args:
             name_query: Text to search in document names (case-insensitive)
             content_query: Text to search in document content (case-insensitive)
-            type_filter: Filter by document type
+            type_filters: Filter by document type
             system_filters: Filter by systems (returns documents where systems contains ANY of these)
             tag_filters: Filter by tags [{"name": str, "value": str}] (documents must match ALL)
             page_size: Number of results per page
@@ -235,8 +235,8 @@ class DocumentDatabase:
             query["name"] = {"$regex": name_query, "$options": "i"}
         if content_query:
             query["content"] = {"$regex": content_query, "$options": "i"}
-        if type_filter:
-            query["type"] = type_filter
+        if type_filters:
+            query["type"] = {"$in": type_filters}
         if system_filters:
             # Match documents where systems array contains ANY of the specified values
             query["systems"] = {"$in": system_filters}

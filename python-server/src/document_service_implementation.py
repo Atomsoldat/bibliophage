@@ -337,7 +337,7 @@ class DocumentServiceImplementation:
         # Extract filter parameters if filter is provided
         name_query = None
         content_query = None
-        type_filter = None
+        type_filters = None
         system_filters = None
         tag_filters = None
 
@@ -354,12 +354,12 @@ class DocumentServiceImplementation:
                 else None
             )
 
-            # Convert DocumentType enum to string for database query
-            if (
-                request.filter.HasField("type_filter")
-                and request.filter.type_filter != document_api.DOCUMENT_TYPE_UNSPECIFIED
-            ):
-                type_filter = document_api.DocumentType.Name(request.filter.type_filter)
+            # Convert DocumentType enums to strings for database query
+            # Repeated fields don't have presence in proto3 - check if non-empty instead
+            if request.filter.type_filters:
+                type_filters = [
+                    document_api.DocumentType.Name(t) for t in request.filter.type_filters
+                ]
 
             # Extract system filters (matches ANY)
             if request.filter.system_filters:
@@ -384,7 +384,7 @@ class DocumentServiceImplementation:
         documents, total_count = await self.db.search_documents(
             name_query=name_query,
             content_query=content_query,
-            type_filter=type_filter,
+            type_filters=type_filters,
             system_filters=system_filters,
             tag_filters=tag_filters,
             page_size=page_size,

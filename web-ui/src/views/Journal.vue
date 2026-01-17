@@ -9,7 +9,7 @@ import { Icon } from '@iconify/vue'
 import { computed, onBeforeMount, ref } from 'vue'
 
 import { DocumentService } from '../bibliophage/v1alpha3/document_connect.ts'
-import { DeleteDocumentRequest, DocumentType, GetDocumentRequest, SearchDocumentsRequest } from '../bibliophage/v1alpha3/document_pb.ts'
+import { DeleteDocumentRequest, DocumentType, GetDocumentRequest, SearchDocumentsRequest, DocumentFilter } from '../bibliophage/v1alpha3/document_pb.ts'
 import DataTable from '../components/DataTable.vue'
 import { useConfig } from '../composables/useConfig'
 import { useEditorWindows } from '../composables/useEditorWindows'
@@ -39,6 +39,10 @@ const journalDocumentTypes = [
   { value: DocumentType.OBJECT, label: 'Object', enabled: ref(true) },
   { value: DocumentType.QUEST, label: 'Quest', enabled: ref(true) },
   { value: DocumentType.SESSION_LOG, label: 'Session Log', enabled: ref(true) },
+  { value: DocumentType.RULEBOOK, label: 'Rulebook', enabled: ref(true) },
+  { value: DocumentType.EXPANSION, label: 'Expansion', enabled: ref(true) },
+  { value: DocumentType.ADVENTURE, label: 'Adventure', enabled: ref(true) },
+  { value: DocumentType.BESTIARY, label: 'Bestiary', enabled: ref(true) },
 ]
 
 // Track dropdown state
@@ -152,23 +156,18 @@ function buildSearchDocumentsRequest(): SearchDocumentsRequest {
   // Note: The API currently only supports a single typeFilter
   // For now, we'll filter client-side if multiple types are selected
   // TODO: Update API to support multiple type filters
+
+  const filter = new DocumentFilter({
+    typeFilters: enabledTypes,
+  })
+
   const req = new SearchDocumentsRequest({
-    // Don't set typeFilter - we'll get all documents and filter client-side
+    filter,
   })
 
   return req
 }
 
-/**
- * Filter entries based on enabled document types (client-side filtering)
- */
-const filteredEntries = computed(() => {
-  const enabledTypes = journalDocumentTypes
-    .filter(t => t.enabled.value)
-    .map(t => t.value)
-
-  return entries.value.filter(entry => enabledTypes.includes(entry.type))
-})
 
 async function handleSearchSubmit() {
   if (!client.value) {
@@ -184,10 +183,9 @@ async function handleSearchSubmit() {
 
     const response = await client.value.searchDocuments(request)
 
-    // Store the results (filter to exclude PDF-sourced documents)
-    const pdfTypes = [DocumentType.RULEBOOK, DocumentType.EXPANSION, DocumentType.ADVENTURE, DocumentType.BESTIARY]
-    entries.value = response.matches.filter(doc => !pdfTypes.includes(doc.type))
-    logger.success(`Success! Found ${entries.value.length} journal entries`)
+    // Store the results
+    entries.value = response.matches
+    logger.success(`Success! Found ${entries.value.length} documents entries`)
   }
   catch (error) {
     logger.error(`Error during document search: ${(error as Error).message}`)
@@ -412,7 +410,7 @@ async function handleBulkDelete() {
   <!-- Journal entries table -->
   <DataTable
     v-model="selectedIds"
-    v-bind:data="filteredEntries"
+    v-bind:data="entries"
     v-bind:columns="columns"
     v-bind:loading="loading"
     v-bind:selectable="true"

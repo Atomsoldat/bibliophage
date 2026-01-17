@@ -520,6 +520,8 @@ export class DocumentListItem extends Message<DocumentListItem> {
 
   /**
    * Embedding status (optional, populated if chunk boundaries exist)
+   * TODO: we  should think about whether we want to calculcate this at each search
+   * I think it's better to have a field in the database representing this information
    *
    * @generated from field: optional bibliophage.v1alpha3.EmbeddingStatus embedding_status = 12;
    */
@@ -880,11 +882,11 @@ export class DocumentFilter extends Message<DocumentFilter> {
   contentQuery?: string;
 
   /**
-   * Filter by type (exact match)
+   * Filter by type (matches as long as ANY type is matched)
    *
-   * @generated from field: optional bibliophage.v1alpha3.DocumentType type_filter = 3;
+   * @generated from field: repeated bibliophage.v1alpha3.DocumentType type_filters = 3;
    */
-  typeFilter?: DocumentType;
+  typeFilters: DocumentType[] = [];
 
   /**
    * Filter by tags (documents must match ALL specified tag filters)
@@ -913,7 +915,7 @@ export class DocumentFilter extends Message<DocumentFilter> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "name_query", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 2, name: "content_query", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 3, name: "type_filter", kind: "enum", T: proto3.getEnumType(DocumentType), opt: true },
+    { no: 3, name: "type_filters", kind: "enum", T: proto3.getEnumType(DocumentType), repeated: true },
     { no: 4, name: "tag_filters", kind: "message", T: TagFilter, repeated: true },
     { no: 5, name: "system_filters", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);

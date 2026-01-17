@@ -181,18 +181,18 @@ class UpdateDocumentResponse(_message.Message):
     def __init__(self, success: bool = ..., message: _Optional[str] = ..., document: _Optional[_Union[Document, _Mapping]] = ...) -> None: ...
 
 class DocumentFilter(_message.Message):
-    __slots__ = ("name_query", "content_query", "type_filter", "tag_filters", "system_filters")
+    __slots__ = ("name_query", "content_query", "type_filters", "tag_filters", "system_filters")
     NAME_QUERY_FIELD_NUMBER: _ClassVar[int]
     CONTENT_QUERY_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FILTER_FIELD_NUMBER: _ClassVar[int]
+    TYPE_FILTERS_FIELD_NUMBER: _ClassVar[int]
     TAG_FILTERS_FIELD_NUMBER: _ClassVar[int]
     SYSTEM_FILTERS_FIELD_NUMBER: _ClassVar[int]
     name_query: str
     content_query: str
-    type_filter: DocumentType
+    type_filters: _containers.RepeatedScalarFieldContainer[DocumentType]
     tag_filters: _containers.RepeatedCompositeFieldContainer[_common_pb2.TagFilter]
     system_filters: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, name_query: _Optional[str] = ..., content_query: _Optional[str] = ..., type_filter: _Optional[_Union[DocumentType, str]] = ..., tag_filters: _Optional[_Iterable[_Union[_common_pb2.TagFilter, _Mapping]]] = ..., system_filters: _Optional[_Iterable[str]] = ...) -> None: ...
+    def __init__(self, name_query: _Optional[str] = ..., content_query: _Optional[str] = ..., type_filters: _Optional[_Iterable[_Union[DocumentType, str]]] = ..., tag_filters: _Optional[_Iterable[_Union[_common_pb2.TagFilter, _Mapping]]] = ..., system_filters: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class SearchDocumentsRequest(_message.Message):
     __slots__ = ("filter", "page_size", "page_number", "sort_order")
