@@ -6,13 +6,15 @@ import type { TableColumn } from '../components/DataTable.vue'
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 import { Icon } from '@iconify/vue'
-import { computed, onBeforeMount, ref, watch } from 'vue'
+import { computed, onBeforeMount, ref } from 'vue'
 
 import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
 import { DocumentService } from '../bibliophage/v1alpha3/document_connect.ts'
 import { DocumentFilter, DocumentType, SearchDocumentsRequest } from '../bibliophage/v1alpha3/document_pb.ts'
 import ChunkEditorModal from '../components/ChunkEditorModal.vue'
 import DataTable from '../components/DataTable.vue'
+import DocumentBasicFilter from '../components/DocumentBasicFilter.vue'
+import type { DocumentBasicFilterValue } from '../components/DocumentBasicFilter.vue'
 import DocumentTypeFilter from '../components/DocumentTypeFilter.vue'
 import { useConfig } from '../composables/useConfig.ts'
 import { useEditorWindows } from '../composables/useEditorWindows.ts'
@@ -41,28 +43,15 @@ const showEmbedModal = ref(false)
 const embedDocumentId = ref<string | null>(null)
 
 // Search filter parameters
-const titleQuery = ref('')
-const systemFiltersInput = ref('') // User input for systems (comma-separated)
-const systemFilters = ref<string[]>([]) // Parsed array of system filters
+const basicFilters = ref<DocumentBasicFilterValue>({
+  nameQuery: '',
+  systemFilters: [],
+})
 const pageSize = ref(20)
 const pageNumber = ref(0)
 
 // Document type filter - initialize with all types enabled
 const enabledDocumentTypes = ref<DocumentType[]>(Object.values(DocumentType).filter(v => typeof v === 'number') as DocumentType[])
-
-// Watch systemFiltersInput and parse it into systemFilters array
-watch(systemFiltersInput, (newValue) => {
-  if (!newValue.trim()) {
-    systemFilters.value = []
-    return
-  }
-
-  // Split by comma, trim whitespace, and filter out empty strings
-  systemFilters.value = newValue
-    .split(',')
-    .map(s => s.trim())
-    .filter(s => s.length > 0)
-})
 
 /**
  * Format file size in bytes to human-readable format (KB, MB, GB)
@@ -187,8 +176,8 @@ onBeforeMount(async () => {
 function buildSearchDocumentsRequest(): SearchDocumentsRequest {
   // Create the request using filter parameters
   const filter = new DocumentFilter({
-    nameQuery: titleQuery.value,
-    systemFilters: systemFilters.value,
+    nameQuery: basicFilters.value.nameQuery,
+    systemFilters: basicFilters.value.systemFilters,
     tagFilters: [], // TODO: Tag filtering not implemented yet
     typeFilters: enabledDocumentTypes.value,
   })
@@ -437,38 +426,14 @@ async function handleBulkUpdate() {
     class="mb-6"
   />
 
-  <form class="card bg-base-200 shadow-xl p-6 mb-6" @submit.prevent="handleSearchSubmit">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-      <!-- Name Search Input -->
-      <div class="form-control">
-        <label class="label" for="title-search">
-          <span class="label-text">Document Name</span>
-        </label>
-        <input
-          id="title-search"
-          v-model="titleQuery"
-          type="text"
-          placeholder="Search by name..."
-          class="input input-bordered w-full"
-        >
-      </div>
+  <!-- Basic Filters (Name, Systems) -->
+  <DocumentBasicFilter
+    v-model="basicFilters"
+    class="mb-6"
+  />
 
-      <!-- System Filters Input -->
-      <div class="form-control">
-        <label class="label" for="system-search">
-          <span class="label-text">Systems (comma-separated)</span>
-        </label>
-        <input
-          id="system-search"
-          v-model="systemFiltersInput"
-          type="text"
-          placeholder="e.g., Pathfinder 1e, Call of Cthulhu"
-          class="input input-bordered w-full"
-        >
-      </div>
-    </div>
-
-    <!-- Search Button -->
+  <!-- Search Button -->
+  <form class="mb-6" @submit.prevent="handleSearchSubmit">
     <div class="flex justify-end">
       <button
         type="submit"
