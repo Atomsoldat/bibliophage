@@ -10,9 +10,10 @@ import { computed, onBeforeMount, ref, watch } from 'vue'
 
 import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
 import { DocumentService } from '../bibliophage/v1alpha3/document_connect.ts'
-import { DocumentFilter, SearchDocumentsRequest } from '../bibliophage/v1alpha3/document_pb.ts'
+import { DocumentFilter, DocumentType, SearchDocumentsRequest } from '../bibliophage/v1alpha3/document_pb.ts'
 import ChunkEditorModal from '../components/ChunkEditorModal.vue'
 import DataTable from '../components/DataTable.vue'
+import DocumentTypeFilter from '../components/DocumentTypeFilter.vue'
 import { useConfig } from '../composables/useConfig.ts'
 import { useEditorWindows } from '../composables/useEditorWindows.ts'
 import { useLogger } from '../composables/useLogger.ts'
@@ -45,6 +46,9 @@ const systemFiltersInput = ref('') // User input for systems (comma-separated)
 const systemFilters = ref<string[]>([]) // Parsed array of system filters
 const pageSize = ref(20)
 const pageNumber = ref(0)
+
+// Document type filter - initialize with all types enabled
+const enabledDocumentTypes = ref<DocumentType[]>(Object.values(DocumentType).filter(v => typeof v === 'number') as DocumentType[])
 
 // Watch systemFiltersInput and parse it into systemFilters array
 watch(systemFiltersInput, (newValue) => {
@@ -185,7 +189,8 @@ function buildSearchDocumentsRequest(): SearchDocumentsRequest {
   const filter = new DocumentFilter({
     nameQuery: titleQuery.value,
     systemFilters: systemFilters.value,
-    tagFilters: [], // Tag filtering not implemented yet
+    tagFilters: [], // TODO: Tag filtering not implemented yet
+    typeFilters: enabledDocumentTypes.value,
   })
 
   const req = new SearchDocumentsRequest({
@@ -425,6 +430,12 @@ async function handleBulkUpdate() {
       Here is where we would like to have a searchable list of all imported documents ( PDFs, Text Files, ...)
     </p>
   </div>
+
+  <!-- Document Type Filter -->
+  <DocumentTypeFilter
+    v-model="enabledDocumentTypes"
+    class="mb-6"
+  />
 
   <form class="card bg-base-200 shadow-xl p-6 mb-6" @submit.prevent="handleSearchSubmit">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
