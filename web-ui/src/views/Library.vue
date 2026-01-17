@@ -259,6 +259,17 @@ async function handleEditDocument(pdf: DocumentListItem) {
   }
 }
 
+function handleNewEntry() {
+  openWindow({
+    title: 'New Journal Entry',
+    content: '',
+    documentId: '',
+    isNew: true,
+  })
+  logger.info('Opened new journal entry')
+}
+
+
 // Open embed modal for a document
 function handleEmbedDocument(pdf: DocumentListItem) {
   embedDocumentId.value = pdf.id
@@ -432,9 +443,9 @@ async function handleBulkUpdate() {
     class="mb-6"
   />
 
-  <!-- Search Button -->
-  <form class="mb-6" @submit.prevent="handleSearchSubmit">
-    <div class="flex justify-end">
+  <div class="flex justify-end">
+    <!-- Search Button -->
+    <form class="mb-6" @submit.prevent="handleSearchSubmit">
       <button
         type="submit"
         class="btn btn-accent btn-lg gap-2"
@@ -444,8 +455,19 @@ async function handleBulkUpdate() {
         <span v-if="loading" class="loading loading-spinner" />
         Search
       </button>
-    </div>
-  </form>
+    </form>
+
+    <!-- Create New Document Button -->
+    <button
+      type="button"
+      class="btn btn-primary btn-lg gap-2"
+      @click="handleNewEntry"
+    >
+      <Icon icon="heroicons:plus" />
+      New Entry
+    </button>
+  </div>
+
 
   <!-- Bulk actions toolbar (shown when items are selected) -->
   <div v-if="selectedIds.size > 0" class="alert alert-info mb-4 flex justify-between items-center">
