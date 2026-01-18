@@ -51,6 +51,24 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres-age:
+    image: apache/age:latest
+    container_name: bibliophage-postgres-age
+    restart: unless-stopped
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=age
+      - POSTGRES_PASSWORD=age_dev
+      - POSTGRES_DB=age
+    volumes:
+      - postgres_age_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U age"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # FerretDB for document storage
   ferretdb:
     image: ghcr.io/ferretdb/ferretdb:2.7.0
@@ -92,5 +110,7 @@ volumes:
     name: bibliophage-postgres-pgvector-data
   postgres_documentdb_data:
     name: bibliophage-postgres-documentdb-data
+  postgres_age_data:
+    name: bibliophage-postgres-age-data
   ollama_models:
     name: bibliophage-ollama-models

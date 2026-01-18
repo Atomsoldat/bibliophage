@@ -4,6 +4,7 @@ docker_compose('dev-environment/docker-compose.yaml')
 # Configure database resources
 dc_resource('postgres-pgvector', labels=['databases'])
 dc_resource('postgres-documentdb', labels=['databases'])
+dc_resource('postgres-age', labels=['databases'])
 dc_resource('ferretdb', labels=['databases'])
 
 # Configure LLM service
