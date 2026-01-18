@@ -61,6 +61,14 @@ export function useChatApi() {
   }
 
   /**
+   * Options for streaming chat
+   */
+  interface StreamChatOptions {
+    enableAutoRetrieval?: boolean
+    retrievalTopK?: number
+  }
+
+  /**
    * Stream chat responses token-by-token
    */
   async function streamChat(
@@ -68,6 +76,7 @@ export function useChatApi() {
     contextDocumentIds: string[],
     conversationHistory: ChatMessage[],
     onChunk: StreamCallback,
+    options: StreamChatOptions = {},
   ): Promise<void> {
     checkInitialisation()
 
@@ -75,6 +84,8 @@ export function useChatApi() {
       message,
       contextDocumentIds,
       conversationHistory,
+      enableAutoRetrieval: options.enableAutoRetrieval,
+      retrievalTopK: options.retrievalTopK,
     })
 
     // Connect RPC streaming: iterate over async iterable

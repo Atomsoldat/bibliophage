@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import type { DocumentListItem } from '../../bibliophage/v1alpha3/document_pb'
-import type { ContextDocument } from '../../composables/useChatState'
+import type { ContextDocument, RetrievedChunk } from '../../composables/useChatState'
 import { Icon } from '@iconify/vue'
 import { ref } from 'vue'
 import { useDocumentApi } from '../../composables/useDocumentApi'
 
 const props = defineProps<{
   selectedDocuments: readonly ContextDocument[]
+  autoRetrievalEnabled: boolean
+  retrievedChunks: readonly RetrievedChunk[]
 }>()
 
 const emit = defineEmits<{
   toggle: [doc: ContextDocument]
+  'update:autoRetrievalEnabled': [enabled: boolean]
 }>()
 
 const documentApi = useDocumentApi()
@@ -55,6 +58,14 @@ function handleToggle(doc: DocumentListItem) {
     snippet: doc.contentSnippet,
   })
 }
+
+function formatSimilarity(similarity: number): string {
+  return `${Math.round(similarity * 100)}%`
+}
+
+function toggleAutoRetrieval() {
+  emit('update:autoRetrievalEnabled', !props.autoRetrievalEnabled)
+}
 </script>
 
 <template>
@@ -66,6 +77,22 @@ function handleToggle(doc: DocumentListItem) {
         {{ selectedDocuments.length }}
       </span>
     </h3>
+
+    <!-- Auto-retrieval toggle -->
+    <div class="form-control mb-3">
+      <label class="label cursor-pointer justify-start gap-3">
+        <input
+          type="checkbox"
+          class="toggle toggle-sm toggle-primary"
+          :checked="autoRetrievalEnabled"
+          @change="toggleAutoRetrieval"
+        >
+        <span class="label-text flex items-center gap-1">
+          <Icon icon="heroicons:sparkles" class="text-primary" />
+          Auto-retrieve context
+        </span>
+      </label>
+    </div>
 
     <!-- Search input -->
     <div class="form-control mb-3">
@@ -98,6 +125,34 @@ function handleToggle(doc: DocumentListItem) {
           <button class="btn btn-ghost btn-xs btn-circle" @click="$emit('toggle', doc)">
             <Icon icon="heroicons:x-mark" class="text-xs" />
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto-retrieved chunks -->
+    <div v-if="retrievedChunks.length > 0" class="mb-3">
+      <div class="text-xs font-semibold text-base-content/60 mb-2 flex items-center gap-1">
+        <Icon icon="heroicons:sparkles" class="text-xs" />
+        Auto-Retrieved
+        <span class="badge badge-ghost badge-xs">{{ retrievedChunks.length }}</span>
+      </div>
+      <div class="space-y-2 max-h-[200px] overflow-y-auto">
+        <div
+          v-for="chunk in retrievedChunks"
+          v-bind:key="chunk.chunkId"
+          class="p-2 border border-base-200 rounded bg-base-100"
+        >
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-semibold text-xs truncate flex-1">
+              {{ chunk.documentName }}
+            </span>
+            <span class="badge badge-sm badge-ghost ml-2">
+              {{ formatSimilarity(chunk.similarity) }}
+            </span>
+          </div>
+          <div class="text-xs text-base-content/70 line-clamp-2">
+            {{ chunk.content }}
+          </div>
         </div>
       </div>
     </div>

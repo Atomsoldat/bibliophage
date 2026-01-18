@@ -14,11 +14,21 @@ export interface ContextDocument {
   snippet: string
 }
 
+export interface RetrievedChunk {
+  chunkId: string
+  documentId: string
+  documentName: string
+  content: string
+  similarity: number
+}
+
 // Shared state
 const messages = ref<DisplayMessage[]>([])
 const selectedDocuments = ref<ContextDocument[]>([])
 const isStreaming = ref(false)
 const currentStreamingMessageId = ref<string | null>(null)
+const autoRetrievalEnabled = ref(true)
+const retrievedChunks = ref<RetrievedChunk[]>([])
 
 /**
  * Composable for managing chat UI state
@@ -114,6 +124,34 @@ export function useChatState() {
   }
 
   /**
+   * Toggle auto-retrieval feature
+   */
+  function toggleAutoRetrieval() {
+    autoRetrievalEnabled.value = !autoRetrievalEnabled.value
+  }
+
+  /**
+   * Set auto-retrieval enabled state
+   */
+  function setAutoRetrievalEnabled(enabled: boolean) {
+    autoRetrievalEnabled.value = enabled
+  }
+
+  /**
+   * Set retrieved chunks from the latest query
+   */
+  function setRetrievedChunks(chunks: RetrievedChunk[]) {
+    retrievedChunks.value = chunks
+  }
+
+  /**
+   * Clear retrieved chunks
+   */
+  function clearRetrievedChunks() {
+    retrievedChunks.value = []
+  }
+
+  /**
    * Get conversation history in ChatMessage format for API
    */
   const conversationHistory = computed(() => {
@@ -128,6 +166,8 @@ export function useChatState() {
     messages: readonly(messages),
     selectedDocuments: readonly(selectedDocuments),
     isStreaming: readonly(isStreaming),
+    autoRetrievalEnabled,
+    retrievedChunks: readonly(retrievedChunks),
     addUserMessage,
     startAssistantMessage,
     appendToken,
@@ -135,6 +175,10 @@ export function useChatState() {
     toggleContextDocument,
     clearContextDocuments,
     clearMessages,
+    toggleAutoRetrieval,
+    setAutoRetrievalEnabled,
+    setRetrievedChunks,
+    clearRetrievedChunks,
     conversationHistory,
   }
 }

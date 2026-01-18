@@ -6,14 +6,30 @@ Uses LangChain's streaming API for token-by-token responses.
 
 import logging
 from collections.abc import AsyncIterator
+from dataclasses import dataclass
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
+import vector_operations
 from bibliophage.v1alpha3 import chat_pb2 as api
 from database import get_database
 from llm_access import DocumentContext, get_llm_client
 
 logger = logging.getLogger(__name__)
+
+# Default number of chunks to retrieve via vector search
+DEFAULT_RETRIEVAL_TOP_K = 5
+
+
+@dataclass
+class RetrievedChunkInfo:
+    """Information about a chunk retrieved via vector search."""
+
+    chunk_id: str
+    document_id: str
+    document_name: str
+    content: str
+    similarity: float
 
 
 class ChatServiceImplementation:
@@ -47,14 +63,34 @@ class ChatServiceImplementation:
                     request.context_document_ids,
                 )
 
+            # Perform vector search if auto-retrieval is enabled (default: True)
+            retrieved_chunks: list[RetrievedChunkInfo] = []
+            enable_auto_retrieval = (
+                request.enable_auto_retrieval
+                if request.HasField("enable_auto_retrieval")
+                else True
+            )
+            if enable_auto_retrieval:
+                top_k = (
+                    request.retrieval_top_k
+                    if request.HasField("retrieval_top_k")
+                    else DEFAULT_RETRIEVAL_TOP_K
+                )
+                retrieved_chunks = await self._fetch_retrieved_chunks(
+                    query=request.message,
+                    top_k=top_k,
+                )
+                logger.info("Retrieved %d chunks via vector search", len(retrieved_chunks))
+
             # Send metadata chunk first (before tokens)
-            metadata_chunk = self._build_metadata_chunk(context_documents)
+            metadata_chunk = self._build_metadata_chunk(context_documents, retrieved_chunks)
             yield metadata_chunk
 
             # Build messages for LLM (system + history + user message)
             messages = self._build_llm_messages(
                 user_message=request.message,
                 context_documents=context_documents,
+                retrieved_chunks=retrieved_chunks,
                 conversation_history=request.conversation_history,
                 system_prompt=(
                     request.system_prompt if request.HasField("system_prompt") else None
@@ -111,10 +147,46 @@ class ChatServiceImplementation:
 
         return context_documents
 
+    async def _fetch_retrieved_chunks(
+        self,
+        query: str,
+        top_k: int,
+    ) -> list[RetrievedChunkInfo]:
+        """Perform vector search and enrich results with document names."""
+        try:
+            search_results = await vector_operations.search_similar(
+                query=query,
+                top_k=top_k,
+            )
+        except Exception:
+            logger.exception("Vector search failed")
+            return []
+
+        # Enrich with document names
+        retrieved_chunks: list[RetrievedChunkInfo] = []
+        for result in search_results:
+            doc_id = result["document_id"]
+            doc_data = await self.db.get_document_by_id(doc_id)
+            doc_name = doc_data["name"] if doc_data else "Unknown Document"
+
+            retrieved_chunks.append(
+                RetrievedChunkInfo(
+                    chunk_id=result["chunk_id"],
+                    document_id=doc_id,
+                    document_name=doc_name,
+                    content=result["content"],
+                    similarity=result["similarity"],
+                ),
+            )
+
+        return retrieved_chunks
+
     def _build_metadata_chunk(
-        self, context_documents: list[DocumentContext],
+        self,
+        context_documents: list[DocumentContext],
+        retrieved_chunks: list[RetrievedChunkInfo],
     ) -> api.ChatResponseChunk:
-        """Build metadata chunk with context document info."""
+        """Build metadata chunk with context document and retrieved chunk info."""
         metadata = api.ChunkMetadata(
             model=self.llm.chat_model.model,
             context_documents=[
@@ -124,6 +196,16 @@ class ChatServiceImplementation:
                     authority=doc.authority_weight,
                 )
                 for doc in context_documents
+            ],
+            retrieved_chunks=[
+                api.RetrievedChunk(
+                    chunk_id=chunk.chunk_id,
+                    document_id=chunk.document_id,
+                    document_name=chunk.document_name,
+                    content=chunk.content,
+                    similarity=chunk.similarity,
+                )
+                for chunk in retrieved_chunks
             ],
         )
 
@@ -137,6 +219,7 @@ class ChatServiceImplementation:
         self,
         user_message: str,
         context_documents: list[DocumentContext],
+        retrieved_chunks: list[RetrievedChunkInfo],
         conversation_history: list[api.ChatMessage],
         system_prompt: str | None,
     ) -> list:
@@ -156,10 +239,24 @@ class ChatServiceImplementation:
                 "If the context does not contain enough information, say so clearly."
             )
 
-        # Add context documents to system prompt
+        # Add context documents to system prompt (selected documents section)
         if context_documents:
             context_text = self.llm._build_context_prompt(context_documents)  # noqa: SLF001
-            system_prompt += f"\n\nContext Documents:\n{context_text}"
+            system_prompt += f"\n\n=== SELECTED DOCUMENTS ===\n{context_text}"
+
+        # Add retrieved chunks (auto-retrieved excerpts section)
+        if retrieved_chunks:
+            excerpts = []
+            for chunk in retrieved_chunks:
+                relevance_pct = int(chunk.similarity * 100)
+                excerpts.append(
+                    f"--- From: {chunk.document_name} ({relevance_pct}% relevant) ---\n"
+                    f"{chunk.content}",
+                )
+            system_prompt += (
+                "\n\n=== RELEVANT EXCERPTS (Auto-Retrieved) ===\n"
+                + "\n\n".join(excerpts)
+            )
 
         messages.append(SystemMessage(content=system_prompt))
 

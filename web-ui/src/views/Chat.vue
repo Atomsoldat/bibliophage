@@ -36,6 +36,9 @@ async function handleSend(message: string) {
   })
 
   try {
+    // Clear previous retrieved chunks before starting new request
+    chatState.clearRetrievedChunks()
+
     // Stream response from backend
     await chatApi.streamChat(
       message,
@@ -48,9 +51,23 @@ async function handleSend(message: string) {
         }
         else if (chunk.type === ChunkType.METADATA) {
           currentMetadata.value = chunk.metadata
+          // Store retrieved chunks in state
+          if (chunk.metadata?.retrievedChunks) {
+            chatState.setRetrievedChunks(
+              chunk.metadata.retrievedChunks.map(c => ({
+                chunkId: c.chunkId,
+                documentId: c.documentId,
+                documentName: c.documentName,
+                content: c.content,
+                similarity: c.similarity,
+              })),
+            )
+          }
           // User-facing notification
+          const docCount = chunk.metadata?.contextDocuments.length || 0
+          const chunkCount = chunk.metadata?.retrievedChunks.length || 0
           logger.notify(
-            `Using ${chunk.metadata?.contextDocuments.length || 0} context documents`,
+            `Using ${docCount} documents, ${chunkCount} auto-retrieved chunks`,
             'info',
           )
           // Technical details (browser only)
@@ -66,6 +83,7 @@ async function handleSend(message: string) {
           logger.error(`Error: ${chunk.content}`)
         }
       },
+      { enableAutoRetrieval: chatState.autoRetrievalEnabled.value },
     )
   }
   catch (error) {
@@ -125,7 +143,10 @@ async function scrollToBottom() {
       <div class="w-96 flex-shrink-0">
         <DocumentPicker
           v-bind:selected-documents="chatState.selectedDocuments.value"
+          v-bind:auto-retrieval-enabled="chatState.autoRetrievalEnabled.value"
+          v-bind:retrieved-chunks="chatState.retrievedChunks.value"
           @toggle="chatState.toggleContextDocument"
+          @update:auto-retrieval-enabled="chatState.setAutoRetrievalEnabled"
         />
       </div>
     </div>
