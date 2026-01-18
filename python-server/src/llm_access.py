@@ -250,8 +250,6 @@ class LLMClient:
             if system_prompt is None:
                 system_prompt = (
                     "You are a knowledgeable assistant for tabletop RPG questions. "
-                    "Answer questions based on the provided context documents. "
-                    "Cite which sources you're drawing from (Official Rules, GM Notes, etc.). "
                     "If the context does not contain enough or incomplete information, say so clearly."
                 )
 

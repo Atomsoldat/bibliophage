@@ -227,16 +227,10 @@ class ChatServiceImplementation:
         messages = []
 
         # System prompt with context
-        # TODO: Outputting the sources should not be done by the LLM by default (if the user specifically asks for it, that may be a different situation), because it is not good at that
-        # and it adds another responsibility with the opportunity to get things wrong
-        # by default, we should just have an expandable section below the messages in which all referenced documents and chunks are listed
         if system_prompt is None:
             system_prompt = (
-                "You are a knowledgeable minion for tabletop RPG questions. "
-                "Answer questions based on the provided context documents."
-                "Cite which sources you're drawing from when appropriate. "
-                "If the citation does not pertain to a document provided in the context, state this explicitly."
-                "If the context does not contain enough information, say so clearly."
+                "You are a knowledgeable assistent for tabletop RPG questions. "
+                "If the context does not contain enough or incomplete information, say so clearly."
             )
 
         # Add context documents to system prompt (selected documents section)
