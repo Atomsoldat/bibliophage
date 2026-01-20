@@ -3,7 +3,7 @@ services:
   postgres-pgvector:
     image: ankane/pgvector:latest
     container_name: bibliophage-postgres-pgvector
-    restart: unless-stopped
+    restart: on-failure:3
     ports:
       - "5432:5432"
     environment:
@@ -23,7 +23,7 @@ services:
   postgres-documentdb:
     image: ghcr.io/ferretdb/postgres-documentdb:17-0.107.0-ferretdb-2.7.0
     container_name: bibliophage-postgres-documentdb
-    restart: unless-stopped
+    restart: on-failure:3
     ports:
       - "5433:5432"
     # using the superuser is not great, but it simplifies a lot of the silliness
@@ -73,7 +73,7 @@ services:
   ferretdb:
     image: ghcr.io/ferretdb/ferretdb:2.7.0
     container_name: bibliophage-ferretdb
-    restart: unless-stopped
+    restart: on-failure:3
     ports:
       - "27017:27017"
     environment:
@@ -86,7 +86,7 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: bibliophage-ollama
-    restart: unless-stopped
+    restart: on-failure:3
     ports:
       - "11435:11434"
     volumes:
