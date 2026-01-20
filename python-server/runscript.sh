@@ -24,7 +24,7 @@ else
     # Default: start the uvicorn web server
     # https://uvicorn.dev/settings/#configuration-methods
     # -- reload enables hot reloading
-    uvicorn \
+    python -m uvicorn \
         --reload \
         src.server:api_server
 fi

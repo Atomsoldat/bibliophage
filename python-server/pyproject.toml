@@ -68,7 +68,9 @@ ty = ">=0.0.1a32, <0.0.1a33"
 deptry = ">=0.24.0, <0.25"
 
 [tool.pixi.tasks.dev]
-cmd = ["uvicorn",
+cmd = ["python",
+        "-m",
+        "uvicorn",
         "--reload",
         "src.server:api_server",
 ]
