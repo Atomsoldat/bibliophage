@@ -301,9 +301,6 @@ async function handleBulkUpdate(formData: MetadataEditFormData) {
     <h1 class="text-4xl font-bold mb-4">
       Library
     </h1>
-    <p class="text-lg">
-      Here is where we would like to have a searchable list of all imported documents ( PDFs, Text Files, ...)
-    </p>
   </div>
 
   <!-- Document Type Filter -->
