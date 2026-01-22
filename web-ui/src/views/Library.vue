@@ -2,15 +2,17 @@
 import type { Client } from '@connectrpc/connect'
 import type { DocumentListItem } from '../bibliophage/v1alpha3/document_pb.ts'
 
+import type { MetadataEditFormData } from '../components/MetadataEditModal.vue'
 import type { DocumentBasicFilterValue } from '../components/DocumentBasicFilter.vue'
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
-import { Icon } from '@iconify/vue'
 
+import { Icon } from '@iconify/vue'
 import { onBeforeMount, ref } from 'vue'
 import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
 import { DocumentService } from '../bibliophage/v1alpha3/document_connect.ts'
 import { DocumentFilter, DocumentType, SearchDocumentsRequest } from '../bibliophage/v1alpha3/document_pb.ts'
+import MetadataEditModal from '../components/MetadataEditModal.vue'
 import ChunkEditorModal from '../components/ChunkEditorModal.vue'
 import DocumentBasicFilter from '../components/DocumentBasicFilter.vue'
 import DocumentTable from '../components/DocumentTable.vue'
@@ -34,10 +36,8 @@ const loading = ref(false)
 const selectedIds = ref<Set<string | number>>(new Set())
 
 // Bulk edit modal state
-const showBulkEditModal = ref(false)
-const bulkEditSystems = ref('')
-const bulkEditType = ref('')
-const bulkEditTags = ref('')
+const showMetadataEditModal = ref(false)
+const bulkEditLoading = ref(false)
 
 // Embed modal state
 const showEmbedModal = ref(false)
@@ -180,37 +180,29 @@ function closeEmbedModal() {
 }
 
 // Open bulk edit modal
-function openBulkEditModal() {
+function openMetadataEditModal() {
   if (selectedIds.value.size === 0) {
     logger.warn('No documents selected for bulk edit')
     return
   }
-
-  // Pre-populate with common values if only one item is selected
-  if (selectedIds.value.size === 1) {
-    const selectedId = Array.from(selectedIds.value)[0]
-    const selectedPdf = pdfs.value.find(pdf => pdf.id === selectedId)
-    if (selectedPdf) {
-      bulkEditSystems.value = selectedPdf.systems.join(', ')
-      bulkEditType.value = selectedPdf.metadata?.publicationType || ''
-      bulkEditTags.value = selectedPdf.tags.map(tag => `${tag.name}:${tag.values.join('|')}`).join(', ')
-    }
-  }
-  else {
-    // Clear fields for multiple selection
-    bulkEditSystems.value = ''
-    bulkEditType.value = ''
-    bulkEditTags.value = ''
-  }
-
-  showBulkEditModal.value = true
+  showMetadataEditModal.value = true
 }
 
-async function handleBulkUpdate() {
+// Get initial document for pre-population (when single item selected)
+function getInitialDocumentForMetadataEdit(): DocumentListItem | null {
+  if (selectedIds.value.size !== 1)
+    return null
+  const selectedId = Array.from(selectedIds.value)[0]
+  return documents.value.find(doc => doc.id === selectedId) || null
+}
+
+async function handleBulkUpdate(formData: MetadataEditFormData) {
   if (!client.value) {
     logger.error('Error: Document client not initialized')
     return
   }
+
+  bulkEditLoading.value = true
 
   try {
     logger.info(`Bulk updating ${selectedIds.value.size} documents...`)
@@ -219,23 +211,7 @@ async function handleBulkUpdate() {
     const { GetDocumentRequest, UpdateDocumentRequest } = await import('../bibliophage/v1alpha3/document_pb.ts')
     const { Tag } = await import('../bibliophage/v1alpha3/common_pb.ts')
 
-    // Parse input fields
-    const newSystems = bulkEditSystems.value.trim()
-      ? bulkEditSystems.value.split(',').map(s => s.trim()).filter(s => s.length > 0)
-      : null
-
-    const newType = bulkEditType.value.trim() || null
-
-    // Parse tags format: "name:value1|value2, name2:value3"
-    const newTags = bulkEditTags.value.trim()
-      ? bulkEditTags.value.split(',').map((tagStr) => {
-          const [name, valuesStr] = tagStr.trim().split(':')
-          if (!name || !valuesStr)
-            return null
-          const values = valuesStr.split('|').map(v => v.trim()).filter(v => v.length > 0)
-          return { name: name.trim(), values }
-        }).filter(tag => tag !== null)
-      : null
+    const { systems: newSystems, type: newType, tags: newTags } = formData
 
     // Track results
     let successCount = 0
@@ -307,12 +283,15 @@ async function handleBulkUpdate() {
     }
 
     // Close modal and refresh
-    showBulkEditModal.value = false
+    showMetadataEditModal.value = false
     selectedIds.value.clear()
     await handleSearchSubmit()
   }
   catch (error) {
     logger.error(`Error during bulk update: ${(error as Error).message}`)
+  }
+  finally {
+    bulkEditLoading.value = false
   }
 }
 </script>
@@ -371,7 +350,7 @@ async function handleBulkUpdate() {
       <span>{{ selectedIds.size }} document{{ selectedIds.size > 1 ? 's' : '' }} selected</span>
     </div>
     <div class="flex gap-2">
-      <button type="button" class="btn btn-sm btn-primary gap-1" @click="openBulkEditModal">
+      <button type="button" class="btn btn-sm btn-primary gap-1" @click="openMetadataEditModal">
         <Icon icon="heroicons:pencil" />
         Edit Metadata
       </button>
@@ -391,80 +370,14 @@ async function handleBulkUpdate() {
   />
 
   <!-- Bulk Edit Modal -->
-  <dialog v-bind:open="showBulkEditModal" class="modal">
-    <div class="modal-box max-w-2xl">
-      <h3 class="font-bold text-lg mb-4">
-        Edit Metadata for {{ selectedIds.size }} Document{{ selectedIds.size > 1 ? 's' : '' }}
-      </h3>
-
-      <div class="alert alert-warning mb-4">
-        <Icon icon="heroicons:exclamation-triangle" class="text-xl" />
-        <span>Only non-empty fields will be updated. Leave a field empty to keep existing values.</span>
-      </div>
-
-      <form class="space-y-4" @submit.prevent="handleBulkUpdate">
-        <!-- Systems Input -->
-        <div class="form-control">
-          <label class="label" for="bulk-systems">
-            <span class="label-text">Systems (comma-separated)</span>
-            <span class="label-text-alt text-base-content/50">e.g., Pathfinder 1e, Call of Cthulhu</span>
-          </label>
-          <input
-            id="bulk-systems"
-            v-model="bulkEditSystems"
-            type="text"
-            placeholder="Leave empty to keep existing values"
-            class="input input-bordered w-full"
-          >
-        </div>
-
-        <!-- Type Input -->
-        <div class="form-control">
-          <label class="label" for="bulk-type">
-            <span class="label-text">Type</span>
-            <span class="label-text-alt text-base-content/50">e.g., Core Rulebook, Adventure</span>
-          </label>
-          <input
-            id="bulk-type"
-            v-model="bulkEditType"
-            type="text"
-            placeholder="Leave empty to keep existing values"
-            class="input input-bordered w-full"
-          >
-        </div>
-
-        <!-- Tags Input -->
-        <div class="form-control">
-          <label class="label" for="bulk-tags">
-            <span class="label-text">Tags (format: name:value1|value2, name2:value3)</span>
-            <span class="label-text-alt text-base-content/50">e.g., genre:fantasy|horror, campaign:storm-king</span>
-          </label>
-          <input
-            id="bulk-tags"
-            v-model="bulkEditTags"
-            type="text"
-            placeholder="Leave empty to keep existing values"
-            class="input input-bordered w-full"
-          >
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="modal-action">
-          <button type="button" class="btn btn-ghost" @click="showBulkEditModal = false">
-            Cancel
-          </button>
-          <button type="submit" class="btn btn-primary">
-            Update Documents
-          </button>
-        </div>
-      </form>
-    </div>
-    <form method="dialog" class="modal-backdrop" @click="showBulkEditModal = false">
-      <button type="button">
-        close
-      </button>
-    </form>
-  </dialog>
+  <MetadataEditModal
+    v-bind:show="showMetadataEditModal"
+    v-bind:loading="bulkEditLoading"
+    v-bind:selected-count="selectedIds.size"
+    v-bind:initial-document="getInitialDocumentForMetadataEdit()"
+    @close="showMetadataEditModal = false"
+    @submit="handleBulkUpdate"
+  />
 
   <!-- Chunk Editor Modal -->
   <ChunkEditorModal
