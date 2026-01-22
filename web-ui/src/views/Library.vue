@@ -341,7 +341,7 @@ async function handleBulkUpdate(formData: MetadataEditFormData) {
   </div>
 
   <!-- Bulk actions toolbar (shown when items are selected) -->
-  <div v-if="selectedIds.size > 0" class="alert alert-info mb-4 flex justify-between items-center">
+  <div class="alert mb-4 flex justify-between items-center">
     <div class="flex items-center gap-2">
       <Icon icon="heroicons:information-circle" class="text-xl" />
       <span>{{ selectedIds.size }} document{{ selectedIds.size > 1 ? 's' : '' }} selected</span>
