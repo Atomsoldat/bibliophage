@@ -40,6 +40,7 @@ docling = ">=2.45.0,<3"
 psutil = ">=7.2.1,<8"
 pgvector-python = ">=0.3.5,<0.4"
 psycopg = ">=3.2.10,<4"
+coverage = ">=7.13.1,<8"
 
 [tool.pixi.feature.gpu.dependencies]
 # read here https://pixi.prefix.dev/dev/python/pytorch
@@ -115,9 +116,14 @@ cmd = ["python", "-m", "deptry", "."]
 [tool.pixi.tasks.tests]
 cmd = ["python", "-m", "pytest", "tests"]
 
-
 [tool.pixi.tasks.ded]
 cmd = ["python", "-m", "vulture", ".", "--exclude", "bibliophage,.pixi,.mypy_cache,__pycache__,__pytest_cache,.ruff_cache"]
+
+[tool.pixi.tasks.coverage]
+cmd = ["python", "-m", "coverage", "run", "-m", "pytest"]
+
+[tool.pixi.tasks.coverage-report]
+cmd = ["python", "-m", "coverage", "report"]
 
 [tool.pytest.ini_options]
 # Async support
@@ -152,3 +158,21 @@ markers = [
     "unit: Fast unit tests with no external dependencies",
     "slow: Tests that take a long time to run",
 ]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "tests/*",
+    "src/bibliophage/*_pb2.py",
+    "__init__.py"
+]
+
+[tool.coverage.report]
+# https://coverage.readthedocs.io/en/7.13.1/config.html#report-exclude-lines
+exclude_lines = [
+    # if we want to specifically exclude a line or block
+    "pragma: no cover",
+    # ignore stuff related to type checkers like mypy and pyright
+    "if TYPE_CHECKING:",
+]
+show_missing = true
