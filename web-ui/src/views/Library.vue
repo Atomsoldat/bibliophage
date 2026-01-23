@@ -2,8 +2,8 @@
 import type { Client } from '@connectrpc/connect'
 import type { DocumentListItem } from '../bibliophage/v1alpha3/document_pb.ts'
 
-import type { MetadataEditFormData } from '../components/MetadataEditModal.vue'
 import type { DocumentBasicFilterValue } from '../components/DocumentBasicFilter.vue'
+import type { MetadataEditFormData } from '../components/MetadataEditModal.vue'
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
 
@@ -12,11 +12,12 @@ import { onBeforeMount, ref } from 'vue'
 import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
 import { DocumentService } from '../bibliophage/v1alpha3/document_connect.ts'
 import { DocumentFilter, DocumentType, SearchDocumentsRequest } from '../bibliophage/v1alpha3/document_pb.ts'
-import MetadataEditModal from '../components/MetadataEditModal.vue'
 import ChunkEditorModal from '../components/ChunkEditorModal.vue'
 import DocumentBasicFilter from '../components/DocumentBasicFilter.vue'
+import DocumentNewEntryButton from '../components/DocumentNewEntryButton.vue'
 import DocumentTable from '../components/DocumentTable.vue'
 import DocumentTypeFilter from '../components/DocumentTypeFilter.vue'
+import MetadataEditModal from '../components/MetadataEditModal.vue'
 import { useConfig } from '../composables/useConfig.ts'
 import { useDocumentTableRefresh } from '../composables/useDocumentTableRefresh.ts'
 import { useEditorWindows } from '../composables/useEditorWindows.ts'
@@ -154,16 +155,6 @@ async function handleEditDocument(pdf: DocumentListItem) {
   catch (error) {
     logger.error(`Error fetching PDF: ${(error as Error).message}`)
   }
-}
-
-function handleNewEntry() {
-  openWindow({
-    title: 'New Journal Entry',
-    content: '',
-    documentId: '',
-    isNew: true,
-  })
-  logger.info('Opened new journal entry')
 }
 
 // Open embed modal for a document
@@ -329,15 +320,7 @@ async function handleBulkUpdate(formData: MetadataEditFormData) {
       </button>
     </form>
 
-    <!-- Create New Document Button -->
-    <button
-      type="button"
-      class="btn btn-primary btn-lg gap-2"
-      @click="handleNewEntry"
-    >
-      <Icon icon="heroicons:plus" />
-      New Entry
-    </button>
+    <DocumentNewEntryButton />
   </div>
 
   <!-- Bulk actions toolbar (shown when items are selected) -->
