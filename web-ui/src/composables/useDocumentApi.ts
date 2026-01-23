@@ -23,6 +23,7 @@ import {
 import { useConfig } from './useConfig'
 
 // Shared client instance (singleton pattern)
+// see https://connectrpc.com/docs/node/using-clients/#connect
 const client = ref<Client<typeof DocumentService> | null>(null)
 const isInitialised = ref(false)
 

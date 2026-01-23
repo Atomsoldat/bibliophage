@@ -1,16 +1,12 @@
 <script setup lang="ts">
-import type { Client } from '@connectrpc/connect'
 import type { DocumentListItem } from '../bibliophage/v1alpha3/document_pb.ts'
 
 import type { DocumentBasicFilterValue } from '../components/DocumentBasicFilter.vue'
 import type { MetadataEditFormData } from '../components/MetadataEditModal.vue'
-import { createClient } from '@connectrpc/connect'
-import { createConnectTransport } from '@connectrpc/connect-web'
 
 import { Icon } from '@iconify/vue'
 import { onBeforeMount, ref } from 'vue'
 import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
-import { DocumentService } from '../bibliophage/v1alpha3/document_connect.ts'
 import { DocumentFilter, DocumentType, SearchDocumentsRequest } from '../bibliophage/v1alpha3/document_pb.ts'
 import ChunkEditorModal from '../components/ChunkEditorModal.vue'
 import DocumentBasicFilter from '../components/DocumentBasicFilter.vue'
@@ -18,19 +14,16 @@ import DocumentNewEntryButton from '../components/DocumentNewEntryButton.vue'
 import DocumentTable from '../components/DocumentTable.vue'
 import DocumentTypeFilter from '../components/DocumentTypeFilter.vue'
 import MetadataEditModal from '../components/MetadataEditModal.vue'
-import { useConfig } from '../composables/useConfig.ts'
+import { useDocumentApi } from '../composables/useDocumentApi.ts'
 import { useDocumentTableRefresh } from '../composables/useDocumentTableRefresh.ts'
 import { useEditorWindows } from '../composables/useEditorWindows.ts'
 import { useLogger } from '../composables/useLogger.ts'
 
-const { config, loadConfig } = useConfig()
 const logger = useLogger()
 const { openWindow } = useEditorWindows()
 const { onRefreshTriggered } = useDocumentTableRefresh()
 
-// Client will be initialized after config loads
-// see https://connectrpc.com/docs/node/using-clients/#connect
-const client = ref<Client<typeof DocumentService> | null>(null)
+const api = useDocumentApi()
 
 const documents = ref([] as DocumentListItem[])
 const loading = ref(false)
@@ -56,14 +49,13 @@ const pageNumber = ref(0)
 const enabledDocumentTypes = ref<DocumentType[]>(Object.values(DocumentType).filter(v => typeof v === 'number') as DocumentType[])
 
 onBeforeMount(async () => {
-  // Load configuration first
-  await loadConfig()
-
-  // Create clients with loaded config
-  const transport = createConnectTransport({
-    baseUrl: config.value.backendHost,
-  })
-  client.value = createClient(DocumentService, transport)
+  try {
+    await api.initialise()
+    logger.info('[Library] Document-API initialised successfully')
+  }
+  catch (error) {
+    logger.error(`[Library] Failed to initialise API: ${(error as Error).message}`)
+  }
 
   // Send initial search to populate table
   handleSearchSubmit()
@@ -94,8 +86,8 @@ function buildSearchDocumentsRequest(): SearchDocumentsRequest {
 }
 
 async function handleSearchSubmit() {
-  if (!client.value) {
-    logger.error('Error: Client not initialized. Configuration may not be loaded yet.')
+  if (!api) {
+    logger.error('Error: Document  API client not yet initialised.')
     return
   }
 
@@ -105,7 +97,7 @@ async function handleSearchSubmit() {
     const request = buildSearchDocumentsRequest()
     logger.info('Searching for documents...')
 
-    const response = await client.value.searchDocuments(request)
+    const response = await api.searchDocuments(request)
 
     // Store the results
     documents.value = response.matches
@@ -122,20 +114,15 @@ async function handleSearchSubmit() {
 
 // Open a global editor window for the selected document
 async function handleEditDocument(pdf: DocumentListItem) {
-  if (!client.value) {
-    logger.error('Error: Client not initialized')
+  if (!api) {
+    logger.error('Error: Document API not initialised')
     return
   }
 
   try {
     logger.info(`Fetching content for: ${pdf.name}`)
 
-    // Import the necessary types
-    const { GetDocumentRequest } = await import('../bibliophage/v1alpha3/document_pb.ts')
-
-    // Fetch the full document with content
-    const request = new GetDocumentRequest({ id: pdf.id })
-    const response = await client.value.getDocument(request)
+    const response = await api.getDocument(pdf.id)
 
     if (!response.success || !response.document) {
       logger.error(`Failed to fetch document: ${response.message}`)
@@ -188,8 +175,8 @@ function getInitialDocumentForMetadataEdit(): DocumentListItem | null {
 }
 
 async function handleBulkUpdate(formData: MetadataEditFormData) {
-  if (!client.value) {
-    logger.error('Error: Document client not initialized')
+  if (!api) {
+    logger.error('Error: Document API not initialised')
     return
   }
 
@@ -199,7 +186,6 @@ async function handleBulkUpdate(formData: MetadataEditFormData) {
     logger.info(`Bulk updating ${selectedIds.value.size} documents...`)
 
     // Import necessary types
-    const { GetDocumentRequest, UpdateDocumentRequest } = await import('../bibliophage/v1alpha3/document_pb.ts')
     const { Tag } = await import('../bibliophage/v1alpha3/common_pb.ts')
 
     const { systems: newSystems, type: newType, tags: newTags } = formData
@@ -213,8 +199,7 @@ async function handleBulkUpdate(formData: MetadataEditFormData) {
     for (const docId of selectedIds.value) {
       try {
         // Fetch the document
-        const getRequest = new GetDocumentRequest({ id: String(docId) })
-        const getResponse = await client.value.getDocument(getRequest)
+        const getResponse = await api.getDocument(String(docId))
 
         if (!getResponse.success || !getResponse.document) {
           errors.push(`${docId}: ${getResponse.message}`)
@@ -246,8 +231,7 @@ async function handleBulkUpdate(formData: MetadataEditFormData) {
         }
 
         // Send update request
-        const updateRequest = new UpdateDocumentRequest({ document: doc })
-        const updateResponse = await client.value.updateDocument(updateRequest)
+        const updateResponse = await api.updateDocument(doc)
 
         if (updateResponse.success) {
           successCount++
