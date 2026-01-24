@@ -2,7 +2,6 @@
 import type { DocumentListItem } from '../bibliophage/v1alpha3/document_pb.ts'
 
 import type { DocumentBasicFilterValue } from '../components/DocumentBasicFilter.vue'
-import type { MetadataEditFormData } from '../components/MetadataEditModal.vue'
 
 import { Icon } from '@iconify/vue'
 import { onBeforeMount, ref } from 'vue'
@@ -10,10 +9,11 @@ import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
 import { DocumentFilter, DocumentType, SearchDocumentsRequest } from '../bibliophage/v1alpha3/document_pb.ts'
 import ChunkEditorModal from '../components/ChunkEditorModal.vue'
 import DocumentBasicFilter from '../components/DocumentBasicFilter.vue'
+import DocumentEditMetadataButton from '../components/DocumentEditMetadataButton.vue'
 import DocumentNewEntryButton from '../components/DocumentNewEntryButton.vue'
 import DocumentTable from '../components/DocumentTable.vue'
 import DocumentTypeFilter from '../components/DocumentTypeFilter.vue'
-import MetadataEditModal from '../components/MetadataEditModal.vue'
+import { useBulkMetadataEdit } from '../composables/useBulkMetadataEdit.ts'
 import { useDocumentApi } from '../composables/useDocumentApi.ts'
 import { useDocumentTableRefresh } from '../composables/useDocumentTableRefresh.ts'
 import { useEditorWindows } from '../composables/useEditorWindows.ts'
@@ -27,11 +27,12 @@ const api = useDocumentApi()
 
 const documents = ref([] as DocumentListItem[])
 const loading = ref(false)
-const selectedIds = ref<Set<string | number>>(new Set())
+const selectedIds = ref<Set<string>>(new Set())
 
-// Bulk edit modal state
-const showMetadataEditModal = ref(false)
-const bulkEditLoading = ref(false)
+// Bulk metadata editing (composable handles modal state and update logic)
+const bulkMetadataEdit = useBulkMetadataEdit(selectedIds, documents, api, () => {
+  handleSearchSubmit()
+})
 
 // Embed modal state
 const showEmbedModal = ref(false)
@@ -157,118 +158,6 @@ function closeEmbedModal() {
   embedDocumentId.value = null
 }
 
-// Open bulk edit modal
-function openMetadataEditModal() {
-  if (selectedIds.value.size === 0) {
-    logger.warn('No documents selected for bulk edit')
-    return
-  }
-  showMetadataEditModal.value = true
-}
-
-// Get initial document for pre-population (when single item selected)
-function getInitialDocumentForMetadataEdit(): DocumentListItem | null {
-  if (selectedIds.value.size !== 1)
-    return null
-  const selectedId = Array.from(selectedIds.value)[0]
-  return documents.value.find(doc => doc.id === selectedId) || null
-}
-
-async function handleBulkUpdate(formData: MetadataEditFormData) {
-  if (!api) {
-    logger.error('Error: Document API not initialised')
-    return
-  }
-
-  bulkEditLoading.value = true
-
-  try {
-    logger.info(`Bulk updating ${selectedIds.value.size} documents...`)
-
-    // Import necessary types
-    const { Tag } = await import('../bibliophage/v1alpha3/common_pb.ts')
-
-    const { systems: newSystems, type: newType, tags: newTags } = formData
-
-    // Track results
-    let successCount = 0
-    let failureCount = 0
-    const errors: string[] = []
-
-    // Update each selected document
-    for (const docId of selectedIds.value) {
-      try {
-        // Fetch the document
-        const getResponse = await api.getDocument(String(docId))
-
-        if (!getResponse.success || !getResponse.document) {
-          errors.push(`${docId}: ${getResponse.message}`)
-          failureCount++
-          continue
-        }
-
-        const doc = getResponse.document
-
-        // Update only non-empty fields
-        if (newSystems !== null) {
-          doc.systems = newSystems
-        }
-
-        if (newType !== null) {
-          // Update publication_type in metadata if it exists
-          if (doc.metadata) {
-            doc.metadata.publicationType = newType
-          }
-        }
-
-        if (newTags !== null) {
-          doc.tags = newTags.map((tagData) => {
-            const tag = new Tag()
-            tag.name = tagData!.name
-            tag.values = tagData!.values
-            return tag
-          })
-        }
-
-        // Send update request
-        const updateResponse = await api.updateDocument(doc)
-
-        if (updateResponse.success) {
-          successCount++
-        }
-        else {
-          errors.push(`${doc.name}: ${updateResponse.message}`)
-          failureCount++
-        }
-      }
-      catch (error) {
-        errors.push(`${docId}: ${(error as Error).message}`)
-        failureCount++
-      }
-    }
-
-    // Report results
-    if (successCount > 0) {
-      logger.success(`Successfully updated ${successCount} document${successCount > 1 ? 's' : ''}`)
-    }
-
-    if (failureCount > 0) {
-      logger.error(`Failed to update ${failureCount} document${failureCount > 1 ? 's' : ''}`)
-      errors.forEach(err => logger.error(err))
-    }
-
-    // Close modal and refresh
-    showMetadataEditModal.value = false
-    selectedIds.value.clear()
-    await handleSearchSubmit()
-  }
-  catch (error) {
-    logger.error(`Error during bulk update: ${(error as Error).message}`)
-  }
-  finally {
-    bulkEditLoading.value = false
-  }
-}
 </script>
 
 <template>
@@ -304,7 +193,7 @@ async function handleBulkUpdate(formData: MetadataEditFormData) {
       </button>
     </form>
 
-    <DocumentNewEntryButton />
+    <DocumentNewEntryButton/>
   </div>
 
   <!-- Bulk actions toolbar (shown when items are selected) -->
@@ -314,10 +203,7 @@ async function handleBulkUpdate(formData: MetadataEditFormData) {
       <span>{{ selectedIds.size }} document{{ selectedIds.size > 1 ? 's' : '' }} selected</span>
     </div>
     <div class="flex gap-2">
-      <button type="button" class="btn btn-sm btn-primary gap-1" @click="openMetadataEditModal">
-        <Icon icon="heroicons:pencil" />
-        Edit Metadata
-      </button>
+      <DocumentEditMetadataButton :bulk-edit="bulkMetadataEdit" />
       <button type="button" class="btn btn-sm btn-ghost gap-1" @click="selectedIds.clear()">
         <Icon icon="heroicons:x-mark" />
         Clear Selection
@@ -331,16 +217,6 @@ async function handleBulkUpdate(formData: MetadataEditFormData) {
     v-bind:loading="loading"
     @edit="handleEditDocument"
     @embed="handleEmbedDocument"
-  />
-
-  <!-- Bulk Edit Modal -->
-  <MetadataEditModal
-    v-bind:show="showMetadataEditModal"
-    v-bind:loading="bulkEditLoading"
-    v-bind:selected-count="selectedIds.size"
-    v-bind:initial-document="getInitialDocumentForMetadataEdit()"
-    @close="showMetadataEditModal = false"
-    @submit="handleBulkUpdate"
   />
 
   <!-- Chunk Editor Modal -->
