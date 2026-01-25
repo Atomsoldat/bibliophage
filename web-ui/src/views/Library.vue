@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import type { DocumentListItem } from '../bibliophage/v1alpha3/document_pb.ts'
-
 import type { DocumentBasicFilterValue } from '../components/DocumentBasicFilter.vue'
 
 import { Icon } from '@iconify/vue'
 import { onBeforeMount, ref } from 'vue'
-import { SortOrder } from '../bibliophage/v1alpha3/common_pb.ts'
-import { DocumentFilter, DocumentType, SearchDocumentsRequest } from '../bibliophage/v1alpha3/document_pb.ts'
+import { buildSearchDocumentsRequest, type DocumentListItem, DocumentType, getAllDocumentTypes, SortOrder } from '../utils/protoHelpers.ts'
 import ChunkEditorModal from '../components/ChunkEditorModal.vue'
 import DocumentBasicFilter from '../components/DocumentBasicFilter.vue'
 import DocumentEditMetadataButton from '../components/DocumentEditMetadataButton.vue'
@@ -46,8 +43,8 @@ const basicFilters = ref<DocumentBasicFilterValue>({
 const pageSize = ref(20)
 const pageNumber = ref(0)
 
-// Document type filter - initialize with all types enabled
-const enabledDocumentTypes = ref<DocumentType[]>(Object.values(DocumentType).filter(v => typeof v === 'number') as DocumentType[])
+// Document type filter - initialise with all types enabled
+const enabledDocumentTypes = ref<DocumentType[]>(getAllDocumentTypes())
 
 onBeforeMount(async () => {
   try {
@@ -67,23 +64,15 @@ onBeforeMount(async () => {
   })
 })
 
-function buildSearchDocumentsRequest(): SearchDocumentsRequest {
-  // Create the request using filter parameters
-  const filter = new DocumentFilter({
+function createSearchRequest() {
+  return buildSearchDocumentsRequest({
     nameQuery: basicFilters.value.nameQuery,
     systemFilters: basicFilters.value.systemFilters,
-    tagFilters: [], // TODO: Tag filtering not implemented yet
     typeFilters: enabledDocumentTypes.value,
-  })
-
-  const req = new SearchDocumentsRequest({
-    filter,
     pageSize: pageSize.value,
     pageNumber: pageNumber.value,
     sortOrder: SortOrder.NAME_ASC,
   })
-
-  return req
 }
 
 async function handleSearchSubmit() {
@@ -95,7 +84,7 @@ async function handleSearchSubmit() {
   loading.value = true
 
   try {
-    const request = buildSearchDocumentsRequest()
+    const request = createSearchRequest()
     logger.info('Searching for documents...')
 
     const response = await api.searchDocuments(request)
@@ -114,16 +103,16 @@ async function handleSearchSubmit() {
 }
 
 // Open a global editor window for the selected document
-async function handleEditDocument(pdf: DocumentListItem) {
+async function handleEditDocument(target: DocumentListItem) {
   if (!api) {
     logger.error('Error: Document API not initialised')
     return
   }
 
   try {
-    logger.info(`Fetching content for: ${pdf.name}`)
+    logger.info(`Fetching content for: ${target.name}`)
 
-    const response = await api.getDocument(pdf.id)
+    const response = await api.getDocument(target.id)
 
     if (!response.success || !response.document) {
       logger.error(`Failed to fetch document: ${response.message}`)
