@@ -6,6 +6,7 @@ dc_resource('postgres-pgvector', labels=['databases'])
 dc_resource('postgres-documentdb', labels=['databases'])
 dc_resource('postgres-age', labels=['databases'])
 dc_resource('ferretdb', labels=['databases'])
+dc_resource('arcadedb', labels=['databases'])
 
 # Configure LLM service
 dc_resource('ollama', labels=['llm'])
