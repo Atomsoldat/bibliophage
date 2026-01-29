@@ -1,0 +1,3 @@
+[submodule "flansch/submodules/arcadedb"]
+	path = flansch/submodules/arcadedb
+	url = git@github.com:ArcadeData/arcadedb.git
