@@ -31,15 +31,18 @@ authors = []
 
 [bump_profiles]
 
-
 [packages.api]
 path = "api/"
 bump_order = 1
 
+[packages.flansch]
+path = "flansch/"
+bump_order = 2
+
 [packages.python-server]
 path = "python-server/"
-bump_order = 2
+bump_order = 3
 
 [packages.web-ui]
 path = "web-ui/"
-bump_order = 3
+bump_order = 4
