@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package bibliophage.v1alpha3;
+
+import "google/protobuf/struct.proto";
+
+// ============================================================================
+// Graph Service - Manage nodes and edges in the knowledge graph
+// ============================================================================
+
+service GraphService {
+  rpc CreateNode(CreateNodeRequest) returns (CreateNodeResponse);
+  rpc CreateEdge(CreateEdgeRequest) returns (CreateEdgeResponse);
+  rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
+  rpc DeleteEdge(DeleteEdgeRequest) returns (DeleteEdgeResponse);
+}
+
+// ============================================================================
+// Data Objects
+// ============================================================================
+
+// Node represents a vertex in the knowledge graph
+message Node {
+  // Unique identifier (assigned by the system)
+  string id = 1;
+
+  // Type identifier (e.g., "character", "location", "document")
+  // References a TypeDefinition
+  string type_id = 2;
+
+  // Dynamic properties validated against the type's schema
+  // Struct works like JSON
+  google.protobuf.Struct properties = 3;
+}
+
+// Edge represents a relationship between two nodes
+message Edge {
+  // Unique identifier (assigned by the system)
+  string id = 1;
+
+  // Relationship type (e.g., "located_in", "knows", "owns")
+  string relationship = 2;
+
+  // Whether this edge has a direction (A → B vs A — B)
+  bool directed = 3;
+
+  // Source node ID (or "node A" for undirected edges)
+  string node_a = 4;
+
+  // Target node ID (or "node B" for undirected edges)
+  string node_b = 5;
+}
+
+// ============================================================================
+// Request/Response Messages
+// ============================================================================
+
+message CreateNodeRequest {
+  // Type identifier for this node
+  string type_id = 1;
+
+  // Properties for this node (validated against type schema)
+  google.protobuf.Struct properties = 2;
+}
+
+message CreateNodeResponse {
+  bool success = 1;
+  string message = 2;
+
+  // The created node with assigned ID
+  Node node = 3;
+}
+
+message CreateEdgeRequest {
+  // Relationship type (e.g., "located_in", "member_of")
+  string relationship = 1;
+
+  // Whether this edge is directed
+  bool directed = 2;
+
+  // Source node ID
+  string source_node_id = 3;
+
+  // Target node ID
+  string target_node_id = 4;
+}
+
+message CreateEdgeResponse {
+  bool success = 1;
+  string message = 2;
+
+  // The created edge with assigned ID
+  Edge edge = 3;
+}
+
+message DeleteNodeRequest {
+  string id = 1;
+}
+
+message DeleteNodeResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message DeleteEdgeRequest {
+  string id = 1;
+}
+
+message DeleteEdgeResponse {
+  bool success = 1;
+  string message = 2;
+}
