@@ -1,7 +1,7 @@
 services:
   # PostgreSQL with pgvector extension for vector DB 
   postgres-pgvector:
-    image: ankane/pgvector:latest
+    image: pgvector/pgvector:pg18-trixie
     container_name: bibliophage-postgres-pgvector
     restart: on-failure:3
     ports:
@@ -15,38 +15,6 @@ services:
       - ./containers/postgres-pgvector/init-pgvector.sh:/docker-entrypoint-initdb.d/init-pgvector.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U pgvector"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # PostgreSQL with DocumentDB extension for FerretDB backend
-  postgres-documentdb:
-    image: ghcr.io/ferretdb/postgres-documentdb:17-0.107.0-ferretdb-2.7.0
-    container_name: bibliophage-postgres-documentdb
-    restart: on-failure:3
-    ports:
-      - "5433:5432"
-    # using the superuser is not great, but it simplifies a lot of the silliness
-    # for setting up the different extensions ferretdb depends upon
-    # for development, i think this is okay
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=ferretdb_dev
-      - POSTGRES_DB=postgres
-    volumes:
-      - postgres_documentdb_data:/var/lib/postgresql/data
-    command:
-      - "postgres"
-      - "-c"
-      - "shared_preload_libraries=pg_cron,pg_documentdb_core,pg_documentdb"
-      - "-c"
-      - "cron.database_name=postgres"
-      - "-c"
-      - "cron.host="
-      - "-c"
-      - "documentdb.localhost_connection_string=host=localhost user=postgres dbname=postgres"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -68,19 +36,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # FerretDB for document storage
-  ferretdb:
-    image: ghcr.io/ferretdb/ferretdb:2.7.0
-    container_name: bibliophage-ferretdb
-    restart: on-failure:3
-    ports:
-      - "27017:27017"
-    environment:
-      - FERRETDB_POSTGRESQL_URL=postgres://postgres:ferretdb_dev@postgres-documentdb:5432/postgres
-    depends_on:
-      postgres-documentdb:
-        condition: service_healthy
 
   # Ollama for local LLM model serving with GPU acceleration
   ollama:
@@ -125,8 +80,6 @@ services:
 volumes:
   postgres_pgvector_data:
     name: bibliophage-postgres-pgvector-data
-  postgres_documentdb_data:
-    name: bibliophage-postgres-documentdb-data
   postgres_age_data:
     name: bibliophage-postgres-age-data
   ollama_models:
