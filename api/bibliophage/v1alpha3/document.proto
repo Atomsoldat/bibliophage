@@ -46,7 +46,7 @@ message Metadata {
 
 // Document represents any content in the system (user-created or loaded from files)
 message Document {
-  // Unique identifier for this document (assigned by the system)
+  // Unique identifier for this document (assigned by the database)
   string id = 1;
 
   // Human-readable name (e.g., "My Campaign Notes", "Player's Handbook")

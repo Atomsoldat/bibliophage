@@ -70,7 +70,7 @@ class PostgresRepository:
         self._max_size = max_size
         self._pool: AsyncConnectionPool | None = None
 
-    async def ensure_initialised(self):
+    async def ensure_initialised(self) -> None:
         """Initialise the database connection pool if not already initialised.
 
         This method is called automatically by execute() and doesn't typically
@@ -132,12 +132,12 @@ class PostgresRepository:
             async def process_results(cursor):
                 return await cursor.fetchall()
 
-            results = await repo.execute("SELECT * FROM users", callback=process_results)
+            results = await repo.execute("SELECT * FROM skeletons", callback=process_results)
 
             # Parameterized query
             results = await repo.execute(
-                "SELECT * FROM users WHERE id = %s",
-                params=(user_id,),
+                "SELECT * FROM skeletons WHERE id = %s",
+                params=(skeleton_id,),
                 callback=process_results
             )
 
@@ -153,7 +153,7 @@ class PostgresRepository:
                 cursor = await conn.execute(sql_command)
             return await callback(cursor)
 
-    async def close_pool(self):
+    async def close_pool(self) -> None:
         """Close the database connection pool.
 
         This should be called when the application shuts down to cleanly
@@ -162,4 +162,5 @@ class PostgresRepository:
         if self._pool is not None:
             await self._pool.close(timeout=10.0)
             self._pool = None
-            logger.info("PostgreSQL connection pool closed")
+            # we let the caller handle that
+            #logger.info("PostgreSQL connection pool closed")

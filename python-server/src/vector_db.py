@@ -80,6 +80,8 @@ class VectorDatabase(PostgresRepository):
             min_size=min_size,
             max_size=max_size,
         )
+        logger.info("VectorDatabase repository initialised")
+
 
     async def ensure_initialised(self):
         """Initialise the database connection pool if not already initialised.

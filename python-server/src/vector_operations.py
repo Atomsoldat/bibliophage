@@ -1,5 +1,7 @@
 """Vector operations module.
 
+TODO: I think in our concept, this should be merged with the vector db module
+
 Provides high-level functions for embedding, searching, and managing document chunks
 using pgvector. This module sits on top of VectorDatabase and provides the business
 logic for RAG operations.
@@ -32,6 +34,8 @@ _embeddings_model: HuggingFaceEmbeddings | None = None
 
 def get_vector_database() -> VectorDatabase:
     """Get the vector database singleton instance.
+
+    This is the function code should use to get a VectorDatabase object to execute statements with.
 
     Returns:
         VectorDatabase: Configured vector database repository
@@ -384,7 +388,7 @@ async def get_chunk_count(document_id: str) -> int:
     return count
 
 
-async def close_connections() -> None:
+async def close_database() -> None:
     """Close all database connections and clean up resources.
 
     This should be called when the application shuts down.
@@ -393,4 +397,4 @@ async def close_connections() -> None:
     if _vector_db is not None:
         await _vector_db.close_pool()
         _vector_db = None
-        logger.info("Vector operations connections closed")
+        logger.info("Vector database connection pool closed")
