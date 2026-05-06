@@ -24,7 +24,6 @@ local_resource(
     labels=['app'],
     resource_deps=['postgres-pgvector', 'postgres-documentdb', 'ferretdb'],
     serve_env={
-        'PYTHONPATH': 'src',
         'PYTHONUNBUFFERED': '1',  # Ensure logs appear immediately
         # Database connections (12-factor: config from environment)
         'VECTOR_DB_URL': 'postgresql://pgvector:pgvector_dev@localhost:5432/pgvector',

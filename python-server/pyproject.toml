@@ -11,6 +11,14 @@ requires-python = ">=3.12"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+# Tells hatchling that src/ is the root of the wheel. With this, src/server.py
+# is installed as `server`, src/bibliophage/... as `bibliophage....`, etc.
+# Combined with the editable self-install below, this puts src/ on sys.path
+# without anyone needing to set PYTHONPATH.
+[tool.hatch.build.targets.wheel]
+only-include = ["src"]
+sources = ["src"]
+
 [tool.pixi.workspace]
 channels = ["conda-forge"]
 platforms = ["linux-64"]
@@ -60,6 +68,9 @@ cpu = ["cpu"]
 gpu = ["gpu"]
 
 [tool.pixi.pypi-dependencies]
+# Install this project itself in editable mode so src/ is on sys.path
+# without needing PYTHONPATH=src.
+bibliophage-data-server = { path = ".", editable = true }
 langchain-community = ">=0.3.31, <0.4"
 langchain = ">=0.3.27, <0.4"
 langchain-core = "*"
@@ -73,14 +84,8 @@ cmd = ["python",
         "-m",
         "uvicorn",
         "--reload",
-        "src.server:api_server",
+        "server:api_server",
 ]
-# if we want to run our server via pixi, we need to make
-# sure python can find the generated API code
-# this is the quick fix for now ...
-# we don't want to spread our env vars all over the place
-# for now let's work with the Tiltfile
-# env = {PYTHONPATH = 'src'}
 
 [tool.pixi.tasks.gen_proto]
 cmd = [
