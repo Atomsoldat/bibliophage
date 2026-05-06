@@ -75,6 +75,9 @@ cmd = ["python",
         "--reload",
         "src.server:api_server",
 ]
+# if we want to run our server via pixi, we need to make
+# sure python can find the generated API code
+# this is the quick fix for now ...
 # we don't want to spread our env vars all over the place
 # for now let's work with the Tiltfile
 # env = {PYTHONPATH = 'src'}
