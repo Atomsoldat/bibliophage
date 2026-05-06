@@ -153,6 +153,57 @@ class PostgresRepository:
                 cursor = await conn.execute(sql_command)
             return await callback(cursor)
 
+    async def execute_script(self, sql_script: str) -> None:
+        """Execute a multi-statement SQL script.
+
+        Intended for DDL such as schema initialisation: there are no parameters
+        and no result set to return. The pool runs in autocommit mode, so each
+        statement in the script is committed individually as psycopg3 sends it.
+
+        Use execute() for single parameterised queries and execute_transaction()
+        when several statements must succeed or fail together.
+
+        Args:
+            sql_script: One or more SQL statements separated by semicolons.
+
+        """
+        await self.ensure_initialised()
+        async with self._pool.connection() as conn:
+            await conn.execute(sql_script)
+
+    async def execute_transaction(self, callback):
+        """Acquire a connection, open a transaction, and pass the connection to a callback.
+
+        All statements executed on the connection inside the callback are wrapped in a
+        single BEGIN/COMMIT block. On any exception the transaction is rolled back and
+        the error is re-raised.
+
+        Use this instead of execute() when multiple statements must succeed or fail
+        together (e.g. inserting into a main table and its junction tables).
+
+        Args:
+            callback: An async function that receives the connection and executes
+                      one or more statements on it.
+
+        Returns:
+            The return value of the callback function
+
+        Example:
+            async def insert_document_and_tags(conn):
+                cursor = await conn.execute(insert_sql, params)
+                row = await cursor.fetchone()
+                document_id = str(row[0])
+                await conn.execute(tags_sql, {"document_id": document_id, ...})
+                return document_id
+
+            document_id = await repo.execute_transaction(insert_document_and_tags)
+
+        """
+        await self.ensure_initialised()
+        async with self._pool.connection() as conn:
+            async with conn.transaction():
+                return await callback(conn)
+
     async def close_pool(self) -> None:
         """Close the database connection pool.
 

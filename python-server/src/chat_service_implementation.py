@@ -12,7 +12,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 import vector_operations
 from bibliophage.v1alpha3 import chat_pb2 as api
-from database import get_database
+from document_database_pg import get_document_db
 from llm_access import DocumentContext, get_llm_client
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class ChatServiceImplementation:
 
     def __init__(self) -> None:
         """Initialize the chat service with database and LLM client."""
-        self.db = get_database()
+        self.db = get_document_db()
         self.llm = get_llm_client()
         logger.info("Chat service initialized")
 

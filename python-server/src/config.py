@@ -32,12 +32,6 @@ class DatabaseConfig(BaseSettings):
         description="PostgreSQL connection URL for pgvector (e.g., postgresql+psycopg://user:pass@localhost:5432/db)",
     )
 
-    # MongoDB/FerretDB for document storage
-    # Reads from DOC_DB_URL environment variable
-    doc_db_url: MongoDsn = Field(
-        description="FerretDB/MongoDB connection URL (e.g., mongodb://localhost:27017/)",
-    )
-
     model_config = SettingsConfigDict(
         env_file=".env",  # Optional: for local development convenience
         env_file_encoding="utf-8",

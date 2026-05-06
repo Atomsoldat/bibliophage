@@ -15,7 +15,7 @@ import bibliophage.v1alpha3.embedding_pb2 as api
 import chunking_strategies
 import vector_operations
 from config import get_settings
-from database import get_database
+from document_database_pg import get_document_db
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class EmbeddingServiceImplementation:
 
     def __init__(self):
         """Initialize the embedding service with database and config."""
-        self.db = get_database()
+        self.db = get_document_db()
         self.settings = get_settings()
         logger.info("Embedding service initialized")
 

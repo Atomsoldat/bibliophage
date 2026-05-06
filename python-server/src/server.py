@@ -10,7 +10,7 @@ from bibliophage.v1alpha3.document_connect import DocumentServiceASGIApplication
 from bibliophage.v1alpha3.embedding_connect import EmbeddingServiceASGIApplication
 from bibliophage.v1alpha3.pdf_connect import PdfServiceASGIApplication
 from chat_service_implementation import ChatServiceImplementation
-from database import get_database
+from document_database_pg import close_database, get_document_db
 from document_service_implementation import DocumentServiceImplementation
 from embedding_service_implementation import EmbeddingServiceImplementation
 from loading_service_implementation import LoadingServiceImplementation
@@ -31,13 +31,11 @@ configure_logging()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifespan - startup and shutdown."""
-    # Startup: initialize database indexes
-    db = get_database()
-    await db.initialize_indexes()
+    # Startup: ensure the database schema (tables, etc.) is in place
+    db = get_document_db()
+    await db.initialise_db_schema()
     yield
     # Shutdown: close database connection
-    from database import close_database
-
     await close_database()
 
 

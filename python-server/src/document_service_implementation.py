@@ -7,7 +7,7 @@ from google.protobuf import timestamp_pb2
 import bibliophage.v1alpha3.document_pb2 as document_api
 import bibliophage.v1alpha3.embedding_pb2 as embedding_api
 import vector_operations
-from database import get_database
+from document_database_pg import get_document_db
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class DocumentServiceImplementation:
     def __init__(self):
         """Initialize the document service with database repository."""
-        self.db = get_database()
+        self.db = get_document_db()
         logger.info("Document service initialized with database repository")
 
     # TODO: figure out where the type of ctx is defined, we  don't use it in the loading service either

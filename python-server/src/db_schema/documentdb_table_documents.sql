@@ -26,13 +26,13 @@ CREATE TABLE IF NOT EXISTS documents (
   document_id UUID DEFAULT uuidv7(),
   title TEXT NOT NULL,
   source_type TEXT NOT NULL,
-  metadata JSONB,
+  metadata JSONB DEFAULT '{}'::jsonb NOT NULL,
   content TEXT NOT NULL,
   content_snippet TEXT NOT NULL,
   document_type TEXT NOT NULL,
   character_count INT NOT NULL,
-  created_at TIMESTAMP DEFAULT now(),
-  updated_at TIMESTAMP DEFAULT now(),
+  created_at TIMESTAMP DEFAULT now() NOT NULL,
+  updated_at TIMESTAMP DEFAULT now() NOT NULL,
   PRIMARY KEY (document_id)
 );
 
@@ -61,8 +61,8 @@ CREATE TABLE IF NOT EXISTS map_documents_to_systems (
 
 
 CREATE TABLE IF NOT EXISTS map_documents_to_tags (
-    document_id UUID,
-    tag_id UUID,
+    document_id UUID REFERENCES documents(document_id) ON DELETE CASCADE,
+    tag_id UUID REFERENCES tags(tag_id) ON DELETE CASCADE,
     PRIMARY KEY (document_id, tag_id)
 );
 
