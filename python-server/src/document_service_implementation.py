@@ -28,10 +28,6 @@ class DocumentServiceImplementation:
             f"Received StoreDocumentRequest for document: {request.document.name}",
         )
 
-        # Generate document ID and store in database
-        document_id = str(uuid.uuid4())
-        now = datetime.now(UTC)
-
         # Validate systems array (must have at least one value)
         if not request.document.systems:
             return document_api.StoreDocumentResponse(
@@ -67,31 +63,26 @@ class DocumentServiceImplementation:
                     "page_count": request.document.metadata.pdf.page_count,
                 }
 
-        await self.db.store_document(
-            document_id=document_id,
+        response = await self.db.store_document(
             name=request.document.name,
             systems=list(request.document.systems),
             source_type=source_type,
             content=request.document.content,
             doc_type=doc_type,
             tags=tags,
-            created_at=now,
             metadata=metadata,
         )
 
         # Create response with stored document metadata
         stored_document = document_api.Document()
         stored_document.CopyFrom(request.document)
-        stored_document.id = document_id
+        stored_document.id = response["document_id"]
 
         # Set timestamps
-        timestamp = timestamp_pb2.Timestamp()
-        timestamp.FromDatetime(now)
-        stored_document.created_at.CopyFrom(timestamp)
-        stored_document.updated_at.CopyFrom(timestamp)
-
-        # Set character count
-        stored_document.character_count = len(request.document.content)
+        stored_document.created_at = response["created_at"]
+        # same thing in this case
+        stored_document.updated_at = response["created_at"]
+        stored_document.character_count = response["character_count"]
 
         return document_api.StoreDocumentResponse(
             success=True,

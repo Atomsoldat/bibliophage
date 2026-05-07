@@ -172,7 +172,7 @@ class DocumentDatabase(PostgresRepository):
                 %(doc_type)s,
                 %(character_count)s
             )
-            RETURNING document_id
+            RETURNING document_id, created_at, character_count
             """
 
         params = {
@@ -188,13 +188,16 @@ class DocumentDatabase(PostgresRepository):
         async def insert_all(conn) -> str:
             cursor = await conn.execute(insert_sql, params)
             row = await cursor.fetchone()
-            document_id = str(row[0])
 
             # TODO: insert systems into map_documents_to_systems
             # TODO: insert tags into map_documents_to_tags
 
-            return document_id
+            return {
+                "document_id": str(row[0]),
+                "created_at": (row[1]), # psycopg already maps dates to the python datetime type
+                "character_count": int(row[2]),
+            }
 
-        document_id = await self.execute_transaction(insert_all)
-        logger.info(f"Document inserted with id {document_id}")
-        return document_id
+        response = await self.execute_transaction(insert_all)
+        logger.info(f"Document inserted with id {response["document_id"]}")
+        return response
