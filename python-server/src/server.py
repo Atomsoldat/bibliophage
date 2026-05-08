@@ -31,8 +31,8 @@ configure_logging()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifespan - startup and shutdown."""
-    # Startup: ensure the database schema (tables, etc.) is in place
     db = get_document_db()
+    await db.ensure_initialised()
     await db.initialise_db_schema()
     yield
     # Shutdown: close database connection

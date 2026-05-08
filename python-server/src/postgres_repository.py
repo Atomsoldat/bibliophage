@@ -73,17 +73,13 @@ class PostgresRepository:
     async def ensure_initialised(self) -> None:
         """Initialise the database connection pool if not already initialised.
 
-        This method is called automatically by execute() and doesn't typically
-        need to be called manually.
-
-        If initialization fails (network issues, bad credentials, etc.), the pool
-        is reset to allow retry on the next call.
+        We call this subroutine once during server startup to open the connection pool
+        That way we don't have to think about that before executing code
+        Each class inheriting from this one will have its own pool in it
+        And will need its own invocation of this function
 
         Raises:
             Exception: Any exception from pool creation, opening, or connection acquisition
-
-        Thread-safe for async contexts - multiple concurrent calls will only
-        initialise the pool once.
 
         """
         if self._pool is None:
