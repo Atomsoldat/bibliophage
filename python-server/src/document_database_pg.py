@@ -201,3 +201,25 @@ class DocumentDatabase(PostgresRepository):
         response = await self.execute_transaction(insert_all)
         logger.info(f"Document inserted with id {response["document_id"]}")
         return response
+
+    async def delete_document(
+        self,
+        id: str,
+    ) -> bool:
+        """Delete a document from the database.
+
+        Args:
+            id: Document ID
+
+        Returns:
+            True on Success, False on Failure
+
+        """
+        delete_sql = """
+            DELETE FROM documents
+            WHERE document_id = %(id)s
+        """
+
+        async with self._pool.connection() as conn:
+            cursor = await conn.execute(delete_sql, {"id": id})
+            return cursor.rowcount == 1
