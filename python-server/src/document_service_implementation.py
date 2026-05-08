@@ -500,17 +500,18 @@ class DocumentServiceImplementation:
         if not deleted:
             return document_api.DeleteDocumentResponse(
                 success=False,
-                message=f"Document with ID {request.id} not found",
+                message=f"Document with ID {request.id} could not be deleted",
             )
 
-        # Lifecycle hooks: Cascade deletion to related data
-        # 1. Delete chunk boundaries from FerretDB
-        await self.db.delete_chunk_boundaries(request.id)
-        logger.info(f"Deleted chunk boundaries for document {request.id}")
-
-        # 2. Delete vector embeddings from pgvector
-        deleted_chunks = await vector_operations.delete_document_chunks(request.id)
-        logger.info(f"Deleted {deleted_chunks} vector chunks for document {request.id}")
+        ## Since we will store documents and vectors  together in postgres,
+        ## we can let the database take care of the cascading deletion
+        ## Lifecycle hooks: Cascade deletion to related data
+        ## 1. Delete chunk boundaries from FerretDB
+        #await self.db.delete_chunk_boundaries(request.id)
+        #logger.info(f"Deleted chunk boundaries for document {request.id}")
+        ## 2. Delete vector embeddings from pgvector
+        #deleted_chunks = await vector_operations.delete_document_chunks(request.id)
+        #logger.info(f"Deleted {deleted_chunks} vector chunks for document {request.id}")
 
         return document_api.DeleteDocumentResponse(
             success=True,
