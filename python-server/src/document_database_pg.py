@@ -204,7 +204,7 @@ class DocumentDatabase(PostgresRepository):
 
     async def delete_document(
         self,
-        id: str,
+        document_id: str,
     ) -> bool:
         """Delete a document from the database.
 
@@ -217,7 +217,7 @@ class DocumentDatabase(PostgresRepository):
         """
         delete_sql = """
             DELETE FROM documents
-            WHERE document_id = %(id)s
+            WHERE document_id = %(document_id)s
         """
 
         async with self._pool.connection() as conn:
