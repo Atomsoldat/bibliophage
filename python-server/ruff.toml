@@ -40,6 +40,10 @@ exclude = [
 select = ["ALL"]
 
 ignore = [
+    # less squiggles for now...
+    "D",
+    # once we have the code in a shape we like, we can think about line length
+    "E501",
     # we use TODO and friends for documentation purposes
     "FIX001",
     # incorrect-blank-line-before-class
