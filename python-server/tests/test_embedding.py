@@ -26,7 +26,6 @@ async def test_embed_document_with_markdown_strategy(test_document, embedding_cl
 
     response = await embedding_client.embed_document(emb_request)
 
-    # Verify embedding succeeded
     assert response.success is True
     assert response.embedding_status.is_embedded is True
     assert response.embedding_status.embeddings_current is True
@@ -39,7 +38,6 @@ async def test_embed_document_with_token_strategy(test_document, embedding_clien
 
     Verifies that token-based chunking works correctly.
     """
-    # Embed the test document with token-based strategy
     emb_request = emb_api.EmbedDocumentRequest()
     emb_request.document_id = test_document.id
     emb_request.config.strategy = emb_api.TOKEN_BASED
@@ -47,7 +45,6 @@ async def test_embed_document_with_token_strategy(test_document, embedding_clien
 
     response = await embedding_client.embed_document(emb_request)
 
-    # Verify embedding succeeded
     assert response.success is True
     assert response.embedding_status.is_embedded is True
     assert response.embedding_status.total_chunks > 0
@@ -64,13 +61,11 @@ async def test_delete_embeddings(embedded_document, embedding_client):
     document, embed_response = embedded_document
     expected_chunks = embed_response.embedding_status.total_chunks
 
-    # Delete embeddings
     delete_request = emb_api.DeleteEmbeddingsRequest()
     delete_request.document_id = document.id
 
     delete_response = await embedding_client.delete_embeddings(delete_request)
 
-    # Verify deletion succeeded
     assert delete_response.success is True
     assert delete_response.chunks_deleted == expected_chunks
 

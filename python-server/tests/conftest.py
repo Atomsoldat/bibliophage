@@ -1,20 +1,16 @@
-"""Pytest configuration and shared fixtures for integration tests.
+"""
+Pytest configuration and shared fixtures for integration tests.
 
-This module provides reusable fixtures for test data setup and teardown,
-ensuring tests are isolated and idempotent.
+All the stuff in here is automagically available to the tests in this directory
 
-Fixtures:
-    - sample_pdf: Generates an examplaric PDF from markdown to be used by other tests
-    - document_client: Configured DocumentServiceClient for test operations
-    - embedding_client: Configured EmbeddingServiceClient for test operations
-    - pdf_client: Configured PdfServiceClient for test operations
-    - test_document: Creates and cleans up a test document automatically
-    - embedded_document: Creates a document and embeds it, cleans up both
-    - token_embedded_document: Creates a document with token-based embeddings
+I didn't pick the name for this, but this is how it works
+https://docs.pytest.org/en/stable/reference/fixtures.html#conftest-py-sharing-fixtures-across-multiple-files
 """
 
 import logging
 import os
+import subprocess
+from pathlib import Path
 
 import pytest
 
