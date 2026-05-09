@@ -17,6 +17,7 @@ import logging
 from typing import Any
 
 from psycopg.types.json import Json
+from psycopg.rows import dict_row
 
 from postgres_repository import PostgresRepository
 from config import get_settings
@@ -222,4 +223,30 @@ class DocumentDatabase(PostgresRepository):
 
         async with self._pool.connection() as conn:
             cursor = await conn.execute(delete_sql, {"id": id})
+            logger.info("Deleted {cursor.rowcount} document(s)")
             return cursor.rowcount == 1
+
+    async def get_document_by_id(
+        self,
+        document_id: str,
+    ) -> dict[str, Any] | None:
+        """Retrieve a document by its ID.
+
+        Args:
+            document_id: The unique identifier of the document
+
+        Returns:
+            The document dictionary if found, None otherwise
+
+        """
+        # Using * here might become not so great if documents ends up having tons of columns
+        # we will fix that once it becomes a problem : ^)
+        fetch_sql = """
+            SELECT *
+            FROM documents
+            WHERE document_id = %(document_id)s
+        """
+        async with self._pool.connection() as conn:
+            cursor = await conn.execute(fetch_sql, {"document_id": document_id})
+            cursor.row_factory = dict_row
+            return await cursor.fetchone()
