@@ -265,9 +265,9 @@ message SearchDocumentsResponse {
   // To retrieve full content, use GetDocument RPC with the document ID
   repeated DocumentListItem matches = 3;
 
+  // TODO: i think i want to get rid of these two
   // Total number of results (for pagination)
   int32 total_count = 4;
-
   // Current page number
   int32 page_number = 5;
 
