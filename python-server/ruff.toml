@@ -35,12 +35,28 @@ exclude = [
 
 
 
+# https://docs.astral.sh/ruff/rules/
 [lint]
 select = ["ALL"]
 
 ignore = [
     # we use TODO and friends for documentation purposes
     "FIX001",
+    # incorrect-blank-line-before-class
+    # enforces blank lines between class definition and docstring
+    # this conflicts with the default black-style formatting, that ruff enforces
+    # we would like to use this rule though, so maybe in the future,
+    # it will be configurable?
+    #https://github.com/astral-sh/ruff/issues/12220
+    "D203",
+    # blank-line-before-class (give stuff space to breathe)
+    "D211",
+    # multi-line-summary-first-line (putting the first line of the docstring on the same line
+    # as the quotation marks clashes with our bracing)
+    "D212",
+    # the formatter enforces an identical rule, making this one redundant
+    # devs say leaving it in may cause trouble
+    "COM812",
 ]
 
 [lint.per-file-ignores]
