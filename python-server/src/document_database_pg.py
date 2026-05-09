@@ -14,6 +14,7 @@ Usage:
 from __future__ import annotations
 import importlib.resources
 import logging
+from psycopg import sql
 from typing import Any
 
 from psycopg.types.json import Json
@@ -208,7 +209,7 @@ class DocumentDatabase(PostgresRepository):
         """Delete a document from the database.
 
         Args:
-            id: Document ID
+            document_id: Document ID
 
         Returns:
             True on Success, False on Failure
@@ -220,8 +221,8 @@ class DocumentDatabase(PostgresRepository):
         """
 
         async with self._pool.connection() as conn:
-            cursor = await conn.execute(delete_sql, {"id": id})
-            logger.info("Deleted {cursor.rowcount} document(s)")
+            cursor = await conn.execute(delete_sql, {"document_id": document_id})
+            logger.info(f"Deleted {cursor.rowcount} document(s)")
             return cursor.rowcount == 1
 
     async def get_document_by_id(
@@ -234,7 +235,7 @@ class DocumentDatabase(PostgresRepository):
             document_id: The unique identifier of the document
 
         Returns:
-            The document dictionary if found, None otherwise
+            The document dict if found, None otherwise
 
         """
         # Using * here might become not so great if documents ends up having tons of columns
@@ -248,3 +249,106 @@ class DocumentDatabase(PostgresRepository):
             cursor = await conn.execute(fetch_sql, {"document_id": document_id})
             cursor.row_factory = dict_row
             return await cursor.fetchone()
+
+    async def search_documents(
+        self,
+        name_query: str | None = None,
+        content_query: str | None = None,
+        type_filters: list[str] | None = None,
+        system_filters: list[str] | None = None,
+        tag_filters: list[dict[str, str]] | None = None,
+        page_size: int = 50,
+        page_number: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """Search for documents with optional filters.
+
+        Args:
+            name_query: Text to search in document names (case-insensitive)
+            content_query: Text to search in document content (case-insensitive)
+            type_filters: Filter by document type
+            system_filters: Filter by systems (returns documents where systems contains ANY of these)
+            tag_filters: Filter by tags [{"name": str, "value": str}] (documents must match ALL)
+            page_size: Number of results per page
+            page_number: Page number (0-indexed)
+
+        Returns:
+            Tuple of (list of matching documents, total count)
+
+        """
+        conditions = []
+        params = {}
+
+        if name_query:
+            conditions.append(sql.SQL("title ILIKE %(name_query)s"))
+            params["name_query"] = "%" + name_query + "%"
+        if content_query:
+            # TODO: build this using pg_trgm (or something similar) and an extra column in our table
+            # apparently, with the right configuration, this allows us to support
+            # multiple languages more smoothly
+            # see our comment above about using SELECT * on the documents table, that might
+            # get messy, if we have all kinds of text search related data in there
+            #
+            # https://www.postgresql.org/docs/current/pgtrgm.html
+            # https://dba.stackexchange.com/questions/271412/trigram-similarity-pg-trgm-with-german-umlauts
+            # https://www.reddit.com/r/PostgreSQL/comments/1ca30w3/how_to_index_a_text_column_containing_nonenglish/
+            # there is also this, but that requires packaging the extension ourselves
+            # https://pgroonga.github.io/reference/pgroonga-versus-textsearch-and-pg-trgm.html
+            raise NotImplementedError
+        if type_filters:
+            conditions.append(sql.SQL("document_type = ANY(%(type_filters)s)"))
+            params["type_filters"] = type_filters
+        if system_filters:
+            conditions.append(sql.SQL("document_system = ANY(%(system_filters)s)"))
+            params["system_filters"] = system_filters
+        if tag_filters:
+            conditions.append(sql.SQL("document_tag = ANY(%(tag_filters)s)"))
+            params["tag_filters"] = tag_filters
+
+        params_count = params
+        # perform shallow copy, otherwise we get a pointer to the same variable
+        params_data = params.copy()
+        params_data["page_size"] = page_size
+        params_data["offset"] = page_number * page_size
+
+        query_data = sql.SQL("SELECT * FROM documents")
+        query_count = sql.SQL("SELECT COUNT(*) FROM documents")
+
+        if conditions:
+            query_data = (
+                query_data + sql.SQL(" WHERE ") + sql.SQL(" AND ").join(conditions)
+            )
+            query_count = (
+                query_count + sql.SQL(" WHERE ") + sql.SQL(" AND ").join(conditions)
+            )
+
+        # TODO: we could make this configurable by the client
+        query_data = query_data + sql.SQL(" ORDER BY updated_at DESC")
+        query_data = query_data + sql.SQL(" LIMIT %(page_size)s")
+        query_data = query_data + sql.SQL(" OFFSET %(offset)s")
+
+        documents = []
+        async with self._pool.connection() as conn:
+            cursor = await conn.execute(query_data, params_data)
+            cursor.row_factory = dict_row
+            documents = await cursor.fetchall()
+            # TODO: some arithmetics to figure out how many pages there are in total
+            # so that we can tell this to the frontend
+
+        # I think that running a whole extra query just to figure out how many documents
+        # matching our query exist might be overblown
+        # maybe we can just do some math to say
+        # whether there are more... we have to fulfill the API contract for now
+        total_matches = 0
+        async with self._pool.connection() as conn:
+            cursor = await conn.execute(query_count, params_count)
+            count_result = await cursor.fetchone()
+            total_matches = count_result[0]
+
+        # we might want to use a named, server side cursor if we end up handling vast
+        # amounts of data, let's see how that ends up working out
+        # for now, this gets all the data from the database and immediately wires it to
+        # the client (that being the python server)
+
+        # FIXME: We are currently returning the document content, which is wasteful
+
+        return documents, total_matches
