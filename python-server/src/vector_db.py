@@ -8,6 +8,7 @@ References:
     - https://www.psycopg.org/psycopg3/docs/advanced/pool.html
 
 """
+
 import logging
 
 from pgvector.psycopg import register_vector_async
@@ -81,7 +82,6 @@ class VectorDatabase(PostgresRepository):
             max_size=max_size,
         )
         logger.info("VectorDatabase repository initialised")
-
 
     async def ensure_initialised(self):
         """Initialise the database connection pool if not already initialised.

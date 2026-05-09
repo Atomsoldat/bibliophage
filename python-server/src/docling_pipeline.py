@@ -122,7 +122,10 @@ class DoclingPipeline:
 
             # Determine batches
             batches = self._determine_batches(
-                tmp_path, total_pages, batch_size, use_smart_batching,
+                tmp_path,
+                total_pages,
+                batch_size,
+                use_smart_batching,
             )
             num_batches = len(batches)
             logger.info(f"Will process in {num_batches} batches")
@@ -159,7 +162,9 @@ class DoclingPipeline:
                 outline_result = inspect_pdf_outline(pdf_path)
                 if outline_result["has_outline"]:
                     batches = analyze_outline_for_batching(
-                        outline_result["outline_items"], total_pages, batch_size,
+                        outline_result["outline_items"],
+                        total_pages,
+                        batch_size,
                     )
                     if batches:
                         logger.info(
@@ -237,7 +242,8 @@ class DoclingPipeline:
             try:
                 # Convert this batch of pages
                 conv_result = doc_converter.convert(
-                    pdf_path, page_range=(start_page, end_page),
+                    pdf_path,
+                    page_range=(start_page, end_page),
                 )
 
                 if conv_result.status != ConversionStatus.SUCCESS:

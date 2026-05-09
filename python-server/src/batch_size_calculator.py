@@ -78,7 +78,8 @@ def calculate_batch_size(
     # Clamp to [min_batch_size, max_batch_size]
     safe_max_batch_size = int(safe_max_pages)
     recommended_batch_size: int = max(
-        min(max_batch_size, safe_max_batch_size), min_batch_size,
+        min(max_batch_size, safe_max_batch_size),
+        min_batch_size,
     )
 
     # Calculate expected peak memory

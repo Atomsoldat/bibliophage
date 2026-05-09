@@ -67,9 +67,12 @@ class DocumentDatabase:
 
         # Chunk boundaries indexes
         await self.chunk_boundaries_collection.create_index(
-            [("document_id", ASCENDING)], unique=True,
+            [("document_id", ASCENDING)],
+            unique=True,
         )
-        await self.chunk_boundaries_collection.create_index([("created_at", DESCENDING)])
+        await self.chunk_boundaries_collection.create_index(
+            [("created_at", DESCENDING)]
+        )
 
         logger.info("Database indexes created/verified")
 
@@ -350,7 +353,9 @@ class DocumentDatabase:
             upsert=True,
         )
 
-        logger.info(f"Stored {len(chunk_boundaries)} chunk boundaries for document {document_id}")
+        logger.info(
+            f"Stored {len(chunk_boundaries)} chunk boundaries for document {document_id}"
+        )
         return document_id
 
     async def get_chunk_boundaries(self, document_id: str) -> dict[str, Any] | None:
@@ -451,6 +456,7 @@ class DocumentDatabase:
         if result.modified_count > 0:
             logger.info(f"Marked embeddings as current for document {document_id}")
         return result.modified_count > 0
+
 
 # TODO: We probably want some kind of connection pool here, if ferretdb allows that
 # ============================================================================

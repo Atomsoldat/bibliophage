@@ -81,7 +81,9 @@ class LLMClient:
         )
 
     def _build_context_prompt(
-        self, documents: list[DocumentContext], sort_by_authority: bool = True,
+        self,
+        documents: list[DocumentContext],
+        sort_by_authority: bool = True,
     ) -> str:
         """Build a formatted context string from documents.
 

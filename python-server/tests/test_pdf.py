@@ -20,8 +20,10 @@ def sample_pdf(tmp_path):
     subprocess.run(["pandoc", str(md_file), "-o", str(pdf_file)], check=True)
     return pdf_file
 
+
 def test_pdf_creation(sample_pdf):
     assert os.path.exists(sample_pdf)
+
 
 # This decorator tells pytest that the function is asynchronous
 # pytest will run the function in an event loop

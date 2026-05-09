@@ -14,6 +14,7 @@ The table schema stores:
 - metadata: JSONB field for additional chunk information (heading path, page numbers, etc.)
 - created_at: Timestamp of when the chunk was embedded
 """
+
 import logging
 from datetime import UTC, datetime
 from typing import Any
@@ -203,7 +204,6 @@ async def embed_chunks(
     # personally, i think UTC is pretty neat, but maybe people find that weird
     now = datetime.now(UTC)
 
-
     async def insert_chunks(cursor):
         """Insert chunks with embeddings into database."""
         # define query using psycopg formatting
@@ -230,15 +230,18 @@ async def embed_chunks(
 
         rows = []
         for i, chunk in enumerate(chunks):
-            rows.append({
-                "document_id": document_id,
-                "chunk_id": chunk["chunk_id"],
-                "content": chunk["content"],
-                "embedding": embeddings[i],  # The embedding vector
-                "metadata": Jsonb(chunk.get("metadata", {})),  # Wrap dict in Jsonb for PostgreSQL
-                "created_at": now,
-            })
-
+            rows.append(
+                {
+                    "document_id": document_id,
+                    "chunk_id": chunk["chunk_id"],
+                    "content": chunk["content"],
+                    "embedding": embeddings[i],  # The embedding vector
+                    "metadata": Jsonb(
+                        chunk.get("metadata", {})
+                    ),  # Wrap dict in Jsonb for PostgreSQL
+                    "created_at": now,
+                }
+            )
 
         await cursor.executemany(
             insert_sql,
@@ -274,7 +277,9 @@ async def delete_document_chunks(document_id: str) -> int:
         """Return the number of deleted rows."""
         return cursor.rowcount
 
-    count = await vector_db.execute(delete_sql, params=(document_id,), callback=get_rowcount)
+    count = await vector_db.execute(
+        delete_sql, params=(document_id,), callback=get_rowcount
+    )
     logger.info(f"Deleted {count} chunks for document {document_id}")
     return count
 
@@ -351,13 +356,15 @@ async def search_similar(
 
         results = []
         for row in rows:
-            results.append({
-                "chunk_id": row[0],
-                "document_id": row[1],
-                "content": row[2],
-                "metadata": row[3],
-                "similarity": float(row[4]),
-            })
+            results.append(
+                {
+                    "chunk_id": row[0],
+                    "document_id": row[1],
+                    "content": row[2],
+                    "metadata": row[3],
+                    "similarity": float(row[4]),
+                }
+            )
         return results
 
     results = await vector_db.execute(search_sql, params=params, callback=fetch_results)
@@ -384,7 +391,9 @@ async def get_chunk_count(document_id: str) -> int:
         row = await cursor.fetchone()
         return row[0] if row else 0
 
-    count = await vector_db.execute(count_sql, params=(document_id,), callback=fetch_count)
+    count = await vector_db.execute(
+        count_sql, params=(document_id,), callback=fetch_count
+    )
     return count
 
 

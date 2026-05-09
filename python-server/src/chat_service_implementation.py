@@ -80,10 +80,14 @@ class ChatServiceImplementation:
                     query=request.message,
                     top_k=top_k,
                 )
-                logger.info("Retrieved %d chunks via vector search", len(retrieved_chunks))
+                logger.info(
+                    "Retrieved %d chunks via vector search", len(retrieved_chunks)
+                )
 
             # Send metadata chunk first (before tokens)
-            metadata_chunk = self._build_metadata_chunk(context_documents, retrieved_chunks)
+            metadata_chunk = self._build_metadata_chunk(
+                context_documents, retrieved_chunks
+            )
             yield metadata_chunk
 
             # Build messages for LLM (system + history + user message)
@@ -124,7 +128,8 @@ class ChatServiceImplementation:
             yield error_chunk
 
     async def _fetch_context_documents(
-        self, document_ids: list[str],
+        self,
+        document_ids: list[str],
     ) -> list[DocumentContext]:
         """Fetch and convert documents to DocumentContext format."""
         context_documents = []

@@ -6,6 +6,7 @@ and vector operations. This service orchestrates interactions between:
 - VectorDatabase (pgvector) for vector embeddings
 - Chunking strategies for generating boundaries
 """
+
 import logging
 from typing import Any
 
@@ -72,7 +73,9 @@ class EmbeddingServiceImplementation:
         try:
             strategy = chunking_strategies.get_strategy(request.config.strategy)
             proto_boundaries = await strategy.propose_chunks(
-                content, request.config, request.document_id,
+                content,
+                request.config,
+                request.document_id,
             )
         except ValueError as e:
             return api.ProposeChunksResponse(
@@ -167,7 +170,9 @@ class EmbeddingServiceImplementation:
             try:
                 strategy = chunking_strategies.get_strategy(request.config.strategy)
                 proto_boundaries = await strategy.propose_chunks(
-                    content, request.config, request.document_id,
+                    content,
+                    request.config,
+                    request.document_id,
                 )
             except Exception as e:
                 logger.error(f"Error generating chunks: {e}", exc_info=True)
@@ -179,16 +184,18 @@ class EmbeddingServiceImplementation:
         # Extract chunk content for embedding
         chunks_with_content = []
         for boundary in proto_boundaries:
-            chunk_content = content[boundary.char_start:boundary.char_end]
-            chunks_with_content.append({
-                "chunk_id": boundary.chunk_id,
-                "content": chunk_content,
-                "metadata": {
-                    "char_start": boundary.char_start,
-                    "char_end": boundary.char_end,
-                    "description": boundary.description,
-                },
-            })
+            chunk_content = content[boundary.char_start : boundary.char_end]
+            chunks_with_content.append(
+                {
+                    "chunk_id": boundary.chunk_id,
+                    "content": chunk_content,
+                    "metadata": {
+                        "char_start": boundary.char_start,
+                        "char_end": boundary.char_end,
+                        "description": boundary.description,
+                    },
+                }
+            )
 
         # Embed chunks in vector database
         try:
@@ -200,7 +207,9 @@ class EmbeddingServiceImplementation:
                 request.document_id,
                 chunks_with_content,
             )
-            logger.info(f"Embedded {embedded_count} chunks for document {request.document_id}")
+            logger.info(
+                f"Embedded {embedded_count} chunks for document {request.document_id}"
+            )
         except Exception as e:
             logger.error(f"Error embedding chunks: {e}", exc_info=True)
             return api.EmbedDocumentResponse(
@@ -226,7 +235,9 @@ class EmbeddingServiceImplementation:
 
         # Build embedding status response
         boundaries_doc = await self.db.get_chunk_boundaries(request.document_id)
-        embedding_status = self._build_embedding_status(boundaries_doc["embedding_status"])
+        embedding_status = self._build_embedding_status(
+            boundaries_doc["embedding_status"]
+        )
 
         return api.EmbedDocumentResponse(
             success=True,
@@ -270,7 +281,9 @@ class EmbeddingServiceImplementation:
         config = self._dict_to_proto_config(boundaries_doc["chunking_config"])
 
         # Convert embedding status
-        embedding_status = self._build_embedding_status(boundaries_doc["embedding_status"])
+        embedding_status = self._build_embedding_status(
+            boundaries_doc["embedding_status"]
+        )
 
         return api.GetChunkBoundariesResponse(
             success=True,
@@ -300,7 +313,9 @@ class EmbeddingServiceImplementation:
             UpdateChunkBoundariesResponse with updated boundaries and status
 
         """
-        logger.info(f"UpdateChunkBoundaries request for document: {request.document_id}")
+        logger.info(
+            f"UpdateChunkBoundaries request for document: {request.document_id}"
+        )
 
         # Validate document exists
         doc_data = await self.db.get_document_by_id(request.document_id)
@@ -328,11 +343,15 @@ class EmbeddingServiceImplementation:
             boundaries_dicts,
         )
 
-        logger.info(f"Updated {len(request.boundaries)} boundaries for document {request.document_id}")
+        logger.info(
+            f"Updated {len(request.boundaries)} boundaries for document {request.document_id}"
+        )
 
         # Fetch updated status
         boundaries_doc = await self.db.get_chunk_boundaries(request.document_id)
-        embedding_status = self._build_embedding_status(boundaries_doc["embedding_status"])
+        embedding_status = self._build_embedding_status(
+            boundaries_doc["embedding_status"]
+        )
 
         return api.UpdateChunkBoundariesResponse(
             success=True,
@@ -363,7 +382,9 @@ class EmbeddingServiceImplementation:
         logger.info(f"DeleteEmbeddings request for document: {request.document_id}")
 
         # Delete from vector database
-        chunks_deleted = await vector_operations.delete_document_chunks(request.document_id)
+        chunks_deleted = await vector_operations.delete_document_chunks(
+            request.document_id
+        )
 
         # Delete chunk boundaries
         boundaries_deleted = await self.db.delete_chunk_boundaries(request.document_id)
@@ -478,7 +499,9 @@ class EmbeddingServiceImplementation:
 
         return boundary
 
-    def _build_embedding_status(self, status_dict: dict[str, Any]) -> api.EmbeddingStatus:
+    def _build_embedding_status(
+        self, status_dict: dict[str, Any]
+    ) -> api.EmbeddingStatus:
         """Convert dict embedding status to protobuf EmbeddingStatus."""
         status = api.EmbeddingStatus()
         status.is_embedded = status_dict.get("is_embedded", False)
@@ -498,7 +521,9 @@ class EmbeddingServiceImplementation:
 
         return status
 
-    def _validate_boundaries(self, boundaries: list[api.ChunkBoundary], content_length: int):
+    def _validate_boundaries(
+        self, boundaries: list[api.ChunkBoundary], content_length: int
+    ):
         """Validate chunk boundaries for consistency.
 
         Checks:

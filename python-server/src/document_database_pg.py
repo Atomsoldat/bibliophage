@@ -1,7 +1,7 @@
 """Database repository module for PostgreSQL operations related to the document database.
 
 This module is meant to replace the ferretdb-specific module and might be merged with the
-vector db module in the future. 
+vector db module in the future.
 This module provides a centralized interface for all document database operations
 
 
@@ -31,12 +31,11 @@ logger = logging.getLogger(__name__)
 _document_db: DocumentDatabase | None = None
 
 
-
 def get_document_db() -> DocumentDatabase:
     """Get the document database singleton instance.
 
     This is the function code should use to get a DocumentDatabase object to execute statements with.
-    
+
     Returns: DocumentDatabase: Configured document database repository
 
     Example:
@@ -75,7 +74,6 @@ async def close_database():
 class DocumentDatabase(PostgresRepository):
     """Repository providing all document database operations."""
 
-
     def __init__(
         self,
         connection_url: str,
@@ -97,7 +95,6 @@ class DocumentDatabase(PostgresRepository):
         )
         logger.info("DocumentDatabase repository initialised")
 
-
     async def initialise_db_schema(self) -> None:
         """Create tables defined in db_schema/*.sql if they do not yet exist.
 
@@ -115,7 +112,6 @@ class DocumentDatabase(PostgresRepository):
     # ========================================================================
     # Document Operations
     # ========================================================================
-
 
     async def store_document(
         self,
@@ -150,9 +146,9 @@ class DocumentDatabase(PostgresRepository):
         content_snippet = content[:200] + "..." if character_count > 200 else content
 
         # TODO: name vs title, adjust API definitions
-        # TODO: we currently don't fill created_at and updated_at and let the DB handle it                                 
-        # TODO: we should come back in a while and see whether we like it that way - 20260505                              
-        # TODO: is the way we handle metadata correct here? what if its empty/undefined? 
+        # TODO: we currently don't fill created_at and updated_at and let the DB handle it
+        # TODO: we should come back in a while and see whether we like it that way - 20260505
+        # TODO: is the way we handle metadata correct here? what if its empty/undefined?
         insert_sql = """
             INSERT INTO documents
             (
@@ -195,12 +191,14 @@ class DocumentDatabase(PostgresRepository):
 
             return {
                 "document_id": str(row[0]),
-                "created_at": (row[1]), # psycopg already maps dates to the python datetime type
+                "created_at": (
+                    row[1]
+                ),  # psycopg already maps dates to the python datetime type
                 "character_count": int(row[2]),
             }
 
         response = await self.execute_transaction(insert_all)
-        logger.info(f"Document inserted with id {response["document_id"]}")
+        logger.info(f"Document inserted with id {response['document_id']}")
         return response
 
     async def delete_document(

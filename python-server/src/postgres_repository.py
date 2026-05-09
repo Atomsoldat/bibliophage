@@ -10,6 +10,7 @@ References:
     - https://www.psycopg.org/psycopg3/docs/api/pool.html#the-connectionpool-class
 
 """
+
 import logging
 from collections.abc import Callable
 
@@ -210,4 +211,4 @@ class PostgresRepository:
             await self._pool.close(timeout=10.0)
             self._pool = None
             # we let the caller handle that
-            #logger.info("PostgreSQL connection pool closed")
+            # logger.info("PostgreSQL connection pool closed")

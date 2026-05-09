@@ -86,7 +86,9 @@ def get_top_level_chapters(outline_items: list[dict[str, Any]]) -> list[dict[str
 
 
 def analyze_outline_for_batching(
-    outline_items: list[dict[str, Any]], total_pages: int, max_batch_size: int,
+    outline_items: list[dict[str, Any]],
+    total_pages: int,
+    max_batch_size: int,
 ) -> list[tuple[int, int, str]]:
     """Analyze outline to create smart batch boundaries.
 

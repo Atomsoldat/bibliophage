@@ -111,7 +111,9 @@ class DocumentServiceImplementation:
         document.id = doc_data["_id"]
         document.name = doc_data["name"]
         document.content = doc_data["content"]
-        document.type = getattr(document_api, doc_data["type"], document_api.DOCUMENT_TYPE_UNSPECIFIED)
+        document.type = getattr(
+            document_api, doc_data["type"], document_api.DOCUMENT_TYPE_UNSPECIFIED
+        )
         document.character_count = doc_data["character_count"]
 
         # Add systems array
@@ -120,7 +122,9 @@ class DocumentServiceImplementation:
         # Convert source_type string to enum
         source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
         document.source_type = getattr(
-            document_api, source_type_str, document_api.SOURCE_TYPE_UNSPECIFIED,
+            document_api,
+            source_type_str,
+            document_api.SOURCE_TYPE_UNSPECIFIED,
         )
 
         # Convert metadata if present
@@ -134,10 +138,12 @@ class DocumentServiceImplementation:
             if "pdf" in doc_data["metadata"]:
                 pdf_data = document_api.PdfData()
                 pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
-                    "loading_batch_count", 0,
+                    "loading_batch_count",
+                    0,
                 )
                 pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get(
-                    "vector_chunk_count", 0,
+                    "vector_chunk_count",
+                    0,
                 )
                 pdf_data.page_count = doc_data["metadata"]["pdf"].get("page_count", 0)
                 metadata.pdf.CopyFrom(pdf_data)
@@ -262,7 +268,9 @@ class DocumentServiceImplementation:
         updated_document.name = doc_data["name"]
         updated_document.content = doc_data["content"]
         updated_document.type = getattr(
-            document_api, doc_data["type"], document_api.DOCUMENT_TYPE_UNSPECIFIED,
+            document_api,
+            doc_data["type"],
+            document_api.DOCUMENT_TYPE_UNSPECIFIED,
         )
         updated_document.character_count = doc_data["character_count"]
 
@@ -272,7 +280,9 @@ class DocumentServiceImplementation:
         # Convert source_type string to enum
         source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
         updated_document.source_type = getattr(
-            document_api, source_type_str, document_api.SOURCE_TYPE_UNSPECIFIED,
+            document_api,
+            source_type_str,
+            document_api.SOURCE_TYPE_UNSPECIFIED,
         )
 
         # Convert metadata if present
@@ -286,10 +296,12 @@ class DocumentServiceImplementation:
             if "pdf" in doc_data["metadata"]:
                 pdf_data = document_api.PdfData()
                 pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
-                    "loading_batch_count", 0,
+                    "loading_batch_count",
+                    0,
                 )
                 pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get(
-                    "vector_chunk_count", 0,
+                    "vector_chunk_count",
+                    0,
                 )
                 pdf_data.page_count = doc_data["metadata"]["pdf"].get("page_count", 0)
                 metadata.pdf.CopyFrom(pdf_data)
@@ -349,7 +361,8 @@ class DocumentServiceImplementation:
             # Repeated fields don't have presence in proto3 - check if non-empty instead
             if request.filter.type_filters:
                 type_filters = [
-                    document_api.DocumentType.Name(t) for t in request.filter.type_filters
+                    document_api.DocumentType.Name(t)
+                    for t in request.filter.type_filters
                 ]
 
             # Extract system filters (matches ANY)
@@ -398,7 +411,9 @@ class DocumentServiceImplementation:
             list_item.name = doc_data["name"]
             list_item.content_snippet = doc_data.get("content_snippet", "")
             list_item.type = getattr(
-                document_api, doc_data["type"], document_api.DOCUMENT_TYPE_UNSPECIFIED,
+                document_api,
+                doc_data["type"],
+                document_api.DOCUMENT_TYPE_UNSPECIFIED,
             )
             list_item.character_count = doc_data["character_count"]
 
@@ -408,7 +423,9 @@ class DocumentServiceImplementation:
             # Convert source_type string to enum
             source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
             list_item.source_type = getattr(
-                document_api, source_type_str, document_api.SOURCE_TYPE_UNSPECIFIED,
+                document_api,
+                source_type_str,
+                document_api.SOURCE_TYPE_UNSPECIFIED,
             )
 
             # Convert metadata if present
@@ -422,13 +439,16 @@ class DocumentServiceImplementation:
                 if "pdf" in doc_data["metadata"]:
                     pdf_data = document_api.PdfData()
                     pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
-                        "loading_batch_count", 0,
+                        "loading_batch_count",
+                        0,
                     )
                     pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get(
-                        "vector_chunk_count", 0,
+                        "vector_chunk_count",
+                        0,
                     )
                     pdf_data.page_count = doc_data["metadata"]["pdf"].get(
-                        "page_count", 0,
+                        "page_count",
+                        0,
                     )
                     metadata.pdf.CopyFrom(pdf_data)
 
@@ -456,16 +476,21 @@ class DocumentServiceImplementation:
                 boundaries_data = chunk_boundaries_map[doc_id]
                 embedding_status = embedding_api.EmbeddingStatus()
                 embedding_status.is_embedded = boundaries_data.get(
-                    "embedding_status", {},
+                    "embedding_status",
+                    {},
                 ).get("is_embedded", False)
                 embedding_status.embeddings_current = boundaries_data.get(
-                    "embedding_status", {},
+                    "embedding_status",
+                    {},
                 ).get("embeddings_current", False)
                 embedding_status.total_chunks = len(
                     boundaries_data.get("chunk_boundaries", []),
                 )
 
-                if "embedding_status" in boundaries_data and "embedded_at" in boundaries_data["embedding_status"]:
+                if (
+                    "embedding_status" in boundaries_data
+                    and "embedded_at" in boundaries_data["embedding_status"]
+                ):
                     embedded_timestamp = timestamp_pb2.Timestamp()
                     embedded_timestamp.FromDatetime(
                         boundaries_data["embedding_status"]["embedded_at"],
@@ -507,11 +532,11 @@ class DocumentServiceImplementation:
         ## we can let the database take care of the cascading deletion
         ## Lifecycle hooks: Cascade deletion to related data
         ## 1. Delete chunk boundaries from FerretDB
-        #await self.db.delete_chunk_boundaries(request.id)
-        #logger.info(f"Deleted chunk boundaries for document {request.id}")
+        # await self.db.delete_chunk_boundaries(request.id)
+        # logger.info(f"Deleted chunk boundaries for document {request.id}")
         ## 2. Delete vector embeddings from pgvector
-        #deleted_chunks = await vector_operations.delete_document_chunks(request.id)
-        #logger.info(f"Deleted {deleted_chunks} vector chunks for document {request.id}")
+        # deleted_chunks = await vector_operations.delete_document_chunks(request.id)
+        # logger.info(f"Deleted {deleted_chunks} vector chunks for document {request.id}")
 
         return document_api.DeleteDocumentResponse(
             success=True,

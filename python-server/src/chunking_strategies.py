@@ -193,7 +193,8 @@ class MarkdownStructureStrategy(ChunkingStrategy):
                     char_start=0,
                     char_end=len(content),
                     description="Complete document",
-                    preview=content[:100].strip() + ("..." if len(content) > 100 else ""),
+                    preview=content[:100].strip()
+                    + ("..." if len(content) > 100 else ""),
                     markdown_ref=MarkdownReference(
                         heading_path=[],
                         start_heading_level=0,
@@ -373,7 +374,8 @@ class PdfPageBasedStrategy(ChunkingStrategy):
                     char_start=0,
                     char_end=len(content),
                     description="Complete document (no page markers)",
-                    preview=content[:100].strip() + ("..." if len(content) > 100 else ""),
+                    preview=content[:100].strip()
+                    + ("..." if len(content) > 100 else ""),
                 ),
             ]
 
@@ -392,7 +394,9 @@ class PdfPageBasedStrategy(ChunkingStrategy):
                 preview += "..."
 
             # Determine page range
-            end_page = page_markers[i + 1][1] - 1 if i + 1 < len(page_markers) else page_num
+            end_page = (
+                page_markers[i + 1][1] - 1 if i + 1 < len(page_markers) else page_num
+            )
 
             pdf_ref = PdfPageReference(
                 start_page=page_num,
@@ -403,7 +407,8 @@ class PdfPageBasedStrategy(ChunkingStrategy):
                 chunk_id=f"{document_id}:chunk:{i}",
                 char_start=chunk_start,
                 char_end=chunk_end,
-                description=f"Page {page_num}" + (f"-{end_page}" if end_page > page_num else ""),
+                description=f"Page {page_num}"
+                + (f"-{end_page}" if end_page > page_num else ""),
                 preview=preview,
                 pdf_ref=pdf_ref,
             )

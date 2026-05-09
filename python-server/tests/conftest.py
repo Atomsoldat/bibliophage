@@ -12,6 +12,7 @@ Fixtures:
     - embedded_document: Creates a document and embeds it, cleans up both
     - token_embedded_document: Creates a document with token-based embeddings
 """
+
 import logging
 import os
 
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 # Test configuration - can be overridden via environment variable
 TEST_SERVER_URL = os.getenv("TEST_SERVER_URL", "http://localhost:8000")
+
 
 # this decorator allows tests to use this function as an argument
 # the function is automatically called and returns the path to our pdf
@@ -142,6 +144,7 @@ async def test_document(document_client):
             f"Failed to cleanup test document {document.id}: {e}",
             exc_info=True,
         )
+
 
 @pytest.fixture
 async def embedded_document(test_document, embedding_client):
