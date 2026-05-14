@@ -15,6 +15,7 @@ The table schema stores:
 - created_at: Timestamp of when the chunk was embedded
 """
 
+import importlib
 import logging
 from datetime import UTC, datetime
 from typing import Any
@@ -80,7 +81,7 @@ def get_embeddings_model() -> HuggingFaceEmbeddings:
     return _embeddings_model
 
 
-async def ensure_schema_exists():
+async def initialise_db_schema():
     """Ensure the vector storage table exists with proper schema.
 
     Creates the 'document_chunks' table if it doesn't exist with:
@@ -101,46 +102,13 @@ async def ensure_schema_exists():
     """
     vector_db = get_vector_database()
 
-    # SQL to create the table and indexes
-    create_table_sql = """
-    -- Enable pgvector extension (idempotent)
-    CREATE EXTENSION IF NOT EXISTS vector;
-
-    -- Create table if not exists
-    CREATE TABLE IF NOT EXISTS document_chunks (
-        id BIGSERIAL PRIMARY KEY,
-        document_id TEXT NOT NULL,
-        chunk_id TEXT UNIQUE NOT NULL,
-        content TEXT NOT NULL,
-        embedding VECTOR(1024),
-        metadata JSONB DEFAULT '{}'::jsonb,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Create index on document_id for efficient deletion by document
-    CREATE INDEX IF NOT EXISTS idx_document_chunks_document_id
-        ON document_chunks(document_id);
-
-    -- Create HNSW index for fast similarity search
-    -- Using cosine distance as we normalize embeddings
-    CREATE INDEX IF NOT EXISTS idx_document_chunks_embedding
-        ON document_chunks
-        USING hnsw (embedding vector_cosine_ops);
-
-    -- Create GIN index on metadata for filtering by chunk properties
-    CREATE INDEX IF NOT EXISTS idx_document_chunks_metadata
-        ON document_chunks
-        USING gin (metadata);
-    """
-
-    async def execute_schema(cursor):
-        """Execute schema creation and return success."""
-        # Note: psycopg doesn't support executing multiple statements in one call
-        # when using server-side cursors, but we can use autocommit mode
-        return True
-
     try:
-        await vector_db.execute(create_table_sql, callback=execute_schema)
+        
+        ddl_schema_dir = importlib.resources.files("db_schema")
+        vectors_ddl_file = ddl_schema_dir.joinpath("vectors.sql")
+        vectors_ddl = vectors_ddl_file.read_text(encoding="utf-8")
+
+        await vector_db.execute_script(vectors_ddl)
         logger.info("Vector database schema verified/created successfully")
     except Exception as e:
         logger.error(f"Failed to create vector database schema: {e}")

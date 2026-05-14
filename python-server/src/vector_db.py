@@ -8,7 +8,7 @@ References:
     - https://www.psycopg.org/psycopg3/docs/advanced/pool.html
 
 """
-
+import importlib
 import logging
 
 from pgvector.psycopg import register_vector_async
@@ -109,3 +109,20 @@ class VectorDatabase(PostgresRepository):
         if self._pool is not None:
             await super().close_pool()
             logger.info("Vector Database connection pool closed")
+
+    async def initialise_db_schema(self):
+        """Ensure the vector storage tables exists with proper schema.
+        This function is idempotent
+        """
+    
+        try:
+            
+            ddl_schema_dir = importlib.resources.files("db_schema")
+            vectors_ddl_file = ddl_schema_dir.joinpath("vectors.sql")
+            vectors_ddl = vectors_ddl_file.read_text(encoding="utf-8")
+    
+            await self.execute_script(vectors_ddl)
+            logger.info("Vector database schema verified/created successfully")
+        except Exception as e:
+            logger.error(f"Failed to create vector database schema: {e}")
+            raise
