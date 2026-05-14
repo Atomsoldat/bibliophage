@@ -4,7 +4,6 @@ CREATE EXTENSION IF NOT EXISTS vector;
 CREATE TABLE IF NOT EXISTS document_chunks (
     vector_id UUID DEFAULT uuidv7(),
     document_id UUID REFERENCES documents(document_id) ON DELETE CASCADE,
-    document_id TEXT NOT NULL,
     chunk_id TEXT UNIQUE NOT NULL,
     content TEXT NOT NULL,
     -- 1024 matches BAAI/bge-large-en-v1.5
