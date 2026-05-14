@@ -12,7 +12,6 @@ Usage:
 """
 
 from __future__ import annotations
-import importlib.resources
 import logging
 from psycopg import sql
 from typing import Any
@@ -97,18 +96,8 @@ class DocumentDatabase(PostgresRepository):
         logger.info("DocumentDatabase repository initialised")
 
     async def initialise_db_schema(self) -> None:
-        """Create tables defined in db_schema/*.sql if they do not yet exist.
-
-        The SQL is shipped as package data alongside the Python code so it
-        travels with the application no matter how it is installed or invoked.
-        """
-
-        ddl_schema_dir = importlib.resources.files("db_schema")
-        documents_ddl_file = ddl_schema_dir.joinpath("documents.sql")
-        documents_ddl = documents_ddl_file.read_text(encoding="utf-8")
-
-        await self.execute_script(documents_ddl)
-        logger.info("DocumentDatabase schema initialisation executed")
+        """Create document tables if they do not yet exist."""
+        await super().initialise_db_schema("documents.sql")
 
     # ========================================================================
     # Document Operations

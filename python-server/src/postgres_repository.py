@@ -11,6 +11,7 @@ References:
 
 """
 
+import importlib.resources
 import logging
 from collections.abc import Callable
 
@@ -200,6 +201,23 @@ class PostgresRepository:
         async with self._pool.connection() as conn:
             async with conn.transaction():
                 return await callback(conn)
+
+    async def initialise_db_schema(self, ddl_filename: str) -> None:
+        """Create tables defined in db_schema/{ddl_filename} if they do not yet exist.
+
+        The SQL is shipped as package data alongside the Python code so it
+        travels with the application no matter how it is installed or invoked.
+
+        Args:
+            ddl_filename: Name of the SQL file inside the db_schema package
+                          (e.g. "documents.sql", "vectors.sql")
+
+        """
+        ddl_schema_dir = importlib.resources.files("db_schema")
+        ddl_file = ddl_schema_dir.joinpath(ddl_filename)
+        ddl = ddl_file.read_text(encoding="utf-8")
+        await self.execute_script(ddl)
+        logger.info("Schema initialisation executed (%s)", ddl_filename)
 
     async def close_pool(self) -> None:
         """Close the database connection pool.
