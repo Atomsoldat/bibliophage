@@ -200,7 +200,7 @@ class EmbeddingServiceImplementation:
         # Embed chunks in vector database
         try:
             # Ensure vector schema exists
-            await postgres_vector_db.ensure_schema_exists()
+            await postgres_vector_db.get_vector_database().initialise_db_schema("vectors.sql")
 
             # Embed all chunks
             embedded_count = await postgres_vector_db.embed_chunks(
@@ -386,10 +386,7 @@ class EmbeddingServiceImplementation:
             request.document_id
         )
 
-        # Delete chunk boundaries
-        boundaries_deleted = await self.db.delete_chunk_boundaries(request.document_id)
-
-        if chunks_deleted == 0 and not boundaries_deleted:
+        if chunks_deleted == 0:
             return api.DeleteEmbeddingsResponse(
                 success=False,
                 message=f"No embeddings found for document {request.document_id}",
@@ -398,7 +395,7 @@ class EmbeddingServiceImplementation:
 
         return api.DeleteEmbeddingsResponse(
             success=True,
-            message=f"Deleted {chunks_deleted} chunks and boundaries",
+            message=f"Deleted {chunks_deleted} chunks",
             chunks_deleted=chunks_deleted,
         )
 
