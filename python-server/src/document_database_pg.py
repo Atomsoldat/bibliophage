@@ -104,7 +104,7 @@ class DocumentDatabase(PostgresRepository):
         """
 
         ddl_schema_dir = importlib.resources.files("db_schema")
-        documents_ddl_file = ddl_schema_dir.joinpath("documentdb_table_documents.sql")
+        documents_ddl_file = ddl_schema_dir.joinpath("documents.sql")
         documents_ddl = documents_ddl_file.read_text(encoding="utf-8")
 
         await self.execute_script(documents_ddl)
