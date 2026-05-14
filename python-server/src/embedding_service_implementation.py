@@ -16,7 +16,7 @@ import bibliophage.v1alpha3.embedding_pb2 as api
 import chunking_strategies
 import postgres_vector_db
 from config import get_settings
-from document_database_pg import get_document_db
+from postgres_document_db import get_document_db
 
 logger = logging.getLogger(__name__)
 

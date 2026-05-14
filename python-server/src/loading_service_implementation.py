@@ -7,7 +7,7 @@ from google.protobuf import timestamp_pb2
 
 import bibliophage.v1alpha3.pdf_pb2 as pdf_api
 from config import get_settings
-from document_database_pg import get_document_db
+from postgres_document_db import get_document_db
 from docling_pipeline import DoclingPipeline
 
 logger = logging.getLogger(__name__)

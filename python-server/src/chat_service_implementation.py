@@ -12,7 +12,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 import postgres_vector_db
 from bibliophage.v1alpha3 import chat_pb2 as api
-from document_database_pg import get_document_db
+from postgres_document_db import get_document_db
 from llm_access import DocumentContext, get_llm_client
 
 logger = logging.getLogger(__name__)
