@@ -14,7 +14,7 @@ from google.protobuf import timestamp_pb2
 
 import bibliophage.v1alpha3.embedding_pb2 as api
 import chunking_strategies
-import vector_operations
+import postgres_vector_db
 from config import get_settings
 from document_database_pg import get_document_db
 
@@ -129,7 +129,7 @@ class EmbeddingServiceImplementation:
         1. Fetches the document content
         2. Uses provided boundaries OR generates them from config
         3. Extracts chunk content from the document
-        4. Generates embeddings via vector_operations
+        4. Generates embeddings via postgres_vector_db
         5. Stores chunk boundaries in FerretDB
         6. Marks embeddings as current
 
@@ -200,10 +200,10 @@ class EmbeddingServiceImplementation:
         # Embed chunks in vector database
         try:
             # Ensure vector schema exists
-            await vector_operations.ensure_schema_exists()
+            await postgres_vector_db.ensure_schema_exists()
 
             # Embed all chunks
-            embedded_count = await vector_operations.embed_chunks(
+            embedded_count = await postgres_vector_db.embed_chunks(
                 request.document_id,
                 chunks_with_content,
             )
@@ -382,7 +382,7 @@ class EmbeddingServiceImplementation:
         logger.info(f"DeleteEmbeddings request for document: {request.document_id}")
 
         # Delete from vector database
-        chunks_deleted = await vector_operations.delete_document_chunks(
+        chunks_deleted = await postgres_vector_db.delete_document_chunks(
             request.document_id
         )
 

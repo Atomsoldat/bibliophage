@@ -1,9 +1,7 @@
 """Vector operations module.
 
-TODO: I think in our concept, this should be merged with the vector db module
-
 Provides high-level functions for embedding, searching, and managing document chunks
-using pgvector. This module sits on top of VectorDatabase and provides the business
+using pgvector. This module sits on top of PostgresRepository and provides the business
 logic for RAG operations.
 
 The table schema stores:
@@ -15,42 +13,41 @@ The table schema stores:
 - created_at: Timestamp of when the chunk was embedded
 """
 
-import importlib
 import logging
 from datetime import UTC, datetime
 from typing import Any
 
 from langchain_huggingface import HuggingFaceEmbeddings
+from pgvector.psycopg import register_vector_async
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
 from config import get_settings
-from vector_db import VectorDatabase
+from postgres_repository import PostgresRepository
 
 logger = logging.getLogger(__name__)
 
 # Singleton instances
-_vector_db: VectorDatabase | None = None
+_vector_db: PostgresRepository | None = None
 _embeddings_model: HuggingFaceEmbeddings | None = None
 
 
-def get_vector_database() -> VectorDatabase:
+def get_vector_database() -> PostgresRepository:
     """Get the vector database singleton instance.
 
-    This is the function code should use to get a VectorDatabase object to execute statements with.
+    This is the function code should use to get a PostgresRepository object
+    configured for pgvector operations.
 
     Returns:
-        VectorDatabase: Configured vector database repository
-
-    Raises:
-        Exception: If database initialization fails
+        PostgresRepository: Configured repository with pgvector support
 
     """
     global _vector_db
     if _vector_db is None:
         settings = get_settings()
-        _vector_db = VectorDatabase(
+        _vector_db = PostgresRepository(
             connection_url=str(settings.database.vector_db_url),
+            configure_callback=register_vector_async,
         )
         logger.info("Vector database instance created")
     return _vector_db
@@ -79,40 +76,6 @@ def get_embeddings_model() -> HuggingFaceEmbeddings:
         )
         logger.info(f"Embeddings model loaded: {model_name}")
     return _embeddings_model
-
-
-async def initialise_db_schema():
-    """Ensure the vector storage table exists with proper schema.
-
-    Creates the 'document_chunks' table if it doesn't exist with:
-    - id: BIGSERIAL primary key
-    - document_id: TEXT (UUID of source document)
-    - chunk_id: TEXT UNIQUE (e.g., "doc-uuid:chunk:0")
-    - content: TEXT (chunk text content)
-    - embedding: VECTOR(1024) (pgvector type - dimension matches BAAI/bge-large-en-v1.5)
-    - metadata: JSONB (chunk metadata: heading paths, page numbers, etc.)
-    - created_at: TIMESTAMPTZ (timestamp with timezone)
-
-    Also creates indexes for efficient querying:
-    - Index on document_id for deletion operations
-    - HNSW index on embedding for similarity search
-    - GIN index on metadata for filtering
-
-    This function is idempotent - safe to call multiple times.
-    """
-    vector_db = get_vector_database()
-
-    try:
-        
-        ddl_schema_dir = importlib.resources.files("db_schema")
-        vectors_ddl_file = ddl_schema_dir.joinpath("vectors.sql")
-        vectors_ddl = vectors_ddl_file.read_text(encoding="utf-8")
-
-        await vector_db.execute_script(vectors_ddl)
-        logger.info("Vector database schema verified/created successfully")
-    except Exception as e:
-        logger.error(f"Failed to create vector database schema: {e}")
-        raise
 
 
 async def embed_chunks(

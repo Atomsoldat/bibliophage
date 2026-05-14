@@ -6,7 +6,7 @@ from google.protobuf import timestamp_pb2
 
 import bibliophage.v1alpha3.document_pb2 as document_api
 import bibliophage.v1alpha3.embedding_pb2 as embedding_api
-import vector_operations
+import postgres_vector_db
 from document_database_pg import get_document_db
 
 logger = logging.getLogger(__name__)
@@ -535,7 +535,7 @@ class DocumentServiceImplementation:
         # await self.db.delete_chunk_boundaries(request.id)
         # logger.info(f"Deleted chunk boundaries for document {request.id}")
         ## 2. Delete vector embeddings from pgvector
-        # deleted_chunks = await vector_operations.delete_document_chunks(request.id)
+        # deleted_chunks = await postgres_vector_db.delete_document_chunks(request.id)
         # logger.info(f"Deleted {deleted_chunks} vector chunks for document {request.id}")
 
         return document_api.DeleteDocumentResponse(
