@@ -1,29 +1,36 @@
-"""Unified database repository for Bibliophage.
+"""PostgreSQL database module for Bibliophage.
 
-Single entry point for all PostgreSQL operations: document CRUD, vector
-embeddings, and similarity search.  Replaces the former split between
-postgres_document_db and postgres_vector_db.
+Single module for all PostgreSQL operations: connection pool management,
+document CRUD, vector embeddings, and similarity search.
 
 Usage:
     db = get_postgres_db()
     await db.store_document(name, ...)
     results = await db.search_similar("query text")
+
+References:
+    - https://www.psycopg.org/psycopg3/docs/advanced/pool.html
+    - https://www.psycopg.org/psycopg3/docs/api/pool.html#the-connectionpool-clas
+    - https://www.psycopg.org/psycopg3/docs/advanced/async.html
 """
 
 from __future__ import annotations
 
+import importlib.resources
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import Any
 
 from langchain_huggingface import HuggingFaceEmbeddings
 from pgvector.psycopg import register_vector_async
-from psycopg import sql
+from psycopg import AsyncConnection, sql
 from psycopg.rows import dict_row
 from psycopg.types.json import Json, Jsonb
+from psycopg_pool import AsyncConnectionPool
 
 from config import get_settings
-from postgres_repository import PostgresRepository
 
 logger = logging.getLogger(__name__)
 
@@ -70,11 +77,16 @@ async def close_database():
         logger.info("BibliophageDatabase connection pool closed")
 
 
-# ── repository ──────────────────────────────────────────────────────────
+# ── database ────────────────────────────────────────────────────────────
 
 
-class BibliophageDatabase(PostgresRepository):
-    """Unified repository for documents and vector chunks."""
+class BibliophageDatabase:
+    """PostgreSQL repository for documents and vector chunks.
+
+    Manages a connection pool and provides simple methods for executing queries.
+    Domain methods (store_document, search_similar, ...) are built on top of
+    three primitives: fetchone, fetchall, execute.
+    """
 
     def __init__(
         self,
@@ -82,17 +94,94 @@ class BibliophageDatabase(PostgresRepository):
         min_size: int = 4,
         max_size: int = 100,
     ):
-        super().__init__(
-            connection_url=connection_url,
-            configure_callback=register_vector_async,
-            min_size=min_size,
-            max_size=max_size,
-        )
+        self._connection_url = connection_url
+        self._min_size = min_size
+        self._max_size = max_size
+        self._pool: AsyncConnectionPool | None = None
+
+    # ── pool lifecycle ──────────────────────────────────────────────────
+
+    async def ensure_initialised(self) -> None:
+        """Open the connection pool. Call once during server startup."""
+        if self._pool is not None:
+            return
+        try:
+            self._pool = AsyncConnectionPool(
+                open=False,
+                conninfo=self._connection_url,
+                min_size=self._min_size,
+                max_size=self._max_size,
+                close_returns=True,
+                configure=register_vector_async,
+                kwargs={"autocommit": True},
+            )
+            await self._pool.open()
+            await self._pool.wait()
+            logger.info("PostgreSQL connection pool initialised")
+        except Exception as e:
+            logger.error(f"Failed to initialise PostgreSQL pool: {e}")
+            self._pool = None
+            raise
+
+    async def close_pool(self) -> None:
+        """Close the connection pool. Call on shutdown."""
+        if self._pool is not None:
+            await self._pool.close(timeout=10.0)
+            self._pool = None
 
     async def initialise_schema(self) -> None:
-        """Create all tables (documents + vector chunks) if they don't exist."""
-        await self.initialise_db_schema("documents.sql")
-        await self.initialise_db_schema("vectors.sql")
+        """Create all tables if they don't exist."""
+        for ddl_file in ("documents.sql", "vectors.sql"):
+            ddl_path = importlib.resources.files("db_schema").joinpath(ddl_file)
+            ddl = ddl_path.read_text(encoding="utf-8")
+            await self.execute_script(ddl)
+            logger.info("Schema initialisation executed (%s)", ddl_file)
+
+    # ── SQL primitives ──────────────────────────────────────────────────
+
+    async def fetchone(
+        self, query: str | sql.Composable, params: Any = None,
+    ) -> dict[str, Any] | None:
+        """Execute a query and return a single row as a dict, or None."""
+        async with self._pool.connection() as conn:
+            cursor = await conn.execute(query, params)
+            cursor.row_factory = dict_row
+            return await cursor.fetchone()
+
+    async def fetchall(
+        self, query: str | sql.Composable, params: Any = None,
+    ) -> list[dict[str, Any]]:
+        """Execute a query and return all rows as a list of dicts."""
+        async with self._pool.connection() as conn:
+            cursor = await conn.execute(query, params)
+            cursor.row_factory = dict_row
+            return await cursor.fetchall()
+
+    async def execute(
+        self, query: str | sql.Composable, params: Any = None,
+    ) -> int:
+        """Execute a statement and return the number of affected rows."""
+        async with self._pool.connection() as conn:
+            cursor = await conn.execute(query, params)
+            return cursor.rowcount
+
+    async def execute_script(self, sql_script: str) -> None:
+        """Execute a multi-statement DDL script (no params, no results)."""
+        async with self._pool.connection() as conn:
+            await conn.execute(sql_script)
+
+    @asynccontextmanager
+    async def transaction(self) -> AsyncIterator[AsyncConnection]:
+        """Context manager yielding a connection inside a transaction.
+
+        Usage:
+            async with db.transaction() as conn:
+                await conn.execute(insert_sql, params)
+                await conn.execute(tags_sql, params)
+        """
+        async with self._pool.connection() as conn:
+            async with conn.transaction():
+                yield conn
 
     # ── document CRUD ───────────────────────────────────────────────────
 
@@ -110,7 +199,7 @@ class BibliophageDatabase(PostgresRepository):
         character_count = len(content)
         content_snippet = content[:200] + "..." if character_count > 200 else content
 
-        insert_sql = """
+        insert_sql = sql.SQL("""
             INSERT INTO documents
                 (title, source_type, metadata, content, content_snippet,
                  document_type, character_count)
@@ -118,7 +207,7 @@ class BibliophageDatabase(PostgresRepository):
                 (%(name)s, %(source_type)s, %(metadata)s, %(content)s,
                  %(content_snippet)s, %(doc_type)s, %(character_count)s)
             RETURNING document_id, created_at, character_count
-        """
+        """)
         params = {
             "name": name,
             "source_type": source_type,
@@ -132,35 +221,25 @@ class BibliophageDatabase(PostgresRepository):
         # TODO: insert systems into map_documents_to_systems
         # TODO: insert tags into map_documents_to_tags
 
-        async def _insert(conn) -> dict[str, Any]:
-            cursor = await conn.execute(insert_sql, params)
-            row = await cursor.fetchone()
-            return {
-                "document_id": str(row[0]),
-                "created_at": row[1],
-                "character_count": int(row[2]),
-            }
-
-        result = await self.execute_transaction(_insert)
+        row = await self.fetchone(insert_sql, params)
+        result = {
+            "document_id": str(row["document_id"]),
+            "created_at": row["created_at"],
+            "character_count": int(row["character_count"]),
+        }
         logger.info(f"Document inserted: {result['document_id']}")
         return result
 
     async def get_document_by_id(self, document_id: str) -> dict[str, Any] | None:
-        """Retrieve a document by ID. Returns dict with column names as keys."""
-        fetch_sql = """
-            SELECT * FROM documents WHERE document_id = %(document_id)s
-        """
-        async with self._pool.connection() as conn:
-            cursor = await conn.execute(fetch_sql, {"document_id": document_id})
-            cursor.row_factory = dict_row
-            return await cursor.fetchone()
+        """Retrieve a document by ID."""
+        fetch_sql = sql.SQL("SELECT * FROM documents WHERE document_id = %(document_id)s")
+        return await self.fetchone(fetch_sql, {"document_id": document_id})
 
     async def delete_document(self, document_id: str) -> bool:
         """Delete a document (cascades to document_chunks). Returns True if deleted."""
-        delete_sql = "DELETE FROM documents WHERE document_id = %(document_id)s"
-        async with self._pool.connection() as conn:
-            cursor = await conn.execute(delete_sql, {"document_id": document_id})
-            return cursor.rowcount == 1
+        delete_sql = sql.SQL("DELETE FROM documents WHERE document_id = %(document_id)s")
+        count = await self.execute(delete_sql, {"document_id": document_id})
+        return count == 1
 
     async def search_documents(
         self,
@@ -206,14 +285,10 @@ class BibliophageDatabase(PostgresRepository):
 
         params_data = {**params, "page_size": page_size, "offset": page_number * page_size}
 
-        async with self._pool.connection() as conn:
-            cursor = await conn.execute(query_data, params_data)
-            cursor.row_factory = dict_row
-            documents = await cursor.fetchall()
+        documents = await self.fetchall(query_data, params_data)
 
-        async with self._pool.connection() as conn:
-            cursor = await conn.execute(query_count, params)
-            total = (await cursor.fetchone())[0]
+        count_row = await self.fetchone(query_count, params)
+        total = count_row["count"] if count_row else 0
 
         return documents, total
 
@@ -265,24 +340,23 @@ class BibliophageDatabase(PostgresRepository):
                 "created_at": now,
             })
 
-        async def _insert(cursor):
-            await cursor.executemany(insert_sql, rows)
-            return cursor.rowcount
-
-        count = await self.execute("", callback=_insert)
+        # executemany needs a connection directly — use the pool context
+        async with self._pool.connection() as conn:
+            cursor = await conn.executemany(insert_sql, rows, returning=True)
+            # psycopg3 executemany with returning=True returns a count
+            # but rowcount after executemany reflects last statement only,
+            # so we use len(rows) as the authoritative count
+        count = len(rows)
         logger.info(f"Inserted {count} chunks for document {document_id}")
         return count
 
     async def delete_document_chunks(self, document_id: str) -> int:
         """Delete all chunks for a document. Returns count deleted."""
-        async def _count(cursor):
-            return cursor.rowcount
-
-        count = await self.execute(
-            "DELETE FROM document_chunks WHERE document_id = %s",
-            params=(document_id,),
-            callback=_count,
+        delete_sql = sql.SQL(
+            "DELETE FROM document_chunks WHERE document_id = %(document_id)s"
         )
+        params = {"document_id": document_id}
+        count = await self.execute(delete_sql, params)
         logger.info(f"Deleted {count} chunks for document {document_id}")
         return count
 
@@ -300,50 +374,36 @@ class BibliophageDatabase(PostgresRepository):
         query_embedding = model.embed_query(query)
 
         if document_id is None:
-            search_sql = """
+            search_sql = sql.SQL("""
                 SELECT chunk_id, document_id, content, metadata,
-                       1 - (embedding <=> %s::vector) AS similarity
+                       1 - (embedding <=> %(embedding)s::vector) AS similarity
                 FROM document_chunks
-                ORDER BY embedding <=> %s::vector
-                LIMIT %s
-            """
-            params = (query_embedding, query_embedding, top_k)
+                ORDER BY embedding <=> %(embedding)s::vector
+                LIMIT %(top_k)s
+            """)
+            params = {"embedding": query_embedding, "top_k": top_k}
         else:
-            search_sql = """
+            search_sql = sql.SQL("""
                 SELECT chunk_id, document_id, content, metadata,
-                       1 - (embedding <=> %s::vector) AS similarity
+                       1 - (embedding <=> %(embedding)s::vector) AS similarity
                 FROM document_chunks
-                WHERE document_id = %s
-                ORDER BY embedding <=> %s::vector
-                LIMIT %s
-            """
-            params = (query_embedding, document_id, query_embedding, top_k)
+                WHERE document_id = %(document_id)s
+                ORDER BY embedding <=> %(embedding)s::vector
+                LIMIT %(top_k)s
+            """)
+            params = {
+                "embedding": query_embedding,
+                "document_id": document_id,
+                "top_k": top_k,
+            }
 
-        async def _fetch(cursor):
-            rows = await cursor.fetchall()
-            return [
-                {
-                    "chunk_id": r[0],
-                    "document_id": r[1],
-                    "content": r[2],
-                    "metadata": r[3],
-                    "similarity": float(r[4]),
-                }
-                for r in rows
-            ]
-
-        results = await self.execute(search_sql, params=params, callback=_fetch)
-        logger.info(f"Found {len(results)} similar chunks")
-        return results
+        return await self.fetchall(search_sql, params)
 
     async def get_chunk_count(self, document_id: str) -> int:
         """Get number of chunks for a document."""
-        async def _count(cursor):
-            row = await cursor.fetchone()
-            return row[0] if row else 0
-
-        return await self.execute(
-            "SELECT COUNT(*) FROM document_chunks WHERE document_id = %s",
-            params=(document_id,),
-            callback=_count,
+        count_sql = sql.SQL(
+            "SELECT COUNT(*) AS count FROM document_chunks WHERE document_id = %(document_id)s"
         )
+        params = {"document_id": document_id}
+        row = await self.fetchone(count_sql, params)
+        return row["count"] if row else 0
