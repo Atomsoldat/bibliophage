@@ -199,10 +199,6 @@ class EmbeddingServiceImplementation:
 
         # Embed chunks in vector database
         try:
-            # Ensure vector schema exists
-            await postgres_vector_db.get_vector_database().initialise_db_schema("vectors.sql")
-
-            # Embed all chunks
             embedded_count = await postgres_vector_db.embed_chunks(
                 request.document_id,
                 chunks_with_content,
