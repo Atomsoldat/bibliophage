@@ -143,12 +143,13 @@ class DocumentServiceImplementation:
         stored_document = document_api.Document()
         stored_document.CopyFrom(request.document)
         stored_document.id = response["document_id"]
-
-        # Set timestamps
-        stored_document.created_at = response["created_at"]
-        # same thing in this case
-        stored_document.updated_at = response["created_at"]
         stored_document.character_count = response["character_count"]
+
+        # Set timestamps — must use FromDatetime, not direct assignment
+        created_ts = timestamp_pb2.Timestamp()
+        created_ts.FromDatetime(response["created_at"])
+        stored_document.created_at.CopyFrom(created_ts)
+        stored_document.updated_at.CopyFrom(created_ts)
 
         return document_api.StoreDocumentResponse(
             success=True,
