@@ -1,7 +1,5 @@
 import logging
 import traceback
-import uuid
-from datetime import UTC, datetime
 
 from google.protobuf import timestamp_pb2
 
@@ -84,10 +82,6 @@ class LoadingServiceImplementation:
                 f"PDF processing complete: {processing_result['successful_batches']}/{len(processing_result['processed_batches'])} batches succeeded",
             )
 
-            # Store as Document in unified documents collection
-            document_id = str(uuid.uuid4())
-            now = datetime.now(UTC)
-
             # Convert protobuf tags to dict format for database storage
             tags = []
             for tag in request.pdf.tags:
@@ -126,22 +120,20 @@ class LoadingServiceImplementation:
                 },
             }
 
-            await self.db.store_document(
-                document_id=document_id,
+            result = await self.db.store_document(
                 name=request.pdf.name,
                 systems=list(request.pdf.systems),
                 source_type=source_type,
                 content=processing_result["content"],
                 doc_type=doc_type,
                 tags=tags,
-                created_at=now,
                 metadata=metadata,
             )
 
             # Create response with PDF metadata (for API compatibility)
             stored_pdf = pdf_api.Pdf()
             stored_pdf.CopyFrom(request.pdf)
-            stored_pdf.id = document_id
+            stored_pdf.id = result["document_id"]
             stored_pdf.page_count = processing_result["total_pages"]
             stored_pdf.batch_count = len(processing_result["processed_batches"])
             stored_pdf.vector_chunk_count = vector_chunk_count
@@ -149,7 +141,7 @@ class LoadingServiceImplementation:
 
             # Set timestamps
             timestamp = timestamp_pb2.Timestamp()
-            timestamp.FromDatetime(now)
+            timestamp.FromDatetime(result["created_at"])
             stored_pdf.created_at.CopyFrom(timestamp)
             stored_pdf.updated_at.CopyFrom(timestamp)
 
