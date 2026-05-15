@@ -183,150 +183,49 @@ class DocumentServiceImplementation:
         request: document_api.UpdateDocumentRequest,
         ctx,
     ) -> document_api.UpdateDocumentResponse:
-        logger.info(f"Received UpdateDocumentRequest for ID: {request.document.id}")
+        """Update a document by ID.
 
-        # Validate systems array if provided (must have at least one value)
-        systems = None
-        if request.document.systems:
-            if len(request.document.systems) == 0:
-                return document_api.UpdateDocumentResponse(
-                    success=False,
-                    message="Document must belong to at least one system",
-                )
-            systems = list(request.document.systems)
+        TODO: Re-implement against PostgreSQL. Pseudocode below.
 
-        # Convert protobuf tags to dict format for database storage if provided
-        tags = None
-        if request.document.tags:
-            tags = []
-            for tag in request.document.tags:
-                tags.append({"name": tag.name, "values": list(tag.values)})
+        Conversion helpers to extract from this method and get_document / search_documents:
+        - _row_to_proto_document(row) — maps DB row to document_api.Document
+          handles column renames (document_id→id, title→name, document_type→type),
+          enum lookups, metadata JSONB→proto, and timestamp conversion
+        - _proto_to_update_params(proto) — maps document_api.Document fields to
+          a dict of DB column names and values, only including fields that are
+          actually set on the proto (partial update semantics)
 
-        # Convert enum to string name for database storage if provided
-        doc_type = None
-        if (
-            request.document.type
-            and request.document.type != document_api.DOCUMENT_TYPE_UNSPECIFIED
-        ):
-            doc_type = document_api.DocumentType.Name(request.document.type)
+        Pseudocode:
+        1. params = _proto_to_update_params(request.document)
+           — skip unset fields (empty strings, UNSPECIFIED enums)
+           — convert enums to string names (DocumentType.Name, SourceType.Name)
+           — convert metadata proto to JSONB dict
+           — if content changed, update character_count and content_snippet too
 
-        # Convert source_type enum to string if provided
-        source_type = None
-        if (
-            request.document.source_type
-            and request.document.source_type != document_api.SOURCE_TYPE_UNSPECIFIED
-        ):
-            source_type = document_api.SourceType.Name(request.document.source_type)
+        2. if not params:
+               return error "no fields to update"
 
-        # Convert metadata if provided
-        metadata = None
-        if request.document.HasField("metadata"):
-            metadata = {
-                "file_size": request.document.metadata.file_size,
-            }
-            if request.document.metadata.HasField("publication_type"):
-                metadata["publication_type"] = (
-                    request.document.metadata.publication_type
-                )
-            if request.document.metadata.HasField("pdf"):
-                metadata["pdf"] = {
-                    "loading_batch_count": request.document.metadata.pdf.loading_batch_count,
-                    "vector_chunk_count": request.document.metadata.pdf.vector_chunk_count,
-                    "page_count": request.document.metadata.pdf.page_count,
-                }
+        3. updated_row = await self.db.update_document(request.document.id, params)
+           — db.update_document builds: UPDATE documents SET col1=%(col1)s, ...
+             WHERE document_id = %(document_id)s RETURNING *
+           — single query, no ORM, uses psycopg sql.SQL + sql.Identifier for
+             dynamic column names so we don't need to enumerate every combination
 
-        # Update document in database
-        doc_data = await self.db.update_document(
-            document_id=request.document.id,
-            name=request.document.name if request.document.name else None,
-            systems=systems,
-            source_type=source_type,
-            content=request.document.content if request.document.content else None,
-            doc_type=doc_type,
-            tags=tags,
-            metadata=metadata,
-        )
+        4. if updated_row is None:
+               return error "not found"
 
-        if doc_data is None:
-            return document_api.UpdateDocumentResponse(
-                success=False,
-                message=f"Document with ID {request.document.id} not found",
-            )
+        5. TODO: if "content" in params, flag embeddings as stale or re-embed
 
-        # Lifecycle hook: Mark embeddings as stale if content changed
-        # This signals that the document has been modified and embeddings need re-generation
-        if request.document.content:
-            await self.db.mark_embeddings_stale(request.document.id)
-            logger.info(
-                f"Marked embeddings as stale for document {request.document.id} due to content update",
-            )
+        6. TODO: handle systems (delete + re-insert into map_documents_to_systems)
+           and tags (delete + re-insert into map_documents_to_tags) within a
+           db.transaction() alongside the document UPDATE
 
-        # Convert updated database document to protobuf Document
-        updated_document = document_api.Document()
-        updated_document.id = doc_data["_id"]
-        updated_document.name = doc_data["name"]
-        updated_document.content = doc_data["content"]
-        updated_document.type = getattr(
-            document_api,
-            doc_data["type"],
-            document_api.DOCUMENT_TYPE_UNSPECIFIED,
-        )
-        updated_document.character_count = doc_data["character_count"]
-
-        # Add systems array
-        updated_document.systems.extend(doc_data.get("systems", []))
-
-        # Convert source_type string to enum
-        source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
-        updated_document.source_type = getattr(
-            document_api,
-            source_type_str,
-            document_api.SOURCE_TYPE_UNSPECIFIED,
-        )
-
-        # Convert metadata if present
-        if "metadata" in doc_data:
-            metadata = document_api.Metadata()
-            metadata.file_size = doc_data["metadata"].get("file_size", 0)
-
-            if "publication_type" in doc_data["metadata"]:
-                metadata.publication_type = doc_data["metadata"]["publication_type"]
-
-            if "pdf" in doc_data["metadata"]:
-                pdf_data = document_api.PdfData()
-                pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
-                    "loading_batch_count",
-                    0,
-                )
-                pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get(
-                    "vector_chunk_count",
-                    0,
-                )
-                pdf_data.page_count = doc_data["metadata"]["pdf"].get("page_count", 0)
-                metadata.pdf.CopyFrom(pdf_data)
-
-            updated_document.metadata.CopyFrom(metadata)
-
-        # Convert dict tags to protobuf tags
-        for tag_data in doc_data.get("tags", []):
-            tag = document_api.Tag()
-            tag.name = tag_data.get("name", "")
-            tag.values.extend(tag_data.get("values", []))
-            updated_document.tags.append(tag)
-
-        # Set timestamps
-        created_timestamp = timestamp_pb2.Timestamp()
-        created_timestamp.FromDatetime(doc_data["created_at"])
-        updated_document.created_at.CopyFrom(created_timestamp)
-
-        updated_timestamp = timestamp_pb2.Timestamp()
-        updated_timestamp.FromDatetime(doc_data["updated_at"])
-        updated_document.updated_at.CopyFrom(updated_timestamp)
-
-        return document_api.UpdateDocumentResponse(
-            success=True,
-            message=f"Document '{updated_document.name}' updated successfully",
-            document=updated_document,
+        7. document = _row_to_proto_document(updated_row)
+           return UpdateDocumentResponse(success=True, document=document)
+        """
+        raise NotImplementedError(
+            "UpdateDocument is not yet implemented against PostgreSQL. "
+            "See pseudocode in docstring for implementation plan."
         )
 
     async def search_documents(
@@ -393,14 +292,6 @@ class DocumentServiceImplementation:
             page_size=page_size,
             page_number=page_number,
         )
-
-        # Fetch chunk boundaries for all documents to populate embedding status
-        document_ids = [doc["_id"] for doc in documents]
-        chunk_boundaries_map = {}
-        for doc_id in document_ids:
-            boundaries_doc = await self.db.get_chunk_boundaries(doc_id)
-            if boundaries_doc:
-                chunk_boundaries_map[doc_id] = boundaries_doc
 
         # Convert database documents to DocumentListItem protobuf objects
         document_list_items = []
@@ -469,33 +360,17 @@ class DocumentServiceImplementation:
                 tag.values.extend(tag_data.get("values", []))
                 list_item.tags.append(tag)
 
-            # Populate embedding status if chunk boundaries exist
-            doc_id = doc_data["_id"]
-            if doc_id in chunk_boundaries_map:
-                boundaries_data = chunk_boundaries_map[doc_id]
-                embedding_status = embedding_api.EmbeddingStatus()
-                embedding_status.is_embedded = boundaries_data.get(
-                    "embedding_status",
-                    {},
-                ).get("is_embedded", False)
-                embedding_status.embeddings_current = boundaries_data.get(
-                    "embedding_status",
-                    {},
-                ).get("embeddings_current", False)
-                embedding_status.total_chunks = len(
-                    boundaries_data.get("chunk_boundaries", []),
+            # Populate embedding status from document_chunks table
+            doc_id = str(doc_data["document_id"])
+            chunk_count = await self.db.get_chunk_count(doc_id)
+            if chunk_count > 0:
+                embedding_status = embedding_api.EmbeddingStatus(
+                    is_embedded=True,
+                    # TODO: embeddings_current is always True — we don't track
+                    # whether content changed since last embedding
+                    embeddings_current=True,
+                    total_chunks=chunk_count,
                 )
-
-                if (
-                    "embedding_status" in boundaries_data
-                    and "embedded_at" in boundaries_data["embedding_status"]
-                ):
-                    embedded_timestamp = timestamp_pb2.Timestamp()
-                    embedded_timestamp.FromDatetime(
-                        boundaries_data["embedding_status"]["embedded_at"],
-                    )
-                    embedding_status.embedded_at.CopyFrom(embedded_timestamp)
-
                 list_item.embedding_status.CopyFrom(embedding_status)
 
             document_list_items.append(list_item)
