@@ -1,6 +1,5 @@
 import logging
-import uuid
-from datetime import UTC, datetime
+from typing import Any
 
 from google.protobuf import timestamp_pb2
 
@@ -9,6 +8,74 @@ import bibliophage.v1alpha3.embedding_pb2 as embedding_api
 from postgres_db import get_postgres_db
 
 logger = logging.getLogger(__name__)
+
+
+def _row_to_proto_document(
+    row: dict[str, Any],
+    proto_class: type = document_api.Document,
+) -> document_api.Document | document_api.DocumentListItem:
+    """Convert a DB row from the documents table to a proto Document or DocumentListItem.
+
+    Handles column renames (document_id→id, title→name, document_type→type),
+    enum string→proto lookups, metadata JSONB→proto, and timestamp conversion.
+    """
+    proto = proto_class()
+    proto.id = str(row["document_id"])
+    proto.name = row["title"]
+    proto.character_count = row["character_count"]
+
+    # Content field: Document has full content, DocumentListItem has content_snippet
+    if proto_class == document_api.Document:
+        proto.content = row["content"]
+    else:
+        proto.content_snippet = row.get("content_snippet", "")
+
+    # Enum fields — stored as their proto name strings in DB
+    proto.type = getattr(
+        document_api, row["document_type"], document_api.DOCUMENT_TYPE_UNSPECIFIED,
+    )
+    source_type_str = row.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
+    proto.source_type = getattr(
+        document_api, source_type_str, document_api.SOURCE_TYPE_UNSPECIFIED,
+    )
+
+    # TODO: systems are not yet stored — junction table not wired up
+    proto.systems.extend(row.get("systems", []))
+
+    # Metadata JSONB → proto
+    metadata_dict = row.get("metadata") or {}
+    if metadata_dict:
+        metadata = document_api.Metadata()
+        metadata.file_size = metadata_dict.get("file_size", 0)
+        if "publication_type" in metadata_dict:
+            metadata.publication_type = metadata_dict["publication_type"]
+        if "pdf" in metadata_dict:
+            pdf = metadata_dict["pdf"]
+            pdf_data = document_api.PdfData(
+                loading_batch_count=pdf.get("loading_batch_count", 0),
+                vector_chunk_count=pdf.get("vector_chunk_count", 0),
+                page_count=pdf.get("page_count", 0),
+            )
+            metadata.pdf.CopyFrom(pdf_data)
+        proto.metadata.CopyFrom(metadata)
+
+    # TODO: tags are not yet stored — junction table not wired up
+    for tag_data in row.get("tags", []):
+        tag = document_api.Tag()
+        tag.name = tag_data.get("name", "")
+        tag.values.extend(tag_data.get("values", []))
+        proto.tags.append(tag)
+
+    # Timestamps
+    created_ts = timestamp_pb2.Timestamp()
+    created_ts.FromDatetime(row["created_at"])
+    proto.created_at.CopyFrom(created_ts)
+
+    updated_ts = timestamp_pb2.Timestamp()
+    updated_ts.FromDatetime(row["updated_at"])
+    proto.updated_at.CopyFrom(updated_ts)
+
+    return proto
 
 
 class DocumentServiceImplementation:
@@ -105,65 +172,7 @@ class DocumentServiceImplementation:
                 message=f"Document with ID {request.id} not found",
             )
 
-        # Convert database document to protobuf Document
-        document = document_api.Document()
-        document.id = doc_data["_id"]
-        document.name = doc_data["name"]
-        document.content = doc_data["content"]
-        document.type = getattr(
-            document_api, doc_data["type"], document_api.DOCUMENT_TYPE_UNSPECIFIED
-        )
-        document.character_count = doc_data["character_count"]
-
-        # Add systems array
-        document.systems.extend(doc_data.get("systems", []))
-
-        # Convert source_type string to enum
-        source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
-        document.source_type = getattr(
-            document_api,
-            source_type_str,
-            document_api.SOURCE_TYPE_UNSPECIFIED,
-        )
-
-        # Convert metadata if present
-        if "metadata" in doc_data:
-            metadata = document_api.Metadata()
-            metadata.file_size = doc_data["metadata"].get("file_size", 0)
-
-            if "publication_type" in doc_data["metadata"]:
-                metadata.publication_type = doc_data["metadata"]["publication_type"]
-
-            if "pdf" in doc_data["metadata"]:
-                pdf_data = document_api.PdfData()
-                pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
-                    "loading_batch_count",
-                    0,
-                )
-                pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get(
-                    "vector_chunk_count",
-                    0,
-                )
-                pdf_data.page_count = doc_data["metadata"]["pdf"].get("page_count", 0)
-                metadata.pdf.CopyFrom(pdf_data)
-
-            document.metadata.CopyFrom(metadata)
-
-        # Convert dict tags to protobuf tags
-        for tag_data in doc_data.get("tags", []):
-            tag = document_api.Tag()
-            tag.name = tag_data.get("name", "")
-            tag.values.extend(tag_data.get("values", []))
-            document.tags.append(tag)
-
-        # Set timestamps
-        created_timestamp = timestamp_pb2.Timestamp()
-        created_timestamp.FromDatetime(doc_data["created_at"])
-        document.created_at.CopyFrom(created_timestamp)
-
-        updated_timestamp = timestamp_pb2.Timestamp()
-        updated_timestamp.FromDatetime(doc_data["updated_at"])
-        document.updated_at.CopyFrom(updated_timestamp)
+        document = _row_to_proto_document(doc_data)
 
         return document_api.GetDocumentResponse(
             success=True,
@@ -296,69 +305,7 @@ class DocumentServiceImplementation:
         # Convert database documents to DocumentListItem protobuf objects
         document_list_items = []
         for doc_data in documents:
-            list_item = document_api.DocumentListItem()
-            list_item.id = doc_data["_id"]
-            list_item.name = doc_data["name"]
-            list_item.content_snippet = doc_data.get("content_snippet", "")
-            list_item.type = getattr(
-                document_api,
-                doc_data["type"],
-                document_api.DOCUMENT_TYPE_UNSPECIFIED,
-            )
-            list_item.character_count = doc_data["character_count"]
-
-            # Add systems array
-            list_item.systems.extend(doc_data.get("systems", []))
-
-            # Convert source_type string to enum
-            source_type_str = doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
-            list_item.source_type = getattr(
-                document_api,
-                source_type_str,
-                document_api.SOURCE_TYPE_UNSPECIFIED,
-            )
-
-            # Convert metadata if present
-            if "metadata" in doc_data:
-                metadata = document_api.Metadata()
-                metadata.file_size = doc_data["metadata"].get("file_size", 0)
-
-                if "publication_type" in doc_data["metadata"]:
-                    metadata.publication_type = doc_data["metadata"]["publication_type"]
-
-                if "pdf" in doc_data["metadata"]:
-                    pdf_data = document_api.PdfData()
-                    pdf_data.loading_batch_count = doc_data["metadata"]["pdf"].get(
-                        "loading_batch_count",
-                        0,
-                    )
-                    pdf_data.vector_chunk_count = doc_data["metadata"]["pdf"].get(
-                        "vector_chunk_count",
-                        0,
-                    )
-                    pdf_data.page_count = doc_data["metadata"]["pdf"].get(
-                        "page_count",
-                        0,
-                    )
-                    metadata.pdf.CopyFrom(pdf_data)
-
-                list_item.metadata.CopyFrom(metadata)
-
-            # Set timestamps
-            created_timestamp = timestamp_pb2.Timestamp()
-            created_timestamp.FromDatetime(doc_data["created_at"])
-            list_item.created_at.CopyFrom(created_timestamp)
-
-            updated_timestamp = timestamp_pb2.Timestamp()
-            updated_timestamp.FromDatetime(doc_data["updated_at"])
-            list_item.updated_at.CopyFrom(updated_timestamp)
-
-            # Add tags (tags are stored as dicts in the database)
-            for tag_data in doc_data.get("tags", []):
-                tag = document_api.Tag()
-                tag.name = tag_data.get("name", "")
-                tag.values.extend(tag_data.get("values", []))
-                list_item.tags.append(tag)
+            list_item = _row_to_proto_document(doc_data, document_api.DocumentListItem)
 
             # Populate embedding status from document_chunks table
             doc_id = str(doc_data["document_id"])
