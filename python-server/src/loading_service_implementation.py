@@ -7,7 +7,7 @@ from google.protobuf import timestamp_pb2
 
 import bibliophage.v1alpha3.pdf_pb2 as pdf_api
 from config import get_settings
-from postgres_document_db import get_document_db
+from postgres_db import get_postgres_db
 from docling_pipeline import DoclingPipeline
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ class LoadingServiceImplementation:
         """Initialise the loading service with configuration from environment variables."""
         settings = get_settings()
 
-        self.db = get_document_db()
+        self.db = get_postgres_db()
 
         # Initialise docling pipeline
         # TODO: Make these configurable via environment variables or request parameters

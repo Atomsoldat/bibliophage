@@ -6,8 +6,7 @@ from google.protobuf import timestamp_pb2
 
 import bibliophage.v1alpha3.document_pb2 as document_api
 import bibliophage.v1alpha3.embedding_pb2 as embedding_api
-import postgres_vector_db
-from postgres_document_db import get_document_db
+from postgres_db import get_postgres_db
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 class DocumentServiceImplementation:
     def __init__(self):
         """Initialize the document service with database repository."""
-        self.db = get_document_db()
+        self.db = get_postgres_db()
         logger.info("Document service initialized with database repository")
 
     # TODO: figure out where the type of ctx is defined, we  don't use it in the loading service either
@@ -528,16 +527,7 @@ class DocumentServiceImplementation:
                 message=f"Document with ID {request.id} could not be deleted",
             )
 
-        ## Since we will store documents and vectors  together in postgres,
-        ## we can let the database take care of the cascading deletion
-        ## Lifecycle hooks: Cascade deletion to related data
-        ## 1. Delete chunk boundaries from FerretDB
-        # await self.db.delete_chunk_boundaries(request.id)
-        # logger.info(f"Deleted chunk boundaries for document {request.id}")
-        ## 2. Delete vector embeddings from pgvector
-        # deleted_chunks = await postgres_vector_db.delete_document_chunks(request.id)
-        # logger.info(f"Deleted {deleted_chunks} vector chunks for document {request.id}")
-
+        # Chunk deletion is handled by ON DELETE CASCADE on document_chunks FK
         return document_api.DeleteDocumentResponse(
             success=True,
             message=f"Document with ID {request.id} deleted successfully",

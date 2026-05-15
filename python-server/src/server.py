@@ -5,8 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import postgres_document_db
-import postgres_vector_db
+import postgres_db
 from bibliophage.v1alpha3.chat_connect import ChatServiceASGIApplication
 from bibliophage.v1alpha3.document_connect import DocumentServiceASGIApplication
 from bibliophage.v1alpha3.embedding_connect import EmbeddingServiceASGIApplication
@@ -32,16 +31,12 @@ configure_logging()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifespan - startup and shutdown."""
-    document_db = postgres_document_db.get_document_db()
-    vector_db = postgres_vector_db.get_vector_database()
-    await document_db.ensure_initialised()
-    await document_db.initialise_db_schema()
-    await vector_db.ensure_initialised()
-    await vector_db.initialise_db_schema("vectors.sql")
+    db = postgres_db.get_postgres_db()
+    await db.ensure_initialised()
+    await db.initialise_schema()
     yield
-    # Shutdown: close database connections
-    await postgres_document_db.close_database()
-    await postgres_vector_db.close_database()
+    # clean up before shutdown
+    await postgres_db.close_database()
 
 
 # this is the core of our API application,

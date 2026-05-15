@@ -14,9 +14,8 @@ from google.protobuf import timestamp_pb2
 
 import bibliophage.v1alpha3.embedding_pb2 as api
 import chunking_strategies
-import postgres_vector_db
+from postgres_db import get_postgres_db
 from config import get_settings
-from postgres_document_db import get_document_db
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ class EmbeddingServiceImplementation:
 
     def __init__(self):
         """Initialize the embedding service with database and config."""
-        self.db = get_document_db()
+        self.db = get_postgres_db()
         self.settings = get_settings()
         logger.info("Embedding service initialized")
 
@@ -129,7 +128,7 @@ class EmbeddingServiceImplementation:
         1. Fetches the document content
         2. Uses provided boundaries OR generates them based on config
         3. Extracts chunk content from the document
-        4. Generates embeddings via postgres_vector_db
+        4. Generates embeddings via postgres_db
         5. Marks embeddings as current
 
         Args:
@@ -197,7 +196,7 @@ class EmbeddingServiceImplementation:
 
         # Embed chunks in vector database
         try:
-            embedded_count = await postgres_vector_db.embed_chunks(
+            embedded_count = await self.db.embed_chunks(
                 request.document_id,
                 chunks_with_content,
             )
@@ -376,7 +375,7 @@ class EmbeddingServiceImplementation:
         logger.info(f"DeleteEmbeddings request for document: {request.document_id}")
 
         # Delete from vector database
-        chunks_deleted = await postgres_vector_db.delete_document_chunks(
+        chunks_deleted = await self.db.delete_document_chunks(
             request.document_id
         )
 

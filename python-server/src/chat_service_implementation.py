@@ -10,9 +10,8 @@ from dataclasses import dataclass
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-import postgres_vector_db
 from bibliophage.v1alpha3 import chat_pb2 as api
-from postgres_document_db import get_document_db
+from postgres_db import get_postgres_db
 from llm_access import DocumentContext, get_llm_client
 
 logger = logging.getLogger(__name__)
@@ -37,7 +36,7 @@ class ChatServiceImplementation:
 
     def __init__(self) -> None:
         """Initialize the chat service with database and LLM client."""
-        self.db = get_document_db()
+        self.db = get_postgres_db()
         self.llm = get_llm_client()
         logger.info("Chat service initialized")
 
@@ -159,7 +158,7 @@ class ChatServiceImplementation:
     ) -> list[RetrievedChunkInfo]:
         """Perform vector search and enrich results with document names."""
         try:
-            search_results = await postgres_vector_db.search_similar(
+            search_results = await self.db.search_similar(
                 query=query,
                 top_k=top_k,
             )
