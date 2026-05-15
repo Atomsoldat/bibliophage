@@ -197,15 +197,14 @@ class BibliophageDatabase:
     ) -> dict[str, Any]:
         """Insert a document. Returns dict with document_id, created_at, character_count."""
         character_count = len(content)
-        content_snippet = content[:200] + "..." if character_count > 200 else content
 
         insert_sql = sql.SQL("""
             INSERT INTO documents
-                (title, source_type, metadata, content, content_snippet,
+                (title, source_type, metadata, content,
                  document_type, character_count)
             VALUES
                 (%(name)s, %(source_type)s, %(metadata)s, %(content)s,
-                 %(content_snippet)s, %(doc_type)s, %(character_count)s)
+                 %(doc_type)s, %(character_count)s)
             RETURNING document_id, created_at, character_count
         """)
         params = {
@@ -213,7 +212,6 @@ class BibliophageDatabase:
             "source_type": source_type,
             "metadata": Json(metadata or {}),
             "content": content,
-            "content_snippet": content_snippet,
             "doc_type": doc_type,
             "character_count": character_count,
         }
