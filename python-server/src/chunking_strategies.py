@@ -137,7 +137,6 @@ class TokenBasedStrategy(ChunkingStrategy):
             description = f"Chunk {i + 1}"
 
             boundary = ChunkBoundary(
-                chunk_id=f"{document_id}:chunk:{i}",
                 char_start=chunk_start,
                 char_end=chunk_end,
                 token_start=i * chunk_size,  # Approximate token position
@@ -189,7 +188,6 @@ class MarkdownStructureStrategy(ChunkingStrategy):
             logger.warning("No headings found, creating single chunk")
             return [
                 ChunkBoundary(
-                    chunk_id=f"{document_id}:chunk:0",
                     char_start=0,
                     char_end=len(content),
                     description="Complete document",
@@ -245,7 +243,6 @@ class MarkdownStructureStrategy(ChunkingStrategy):
                 )
 
             boundary = ChunkBoundary(
-                chunk_id=f"{document_id}:chunk:{i}",
                 char_start=chunk.char_start,
                 char_end=chunk.char_end,
                 description=chunk.description,
@@ -298,7 +295,6 @@ class MarkdownWithTokenLimitStrategy(ChunkingStrategy):
 
             if chunk_size <= max_chunk_size:
                 # Chunk is within limit, keep as-is but update ID
-                chunk.chunk_id = f"{document_id}:chunk:{chunk_counter}"
                 final_boundaries.append(chunk)
                 chunk_counter += 1
             else:
@@ -370,7 +366,6 @@ class PdfPageBasedStrategy(ChunkingStrategy):
             logger.warning("No page markers found, creating single chunk")
             return [
                 ChunkBoundary(
-                    chunk_id=f"{document_id}:chunk:0",
                     char_start=0,
                     char_end=len(content),
                     description="Complete document (no page markers)",
@@ -404,7 +399,6 @@ class PdfPageBasedStrategy(ChunkingStrategy):
             )
 
             boundary = ChunkBoundary(
-                chunk_id=f"{document_id}:chunk:{i}",
                 char_start=chunk_start,
                 char_end=chunk_end,
                 description=f"Page {page_num}"

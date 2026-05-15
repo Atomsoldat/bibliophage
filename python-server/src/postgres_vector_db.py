@@ -6,7 +6,7 @@ logic for RAG operations.
 
 The table schema stores:
 - document_id: UUID of the source document
-- chunk_id: Unique identifier for the chunk (e.g., "doc-uuid:chunk:0")
+- chunk_id: UUID of the chunk
 - content: The actual text content of the chunk
 - embedding: Vector representation (pgvector type)
 - metadata: JSONB field for additional chunk information (heading path, page numbers, etc.)
@@ -88,7 +88,7 @@ async def embed_chunks(
         document_id: UUID of the source document
         chunks: List of chunk dictionaries with structure:
             {
-                "chunk_id": "doc-uuid:chunk:0",
+                "chunk_id": "...",   # UUIDv7
                 "content": "text content",
                 "metadata": {
                     "char_start": 0,
@@ -230,7 +230,7 @@ async def search_similar(
     Returns:
         List of dictionaries with structure:
         {
-            "chunk_id": "doc-uuid:chunk:0",
+            "chunk_id": "...",  # UUIDv7 
             "document_id": "doc-uuid",
             "content": "chunk text",
             "metadata": {...},

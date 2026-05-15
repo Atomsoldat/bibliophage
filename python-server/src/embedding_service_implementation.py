@@ -127,11 +127,10 @@ class EmbeddingServiceImplementation:
 
         This RPC:
         1. Fetches the document content
-        2. Uses provided boundaries OR generates them from config
+        2. Uses provided boundaries OR generates them based on config
         3. Extracts chunk content from the document
         4. Generates embeddings via postgres_vector_db
-        5. Stores chunk boundaries in FerretDB
-        6. Marks embeddings as current
+        5. Marks embeddings as current
 
         Args:
             request: EmbedDocumentRequest with document_id, config, and optional boundaries
@@ -160,7 +159,6 @@ class EmbeddingServiceImplementation:
 
         # Determine chunk boundaries: use provided or generate
         if request.boundaries:
-            # User provided boundaries
             logger.info(f"Using {len(request.boundaries)} provided boundaries")
             proto_boundaries = list(request.boundaries)
         else:
@@ -213,7 +211,7 @@ class EmbeddingServiceImplementation:
                 message=f"Failed to embed chunks: {e!s}",
             )
 
-        # Store chunk boundaries in FerretDB (convert to dicts for database storage)
+        # Store chunk boundaries
         config_dict = self._proto_config_to_dict(request.config)
         boundaries_dicts = [self._proto_boundary_to_dict(b) for b in proto_boundaries]
         await self.db.store_chunk_boundaries(

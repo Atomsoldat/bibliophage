@@ -48,8 +48,8 @@ message PdfPageReference {
 
 // ChunkBoundary defines a single chunk's position and metadata
 message ChunkBoundary {
-  // Unique identifier for this chunk (e.g., "doc-uuid:chunk:0")
-  string chunk_id = 1;
+  // Unique identifier for this chunk (UUIDv7 calculated by DB)
+  optional string chunk_id = 1;
 
   // Character offset where this chunk starts (0-indexed)
   int32 char_start = 2;

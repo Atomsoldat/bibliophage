@@ -33,7 +33,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 -- substring(string from start for count)
 -- https://www.postgresql.org/docs/18/functions-string.html
 CREATE TABLE IF NOT EXISTS document_chunks (
-    vector_id UUID DEFAULT uuidv7(),
+    chunk_id UUID DEFAULT uuidv7(),
     document_id UUID NOT NULL REFERENCES documents(document_id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     start_position INT NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS document_chunks (
     embedding VECTOR(1024),
     metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ DEFAULT now(),
-    PRIMARY KEY (vector_id),
+    PRIMARY KEY (chunk_id),
     CHECK (start_position >= 0 AND end_position > start_position)
 );
 
