@@ -141,11 +141,11 @@ class ChatServiceImplementation:
 
             context_documents.append(
                 DocumentContext(
-                    id=doc_data["_id"],
-                    name=doc_data["name"],
+                    id=str(doc_data["document_id"]),
+                    name=doc_data["title"],
                     content=doc_data["content"],
                     source_type=doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED"),
-                    document_type=doc_data["type"],
+                    document_type=doc_data["document_type"],
                 ),
             )
 
@@ -171,7 +171,7 @@ class ChatServiceImplementation:
         for result in search_results:
             doc_id = result["document_id"]
             doc_data = await self.db.get_document_by_id(doc_id)
-            doc_name = doc_data["name"] if doc_data else "Unknown Document"
+            doc_name = doc_data["title"] if doc_data else "Unknown Document"
 
             retrieved_chunks.append(
                 RetrievedChunkInfo(
