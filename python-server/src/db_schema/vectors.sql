@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS document_chunks (
     -- 1024 matches BAAI/bge-large-en-v1.5
     embedding VECTOR(1024),
     metadata JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT now(),
     PRIMARY KEY (vector_id)
 );
 
