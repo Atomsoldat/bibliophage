@@ -2,7 +2,6 @@
 
 Environment variables:
 - VECTOR_DB_URL: PostgreSQL connection string for pgvector (required)
-- DOC_DB_URL: MongoDB/FerretDB connection string for document storage (required)
 - EMBEDDING_MODEL_NAME: HuggingFace model for embeddings (optional, default: BAAI/bge-large-en-v1.5)
 - LOG_LEVEL: Logging level (optional, default: INFO)
 - OLLAMA_URL: Ollama API URL (optional, default: http://localhost:11435)
@@ -19,7 +18,7 @@ Environment variables:
 # by default, env vars are not case sensitive
 # https://docs.pydantic.dev/latest/concepts/pydantic_settings/#case-sensitivity
 
-from pydantic import Field, MongoDsn, PostgresDsn
+from pydantic import Field, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
