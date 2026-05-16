@@ -312,16 +312,13 @@ class BibliophageDatabase:
         logger.info(f"Generating embeddings for {len(contents)} chunks")
         embeddings = model.embed_documents(contents)
 
-        now = datetime.now(UTC)
-
         insert_sql = sql.SQL("""
             INSERT INTO document_chunks
-                (document_id, chunk_id, content, embedding,
-                 start_position, end_position, metadata, created_at)
+                (document_id, content, embedding,
+                 start_position, end_position, metadata)
             VALUES
-                (%(document_id)s, %(chunk_id)s, %(content)s, %(embedding)s,
-                 %(start_position)s, %(end_position)s, %(metadata)s, %(created_at)s)
-            ON CONFLICT (chunk_id) DO NOTHING
+                (%(document_id)s, %(content)s, %(embedding)s,
+                 %(start_position)s, %(end_position)s, %(metadata)s)
         """)
 
         rows = []
@@ -329,13 +326,11 @@ class BibliophageDatabase:
             meta = chunk.get("metadata", {})
             rows.append({
                 "document_id": document_id,
-                "chunk_id": chunk["chunk_id"],
                 "content": chunk["content"],
                 "embedding": embeddings[i],
                 "start_position": meta.get("char_start", 0),
                 "end_position": meta.get("char_end", len(chunk["content"])),
                 "metadata": Jsonb(meta),
-                "created_at": now,
             })
 
         # executemany needs a connection directly — use the pool context

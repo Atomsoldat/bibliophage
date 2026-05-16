@@ -132,7 +132,6 @@ class EmbeddingServiceImplementation:
         for boundary in proto_boundaries:
             chunk_content = content[boundary.char_start : boundary.char_end]
             chunks_for_db.append({
-                "chunk_id": boundary.chunk_id,
                 "content": chunk_content,
                 "metadata": {
                     "char_start": boundary.char_start,
