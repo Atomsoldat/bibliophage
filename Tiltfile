@@ -86,8 +86,8 @@ local_resource(
 )
 
 local_resource(
-    'nuke everything',
-    cmd='docker compose down -v',
+    'nuke containers&volumes',
+    cmd='cd dev-environment && docker compose down -v',
     auto_init=False,
     trigger_mode=TRIGGER_MODE_MANUAL,
     labels=['tools'],
