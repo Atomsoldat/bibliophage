@@ -333,9 +333,17 @@ class BibliophageDatabase:
                 "metadata": Jsonb(meta),
             })
 
-        # executemany needs a connection directly — use the pool context
+        # executemany needs a cursor to be instantiated
+        # the conn.execute() we normally use for one-offs is syntactic sugar on the connection class  that
+        # does the cursor creation for us behind the scenes and returns a cursor
+        # https://www.psycopg.org/psycopg3/docs/api/pool.html#psycopg_pool.AsyncConnectionPool
+        # https://www.psycopg.org/psycopg3/docs/api/pool.html#psycopg_pool.AsyncConnectionPool.connection
+        # https://www.psycopg.org/psycopg3/docs/api/connections.html#psycopg.AsyncConnection.execute
+        # https://www.psycopg.org/psycopg3/docs/api/connections.html#psycopg.AsyncConnection.cursor
+        # https://www.psycopg.org/psycopg3/docs/api/cursors.html#psycopg.AsyncCursor.executemany
         async with self._pool.connection() as conn:
-            cursor = await conn.executemany(insert_sql, rows, returning=True)
+            cursor = conn.cursor()
+            await cursor.executemany(insert_sql, rows, returning=True)
             # psycopg3 executemany with returning=True returns a count
             # but rowcount after executemany reflects last statement only,
             # so we use len(rows) as the authoritative count
