@@ -1,0 +1,3 @@
+## OpenCV
+Docling has a dependency on OpenCV. That library has a funny quirk where it does some modification of the python library path. Upon installation it will create some files that manipulate it, whenever OpenCV gets loaded. This goes tits-up, when we move the directory containig the library afterwards. Since pixi installs the python environment inside a subdirectory of our project, this happens to bite us. If weird messages about recursion occuring while loading OpenCV show up in our error logs, nuke the `.pixi` subdir of the python server and rerun `pixi install`, that recreates those messed up files.
+
