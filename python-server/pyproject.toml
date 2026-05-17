@@ -127,9 +127,11 @@ cmd = ["python", "-m", "pytest", "tests"]
 [tool.pixi.tasks.ded]
 cmd = ["python", "-m", "vulture", ".", "--exclude", "bibliophage,.pixi,.mypy_cache,__pycache__,__pytest_cache,.ruff_cache"]
 
+# coverage needs to execute the test suite to create .coverage
 [tool.pixi.tasks.coverage]
 cmd = ["python", "-m", "coverage", "run", "-m", "pytest"]
 
+# we can then get our coverage from the report
 [tool.pixi.tasks.coverage-report]
 cmd = ["python", "-m", "coverage", "report"]
 
