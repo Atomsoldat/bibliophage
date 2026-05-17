@@ -45,11 +45,15 @@ message PdfPageReference {
   int32 end_page = 2;
 }
 
+// TODO: We should derive a type from ChunkBoundary that also contains the data
+// that way we can stop using dicts in our DB layer for this, which is getting annoying
+// because we have to compare chunks/boundaries from the client to chunks/boundaries coming from the database
 // ChunkBoundary defines a single chunk's position and metadata
 message ChunkBoundary {
   // Unique identifier for this chunk (UUIDv7 calculated by DB)
   optional string chunk_id = 1;
 
+  // TODO: these should  match the name in the database, which is start_position and end_position respectively
   // Character offset where this chunk starts (0-indexed)
   int32 char_start = 2;
 

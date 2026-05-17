@@ -164,6 +164,9 @@ export class PdfPageReference extends Message<PdfPageReference> {
 }
 
 /**
+ * TODO: We should derive a type from ChunkBoundary that also contains the data
+ * that way we can stop using dicts in our DB layer for this, which is getting annoying
+ * because we have to compare chunks/boundaries from the client to chunks/boundaries coming from the database
  * ChunkBoundary defines a single chunk's position and metadata
  *
  * @generated from message bibliophage.v1alpha3.ChunkBoundary
@@ -177,6 +180,7 @@ export class ChunkBoundary extends Message<ChunkBoundary> {
   chunkId?: string;
 
   /**
+   * TODO: these should  match the name in the database, which is start_position and end_position respectively
    * Character offset where this chunk starts (0-indexed)
    *
    * @generated from field: int32 char_start = 2;

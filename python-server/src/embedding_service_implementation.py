@@ -95,7 +95,12 @@ class EmbeddingServiceImplementation:
         request: api.EmbedDocumentRequest,
         ctx,
     ) -> api.EmbedDocumentResponse:
-        """Embed a document: chunk it, generate embeddings, store in document_chunks."""
+        """Embed a document, reconciling against existing chunks when boundaries are provided.
+
+        With desired_boundaries: compares against stored chunks by (start, end) position,
+        skips unchanged chunks, deletes orphans, and embeds only new/modified boundaries.
+        Without desired_boundaries: generates boundaries from config and replaces all chunks.
+        """
         logger.info(f"EmbedDocument request for document: {request.document_id}")
 
         doc_data = await self.db.get_document_by_id(request.document_id)
@@ -112,62 +117,17 @@ class EmbeddingServiceImplementation:
                 message=f"Document {request.document_id} has no content to embed",
             )
 
-        # Determine chunk boundaries: use provided or generate
-        if request.boundaries:
-            logger.info(f"Using {len(request.boundaries)} provided boundaries")
-            proto_boundaries = list(request.boundaries)
-        else:
-            logger.info("Generating boundaries from config")
-            try:
-                strategy = chunking_strategies.get_strategy(request.config.strategy)
-                proto_boundaries = await strategy.propose_chunks(
-                    content,
-                    request.config,
-                    request.document_id,
-                )
-            except Exception as e:
-                logger.error(f"Error generating chunks: {e}", exc_info=True)
-                return api.EmbedDocumentResponse(
-                    success=False,
-                    message=f"Failed to generate chunks: {e!s}",
-                )
-
-        # Build chunk dicts for postgres_db.embed_chunks
-        chunks_for_db = []
-        for boundary in proto_boundaries:
-            chunk_content = content[boundary.char_start : boundary.char_end]
-            chunks_for_db.append({
-                "content": chunk_content,
-                "metadata": {
-                    "char_start": boundary.char_start,
-                    "char_end": boundary.char_end,
-                    "description": boundary.description,
-                },
-            })
-
-        try:
-            embedded_count = await self.db.embed_chunks(
-                request.document_id,
-                chunks_for_db,
+        if request.desired_boundaries:
+            return await self._reconcile_and_embed(
+                request.document_id, content, list(request.desired_boundaries)
             )
-            logger.info(
-                f"Embedded {embedded_count} chunks for document {request.document_id}"
-            )
-        except Exception as e:
-            logger.error(f"Error embedding chunks: {e}", exc_info=True)
-            return api.EmbedDocumentResponse(
-                success=False,
-                message=f"Failed to embed chunks: {e!s}",
-            )
+        return await self._full_embed(request, content)
 
-        embedding_status = await self._build_embedding_status(request.document_id)
-
-        return api.EmbedDocumentResponse(
-            success=True,
-            message=f"Successfully embedded {embedded_count} chunks",
-            embedding_status=embedding_status,
-        )
-
+    # TODO: This function looks misplaced and at least partially redundant
+    # DB stuff should live in the DB module
+    # that way other modules can make use of it (background jobs, migrations, who knows what else)
+    # The name should be get_chunks() or something like that according to our convention in the docstring
+    # come up with something expressive
     async def get_chunk_boundaries(
         self,
         request: api.GetChunkBoundariesRequest,
@@ -233,6 +193,153 @@ class EmbeddingServiceImplementation:
             message=f"Deleted {chunks_deleted} chunks",
             chunks_deleted=chunks_deleted,
         )
+
+    # ── embed orchestration ──────────────────────────────────────────────
+    # TODO: we should run embedding in the background
+
+    async def _full_embed(
+        self,
+        request: api.EmbedDocumentRequest,
+        content: str,
+    ) -> api.EmbedDocumentResponse:
+        """Full embed: drop all existing chunks, generate boundaries from config, embed everything."""
+
+        # drop all existing chunks, because the user did not give us info which ones to keep
+        await self.db.delete_document_chunks(request.document_id)
+
+        # come up with our own boundaries based on the strategy selected by the user
+        try:
+            strategy = chunking_strategies.get_strategy(request.config.strategy)
+            boundaries = await strategy.propose_chunks(
+                content, request.config, request.document_id,
+            )
+        except Exception as e:
+            logger.error(f"Error generating boundaries: {e}", exc_info=True)
+            return api.EmbedDocumentResponse(
+                success=False,
+                message=f"Failed to generate boundaries: {e!s}",
+            )
+
+        try:
+            embedded_count = await self.db.embed_chunks(
+                document_id=request.document_id,
+                chunks=self._boundaries_to_chunks(boundaries, content),
+            )
+        except Exception as e:
+            logger.error(f"Error embedding chunks: {e}", exc_info=True)
+            return api.EmbedDocumentResponse(
+                success=False, message=f"Failed to embed chunks: {e!s}",
+            )
+
+        embedding_status = await self._build_embedding_status(request.document_id)
+        return api.EmbedDocumentResponse(
+            success=True,
+            message=f"Embedded {embedded_count} chunks (full)",
+            embedding_status=embedding_status,
+        )
+
+    async def _reconcile_and_embed(
+        self,
+        document_id: str,
+        content: str,
+        boundaries_desired: list[api.ChunkBoundary],
+    ) -> api.EmbedDocumentResponse:
+        """Compare desired boundaries against existing chunks and only embed the diff."""
+
+        # TODO: This could do with some cleanup
+        # I feel like it would be tidier to just always speak the language of the API in this case
+        # even at the DB layer of our python code
+        # This is a list of dicts
+        boundaries_current = await self.db.get_boundaries_for_document(document_id)
+
+        boundaries_to_embed, chunk_ids_to_delete = self._diff_boundaries(
+            boundaries_desired, boundaries_current
+        )
+
+        await self.db.delete_chunks_by_ids(chunk_ids_to_delete)
+
+        logger.info(
+            f"Reconcile for {document_id}: "
+            f"{len(boundaries_to_embed)} to embed, "
+            f"{len(chunk_ids_to_delete)} to delete, "
+            f"{len(boundaries_desired) - len(boundaries_to_embed)} unchanged"
+        )
+
+        embedded_count = 0
+        if boundaries_to_embed:
+            try:
+                embedded_count = await self.db.embed_chunks(
+                    document_id=document_id,
+                    chunks=self._boundaries_to_chunks(boundaries_to_embed, content),
+                )
+            except Exception as e:
+                logger.error(f"Error embedding chunks: {e}", exc_info=True)
+                return api.EmbedDocumentResponse(
+                    success=False, message=f"Failed to embed chunks: {e!s}",
+                )
+
+        # TODO: Why do we do this here?
+        embedding_status = await self._build_embedding_status(document_id)
+        return api.EmbedDocumentResponse(
+            success=True,
+            message=f"Reconciled: embedded {embedded_count}, deleted {len(chunk_ids_to_delete)}",
+            embedding_status=embedding_status,
+        )
+
+    @staticmethod
+    def _diff_boundaries(
+        boundaries_desired: list[api.ChunkBoundary],
+        boundaries_current: list[dict[str, Any]],
+    ) -> tuple[list[api.ChunkBoundary], list[str]]:
+        """Determine which boundaries need embedding and which existing chunks need deletion.
+
+        Returns (boundaries_to_embed, chunk_ids_to_delete).
+        """
+        # These are a list of ChunkBoundaries ...
+        boundaries_to_embed = []
+
+        # define a set of tuples, we match the exact pairings later
+        # set theory, yaaaay
+        desired_positions = {(i.char_start, i.char_end) for i in boundaries_desired}
+        current_positions = {(i["start_position"], i["end_position"]) for i in boundaries_current}
+
+        for i in boundaries_desired:
+            if (i.char_start, i.char_end) in current_positions:
+                # chunks that have the correct boundaries already do not need to be embedded
+                pass
+            else:
+                boundaries_to_embed.append(i)
+
+        chunk_ids_to_delete = []
+        for i in boundaries_current:
+            if (i["start_position"], i["end_position"]) in desired_positions:
+                # chunks that have the correct boundaries already do not need to be deleted
+                pass
+            else:
+                chunk_ids_to_delete.append(i["chunk_id"])
+
+        return boundaries_to_embed, chunk_ids_to_delete
+
+
+    @staticmethod
+    def _boundaries_to_chunks(
+        boundaries: list[api.ChunkBoundary],
+        content: str,
+    ) -> list[dict[str, Any]]:
+        """Convert proto boundaries to chunk dicts for the DB layer.
+        Populate chunk content via string slice of the parent document
+        """
+        return [
+            {
+                "content": content[i.char_start : i.char_end],
+                "metadata": {
+                    "char_start": i.char_start,
+                    "char_end": i.char_end,
+                    "description": i.description,
+                },
+            }
+            for i in boundaries
+        ]
 
     # ── helpers ─────────────────────────────────────────────────────────
 

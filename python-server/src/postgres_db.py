@@ -299,13 +299,11 @@ class BibliophageDatabase:
     ) -> int:
         """Generate embeddings for chunks and store them. Returns count inserted.
 
-        Each chunk dict must have: chunk_id, content, metadata (with char_start, char_end).
-        Deletes existing chunks for the document first.
+        Each chunk dict must have: content, metadata (with char_start, char_end).
         """
         if not chunks:
-            raise ValueError("Chunks list cannot be empty")
-
-        await self.delete_document_chunks(document_id)
+            errmsg="Chunks list cannot be empty"
+            raise ValueError(errmsg)
 
         model = get_embeddings_model()
         contents = [c["content"] for c in chunks]
@@ -347,8 +345,30 @@ class BibliophageDatabase:
             # psycopg3 executemany with returning=True returns a count
             # but rowcount after executemany reflects last statement only,
             # so we use len(rows) as the authoritative count
-        count = len(rows)
-        logger.info(f"Inserted {count} chunks for document {document_id}")
+
+        logger.info(f"Inserted {len(rows)} chunks for document {document_id}")
+        return len(rows)
+
+    async def get_boundaries_for_document(
+        self,
+        document_id: str,
+    ) -> list[dict[str, Any]]:
+        """Return chunk_id, start_position, end_position for all chunks of a document."""
+        return await self.fetchall(
+            "SELECT chunk_id, start_position, end_position "
+            "FROM document_chunks WHERE document_id = %(document_id)s",
+            {"document_id": document_id},
+        )
+
+    async def delete_chunks_by_ids(self, chunk_ids: list[str]) -> int:
+        """Delete specific chunks by their IDs. Returns count deleted."""
+        if not chunk_ids:
+            return 0
+        delete_sql = sql.SQL(
+            "DELETE FROM document_chunks WHERE chunk_id = ANY(%(chunk_ids)s)"
+        )
+        count = await self.execute(delete_sql, {"chunk_ids": chunk_ids})
+        logger.info(f"Deleted {count} chunks by ID")
         return count
 
     async def delete_document_chunks(self, document_id: str) -> int:
