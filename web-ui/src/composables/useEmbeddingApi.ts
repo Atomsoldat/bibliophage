@@ -133,6 +133,7 @@ export function useEmbeddingApi() {
   }
 
   /**
+   * TODO: this is currently not called by anything; remove?
    * Update chunk boundaries for a document
    * Marks existing embeddings as stale
    *

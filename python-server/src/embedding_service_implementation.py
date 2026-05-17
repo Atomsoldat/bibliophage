@@ -2,6 +2,11 @@
 
 Implements the EmbeddingService RPCs for chunk generation, embedding management,
 and vector operations. Orchestrates chunking strategies and postgres_db.
+
+
+In general, when we talk about a chunk, we mean the data + the metadata (i.e. the full thing as it is stored in the DB).
+The boundary is the thing defining the chunk, but does not contain the data, it is only metadata. We use boundaries when we have
+no need to fetch and mess with the actual data. Actually using this convention in all of the code is still a WIP...
 """
 
 import logging
@@ -204,24 +209,6 @@ class EmbeddingServiceImplementation:
             message=f"Found {len(proto_boundaries)} chunk boundaries",
             boundaries=proto_boundaries,
             embedding_status=embedding_status,
-        )
-
-    async def update_chunk_boundaries(
-        self,
-        request: api.UpdateChunkBoundariesRequest,
-        ctx,
-    ) -> api.UpdateChunkBoundariesResponse:
-        """Update chunk boundaries for a document.
-
-        TODO: Re-implement against PostgreSQL. This would need to delete existing
-        chunks and insert new boundary-only rows (without embeddings), effectively
-        marking the document as needing re-embedding.
-        """
-        raise NotImplementedError(
-            "UpdateChunkBoundaries is not yet implemented against PostgreSQL. "
-            "This would need to delete existing chunks and insert new boundary-only "
-            "rows (without embeddings), effectively marking the document as needing "
-            "re-embedding."
         )
 
     async def delete_embeddings(

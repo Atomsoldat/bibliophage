@@ -356,8 +356,7 @@ class BibliophageDatabase:
         delete_sql = sql.SQL(
             "DELETE FROM document_chunks WHERE document_id = %(document_id)s"
         )
-        params = {"document_id": document_id}
-        count = await self.execute(delete_sql, params)
+        count = await self.execute(delete_sql, {"document_id": document_id})
         logger.info(f"Deleted {count} chunks for document {document_id}")
         return count
 
@@ -369,7 +368,8 @@ class BibliophageDatabase:
     ) -> list[dict[str, Any]]:
         """Vector similarity search. Returns list of dicts with chunk_id, document_id, content, metadata, similarity."""
         if top_k <= 0:
-            raise ValueError("top_k must be positive")
+            errmsg = "top_k must be positive"
+            raise ValueError(errmsg)
 
         model = get_embeddings_model()
         query_embedding = model.embed_query(query)
