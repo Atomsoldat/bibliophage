@@ -10,6 +10,7 @@ no need to fetch and mess with the actual data. Actually using this convention i
 """
 
 import logging
+from dataclasses import dataclass
 from typing import Any
 
 import bibliophage.v1alpha3.embedding_pb2 as api
@@ -18,6 +19,14 @@ from config import get_settings
 from postgres_db import get_postgres_db
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class BoundaryDiff:
+    """Result of comparing desired boundaries against existing chunks."""
+
+    to_embed: list[Any]  # ChunkBoundary protos
+    to_delete: list[str]  # chunk_ids
 
 
 class EmbeddingServiceImplementation:
@@ -252,25 +261,23 @@ class EmbeddingServiceImplementation:
         # This is a list of dicts
         boundaries_current = await self.db.get_boundaries_for_document(document_id)
 
-        boundaries_to_embed, chunk_ids_to_delete = self._diff_boundaries(
-            boundaries_desired, boundaries_current
-        )
+        diff = self._diff_boundaries(boundaries_desired, boundaries_current)
 
-        await self.db.delete_chunks_by_ids(chunk_ids_to_delete)
+        await self.db.delete_chunks_by_ids(diff.to_delete)
 
         logger.info(
             f"Reconcile for {document_id}: "
-            f"{len(boundaries_to_embed)} to embed, "
-            f"{len(chunk_ids_to_delete)} to delete, "
-            f"{len(boundaries_desired) - len(boundaries_to_embed)} unchanged"
+            f"{len(diff.to_embed)} to embed, "
+            f"{len(diff.to_delete)} to delete, "
+            f"{len(boundaries_desired) - len(diff.to_embed)} unchanged"
         )
 
         embedded_count = 0
-        if boundaries_to_embed:
+        if diff.to_embed:
             try:
                 embedded_count = await self.db.embed_chunks(
                     document_id=document_id,
-                    chunks=self._boundaries_to_chunks(boundaries_to_embed, content),
+                    chunks=self._boundaries_to_chunks(diff.to_embed, content),
                 )
             except Exception as e:
                 logger.error(f"Error embedding chunks: {e}", exc_info=True)
@@ -282,7 +289,7 @@ class EmbeddingServiceImplementation:
         embedding_status = await self._build_embedding_status(document_id)
         return api.EmbedDocumentResponse(
             success=True,
-            message=f"Reconciled: embedded {embedded_count}, deleted {len(chunk_ids_to_delete)}",
+            message=f"Reconciled: embedded {embedded_count}, deleted {len(diff.to_delete)}",
             embedding_status=embedding_status,
         )
 
@@ -290,11 +297,8 @@ class EmbeddingServiceImplementation:
     def _diff_boundaries(
         boundaries_desired: list[api.ChunkBoundary],
         boundaries_current: list[dict[str, Any]],
-    ) -> tuple[list[api.ChunkBoundary], list[str]]:
-        """Determine which boundaries need embedding and which existing chunks need deletion.
-
-        Returns (boundaries_to_embed, chunk_ids_to_delete).
-        """
+    ) -> BoundaryDiff:
+        """Determine which boundaries need embedding and which existing chunks need deletion."""
         # These are a list of ChunkBoundaries ...
         boundaries_to_embed = []
 
@@ -318,7 +322,7 @@ class EmbeddingServiceImplementation:
             else:
                 chunk_ids_to_delete.append(i["chunk_id"])
 
-        return boundaries_to_embed, chunk_ids_to_delete
+        return BoundaryDiff(to_embed=boundaries_to_embed, to_delete=chunk_ids_to_delete)
 
 
     @staticmethod
