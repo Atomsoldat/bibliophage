@@ -6,7 +6,6 @@ import type {
   EmbedDocumentResponse,
   GetChunkBoundariesResponse,
   ProposeChunksResponse,
-  UpdateChunkBoundariesResponse,
 } from '../bibliophage/v1alpha3/embedding_pb'
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
@@ -19,7 +18,6 @@ import {
   EmbedDocumentRequest,
   GetChunkBoundariesRequest,
   ProposeChunksRequest,
-  UpdateChunkBoundariesRequest,
 } from '../bibliophage/v1alpha3/embedding_pb'
 import { useConfig } from './useConfig'
 
@@ -110,7 +108,7 @@ export function useEmbeddingApi() {
     const request = new EmbedDocumentRequest({
       documentId,
       config: new ChunkingConfig(config),
-      boundaries,
+      desiredBoundaries: boundaries,
     })
 
     return await client.value!.embedDocument(request)
@@ -130,32 +128,6 @@ export function useEmbeddingApi() {
     })
 
     return await client.value!.getChunkBoundaries(request)
-  }
-
-  /**
-   * TODO: this is currently not called by anything; remove?
-   * Update chunk boundaries for a document
-   * Marks existing embeddings as stale
-   *
-   * @param documentId - The ID of the document
-   * @param config - Chunking configuration for these boundaries
-   * @param boundaries - Updated chunk boundaries
-   * @returns Response with updated status
-   */
-  async function updateChunkBoundaries(
-    documentId: string,
-    config: Partial<ChunkingConfig>,
-    boundaries: ChunkBoundary[],
-  ): Promise<UpdateChunkBoundariesResponse> {
-    checkInitialisation()
-
-    const request = new UpdateChunkBoundariesRequest({
-      documentId,
-      config: new ChunkingConfig(config),
-      boundaries,
-    })
-
-    return await client.value!.updateChunkBoundaries(request)
   }
 
   /**
@@ -181,7 +153,6 @@ export function useEmbeddingApi() {
     proposeChunks,
     embedDocument,
     getChunkBoundaries,
-    updateChunkBoundaries,
     deleteEmbeddings,
     isInitialised,
   }
