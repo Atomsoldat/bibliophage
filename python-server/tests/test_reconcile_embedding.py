@@ -1,14 +1,17 @@
-"""Integration tests for differential re-embedding (reconciliation).
+"""Tests for differential re-embedding (reconciliation).
 
-Tests verify that embed_document with desired_boundaries correctly:
+Integration tests verify that embed_document with desired_boundaries correctly:
 - Skips unchanged chunks
 - Deletes orphaned chunks
 - Embeds only new/modified boundaries
+
+Unit tests verify the _diff_boundaries set logic in isolation.
 """
 
 import pytest
 
 import bibliophage.v1alpha3.embedding_pb2 as emb_api
+from embedding_service_implementation import EmbeddingServiceImplementation
 
 
 @pytest.mark.integration
@@ -129,3 +132,92 @@ async def test_reconcile_against_unembedded_document(test_document, embedding_cl
     assert response.embedding_status.total_chunks == len(boundaries)
     assert f"embedded {len(boundaries)}" in response.message
     assert "deleted 0" in response.message
+
+
+# ── unit tests for _diff_boundaries ────────────────────────────────────
+
+
+def _make_boundary(char_start, char_end):
+    """Helper to create a ChunkBoundary proto with just positions."""
+    return emb_api.ChunkBoundary(char_start=char_start, char_end=char_end)
+
+
+def _make_db_row(chunk_id, start, end):
+    """Helper to create a dict matching the shape returned by get_boundaries_for_document."""
+    return {"chunk_id": chunk_id, "start_position": start, "end_position": end}
+
+
+@pytest.mark.unit
+def test_diff_no_changes():
+    """Identical boundaries produce empty diff."""
+    desired = [_make_boundary(0, 100), _make_boundary(100, 200)]
+    current = [_make_db_row("a", 0, 100), _make_db_row("b", 100, 200)]
+
+    diff = EmbeddingServiceImplementation._diff_boundaries(desired, current)
+
+    assert diff.to_embed == []
+    assert diff.to_delete == []
+
+
+@pytest.mark.unit
+def test_diff_one_modified():
+    """Changing one boundary's end marks it for embed and the old one for delete."""
+    desired = [_make_boundary(0, 100), _make_boundary(100, 250)]
+    current = [_make_db_row("a", 0, 100), _make_db_row("b", 100, 200)]
+
+    diff = EmbeddingServiceImplementation._diff_boundaries(desired, current)
+
+    assert len(diff.to_embed) == 1
+    assert diff.to_embed[0].char_end == 250
+    assert diff.to_delete == ["b"]
+
+
+@pytest.mark.unit
+def test_diff_orphan_deleted():
+    """Fewer desired boundaries means the extra existing chunk is orphaned."""
+    desired = [_make_boundary(0, 100)]
+    current = [_make_db_row("a", 0, 100), _make_db_row("b", 100, 200)]
+
+    diff = EmbeddingServiceImplementation._diff_boundaries(desired, current)
+
+    assert diff.to_embed == []
+    assert diff.to_delete == ["b"]
+
+
+@pytest.mark.unit
+def test_diff_new_boundary_added():
+    """A desired boundary with no match in current is new (embed it)."""
+    desired = [_make_boundary(0, 100), _make_boundary(100, 200), _make_boundary(200, 300)]
+    current = [_make_db_row("a", 0, 100), _make_db_row("b", 100, 200)]
+
+    diff = EmbeddingServiceImplementation._diff_boundaries(desired, current)
+
+    assert len(diff.to_embed) == 1
+    assert diff.to_embed[0].char_start == 200
+    assert diff.to_delete == []
+
+
+@pytest.mark.unit
+def test_diff_empty_current():
+    """No existing chunks means everything is new."""
+    desired = [_make_boundary(0, 100), _make_boundary(100, 200)]
+
+    diff = EmbeddingServiceImplementation._diff_boundaries(desired, boundaries_current=[])
+
+    assert len(diff.to_embed) == 2
+    assert diff.to_delete == []
+
+
+@pytest.mark.integration
+async def test_full_embed_without_boundaries_still_works(test_document, embedding_client):
+    """Embedding without desired_boundaries should still work (full embed path)."""
+    emb_request = emb_api.EmbedDocumentRequest()
+    emb_request.document_id = test_document.id
+    emb_request.config.strategy = emb_api.MARKDOWN_STRUCTURE
+    emb_request.config.max_heading_level = 2
+
+    response = await embedding_client.embed_document(emb_request)
+
+    assert response.success is True
+    assert response.embedding_status.is_embedded is True
+    assert response.embedding_status.total_chunks > 0
