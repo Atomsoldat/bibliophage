@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { DeleteEmbeddingsRequest, DeleteEmbeddingsResponse, EmbedDocumentRequest, EmbedDocumentResponse, GetChunkBoundariesRequest, GetChunkBoundariesResponse, ProposeChunksRequest, ProposeChunksResponse, UpdateChunkBoundariesRequest, UpdateChunkBoundariesResponse } from "./embedding_pb.js";
+import { DeleteEmbeddingsRequest, DeleteEmbeddingsResponse, EmbedDocumentRequest, EmbedDocumentResponse, GetChunkBoundariesRequest, GetChunkBoundariesResponse, ProposeChunksRequest, ProposeChunksResponse } from "./embedding_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -39,15 +39,6 @@ export const EmbeddingService = {
       name: "GetChunkBoundaries",
       I: GetChunkBoundariesRequest,
       O: GetChunkBoundariesResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc bibliophage.v1alpha3.EmbeddingService.UpdateChunkBoundaries
-     */
-    updateChunkBoundaries: {
-      name: "UpdateChunkBoundaries",
-      I: UpdateChunkBoundariesRequest,
-      O: UpdateChunkBoundariesResponse,
       kind: MethodKind.Unary,
     },
     /**

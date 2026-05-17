@@ -136,14 +136,14 @@ class ProposeChunksResponse(_message.Message):
     def __init__(self, success: bool = ..., message: _Optional[str] = ..., proposal: _Optional[_Union[ChunkProposal, _Mapping]] = ...) -> None: ...
 
 class EmbedDocumentRequest(_message.Message):
-    __slots__ = ("document_id", "config", "boundaries")
+    __slots__ = ("document_id", "config", "desired_boundaries")
     DOCUMENT_ID_FIELD_NUMBER: _ClassVar[int]
     CONFIG_FIELD_NUMBER: _ClassVar[int]
-    BOUNDARIES_FIELD_NUMBER: _ClassVar[int]
+    DESIRED_BOUNDARIES_FIELD_NUMBER: _ClassVar[int]
     document_id: str
     config: ChunkingConfig
-    boundaries: _containers.RepeatedCompositeFieldContainer[ChunkBoundary]
-    def __init__(self, document_id: _Optional[str] = ..., config: _Optional[_Union[ChunkingConfig, _Mapping]] = ..., boundaries: _Optional[_Iterable[_Union[ChunkBoundary, _Mapping]]] = ...) -> None: ...
+    desired_boundaries: _containers.RepeatedCompositeFieldContainer[ChunkBoundary]
+    def __init__(self, document_id: _Optional[str] = ..., config: _Optional[_Union[ChunkingConfig, _Mapping]] = ..., desired_boundaries: _Optional[_Iterable[_Union[ChunkBoundary, _Mapping]]] = ...) -> None: ...
 
 class EmbedDocumentResponse(_message.Message):
     __slots__ = ("success", "message", "embedding_status")
@@ -174,28 +174,6 @@ class GetChunkBoundariesResponse(_message.Message):
     config: ChunkingConfig
     embedding_status: EmbeddingStatus
     def __init__(self, success: bool = ..., message: _Optional[str] = ..., boundaries: _Optional[_Iterable[_Union[ChunkBoundary, _Mapping]]] = ..., config: _Optional[_Union[ChunkingConfig, _Mapping]] = ..., embedding_status: _Optional[_Union[EmbeddingStatus, _Mapping]] = ...) -> None: ...
-
-class UpdateChunkBoundariesRequest(_message.Message):
-    __slots__ = ("document_id", "boundaries", "config")
-    DOCUMENT_ID_FIELD_NUMBER: _ClassVar[int]
-    BOUNDARIES_FIELD_NUMBER: _ClassVar[int]
-    CONFIG_FIELD_NUMBER: _ClassVar[int]
-    document_id: str
-    boundaries: _containers.RepeatedCompositeFieldContainer[ChunkBoundary]
-    config: ChunkingConfig
-    def __init__(self, document_id: _Optional[str] = ..., boundaries: _Optional[_Iterable[_Union[ChunkBoundary, _Mapping]]] = ..., config: _Optional[_Union[ChunkingConfig, _Mapping]] = ...) -> None: ...
-
-class UpdateChunkBoundariesResponse(_message.Message):
-    __slots__ = ("success", "message", "boundaries", "embedding_status")
-    SUCCESS_FIELD_NUMBER: _ClassVar[int]
-    MESSAGE_FIELD_NUMBER: _ClassVar[int]
-    BOUNDARIES_FIELD_NUMBER: _ClassVar[int]
-    EMBEDDING_STATUS_FIELD_NUMBER: _ClassVar[int]
-    success: bool
-    message: str
-    boundaries: _containers.RepeatedCompositeFieldContainer[ChunkBoundary]
-    embedding_status: EmbeddingStatus
-    def __init__(self, success: bool = ..., message: _Optional[str] = ..., boundaries: _Optional[_Iterable[_Union[ChunkBoundary, _Mapping]]] = ..., embedding_status: _Optional[_Union[EmbeddingStatus, _Mapping]] = ...) -> None: ...
 
 class DeleteEmbeddingsRequest(_message.Message):
     __slots__ = ("document_id",)

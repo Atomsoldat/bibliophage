@@ -25,9 +25,6 @@ class EmbeddingService(Protocol):
     async def get_chunk_boundaries(self, request: bibliophage_dot_v1alpha3_dot_embedding__pb2.GetChunkBoundariesRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_embedding__pb2.GetChunkBoundariesResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def update_chunk_boundaries(self, request: bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesResponse:
-        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-
     async def delete_embeddings(self, request: bibliophage_dot_v1alpha3_dot_embedding__pb2.DeleteEmbeddingsRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_embedding__pb2.DeleteEmbeddingsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
@@ -66,16 +63,6 @@ class EmbeddingServiceASGIApplication(ConnectASGIApplication[EmbeddingService]):
                         idempotency_level=IdempotencyLevel.UNKNOWN,
                     ),
                     function=svc.get_chunk_boundaries,
-                ),
-                "/bibliophage.v1alpha3.EmbeddingService/UpdateChunkBoundaries": Endpoint.unary(
-                    method=MethodInfo(
-                        name="UpdateChunkBoundaries",
-                        service_name="bibliophage.v1alpha3.EmbeddingService",
-                        input=bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesRequest,
-                        output=bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesResponse,
-                        idempotency_level=IdempotencyLevel.UNKNOWN,
-                    ),
-                    function=svc.update_chunk_boundaries,
                 ),
                 "/bibliophage.v1alpha3.EmbeddingService/DeleteEmbeddings": Endpoint.unary(
                     method=MethodInfo(
@@ -159,26 +146,6 @@ class EmbeddingServiceClient(ConnectClient):
             timeout_ms=timeout_ms,
         )
 
-    async def update_chunk_boundaries(
-        self,
-        request: bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesRequest,
-        *,
-        headers: Headers | Mapping[str, str] | None = None,
-        timeout_ms: int | None = None,
-    ) -> bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesResponse:
-        return await self.execute_unary(
-            request=request,
-            method=MethodInfo(
-                name="UpdateChunkBoundaries",
-                service_name="bibliophage.v1alpha3.EmbeddingService",
-                input=bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesRequest,
-                output=bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesResponse,
-                idempotency_level=IdempotencyLevel.UNKNOWN,
-            ),
-            headers=headers,
-            timeout_ms=timeout_ms,
-        )
-
     async def delete_embeddings(
         self,
         request: bibliophage_dot_v1alpha3_dot_embedding__pb2.DeleteEmbeddingsRequest,
@@ -206,8 +173,6 @@ class EmbeddingServiceSync(Protocol):
     def embed_document(self, request: bibliophage_dot_v1alpha3_dot_embedding__pb2.EmbedDocumentRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_embedding__pb2.EmbedDocumentResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
     def get_chunk_boundaries(self, request: bibliophage_dot_v1alpha3_dot_embedding__pb2.GetChunkBoundariesRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_embedding__pb2.GetChunkBoundariesResponse:
-        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def update_chunk_boundaries(self, request: bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
     def delete_embeddings(self, request: bibliophage_dot_v1alpha3_dot_embedding__pb2.DeleteEmbeddingsRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_embedding__pb2.DeleteEmbeddingsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
@@ -246,16 +211,6 @@ class EmbeddingServiceWSGIApplication(ConnectWSGIApplication):
                         idempotency_level=IdempotencyLevel.UNKNOWN,
                     ),
                     function=service.get_chunk_boundaries,
-                ),
-                "/bibliophage.v1alpha3.EmbeddingService/UpdateChunkBoundaries": EndpointSync.unary(
-                    method=MethodInfo(
-                        name="UpdateChunkBoundaries",
-                        service_name="bibliophage.v1alpha3.EmbeddingService",
-                        input=bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesRequest,
-                        output=bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesResponse,
-                        idempotency_level=IdempotencyLevel.UNKNOWN,
-                    ),
-                    function=service.update_chunk_boundaries,
                 ),
                 "/bibliophage.v1alpha3.EmbeddingService/DeleteEmbeddings": EndpointSync.unary(
                     method=MethodInfo(
@@ -333,26 +288,6 @@ class EmbeddingServiceClientSync(ConnectClientSync):
                 service_name="bibliophage.v1alpha3.EmbeddingService",
                 input=bibliophage_dot_v1alpha3_dot_embedding__pb2.GetChunkBoundariesRequest,
                 output=bibliophage_dot_v1alpha3_dot_embedding__pb2.GetChunkBoundariesResponse,
-                idempotency_level=IdempotencyLevel.UNKNOWN,
-            ),
-            headers=headers,
-            timeout_ms=timeout_ms,
-        )
-
-    def update_chunk_boundaries(
-        self,
-        request: bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesRequest,
-        *,
-        headers: Headers | Mapping[str, str] | None = None,
-        timeout_ms: int | None = None,
-    ) -> bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesResponse:
-        return self.execute_unary(
-            request=request,
-            method=MethodInfo(
-                name="UpdateChunkBoundaries",
-                service_name="bibliophage.v1alpha3.EmbeddingService",
-                input=bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesRequest,
-                output=bibliophage_dot_v1alpha3_dot_embedding__pb2.UpdateChunkBoundariesResponse,
                 idempotency_level=IdempotencyLevel.UNKNOWN,
             ),
             headers=headers,

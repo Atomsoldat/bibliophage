@@ -9,7 +9,6 @@ service EmbeddingService {
   rpc ProposeChunks(ProposeChunksRequest) returns (ProposeChunksResponse);
   rpc EmbedDocument(EmbedDocumentRequest) returns (EmbedDocumentResponse);
   rpc GetChunkBoundaries(GetChunkBoundariesRequest) returns (GetChunkBoundariesResponse);
-  rpc UpdateChunkBoundaries(UpdateChunkBoundariesRequest) returns (UpdateChunkBoundariesResponse);
   rpc DeleteEmbeddings(DeleteEmbeddingsRequest) returns (DeleteEmbeddingsResponse);
 }
 
@@ -173,16 +172,21 @@ message ProposeChunksResponse {
   optional ChunkProposal proposal = 3;
 }
 
-// EmbedDocumentRequest - Embed a document with specified or generated boundaries
+// EmbedDocumentRequest - Embed a document with specified or generated boundaries.
+// When boundaries are provided, the backend reconciles them against existing chunks:
+// unchanged boundaries (matching start/end positions) are skipped, orphaned chunks
+// are deleted, and only new/modified boundaries are embedded.
+// When boundaries are empty, all existing chunks are replaced using the config strategy.
 message EmbedDocumentRequest {
   // Document ID to embed
   string document_id = 1;
 
-  // Chunking configuration (used to generate boundaries if not provided)
+  // Chunking configuration (used to generate boundaries if none provided)
   ChunkingConfig config = 2;
 
-  // Optional: Pre-defined chunk boundaries (if not provided, will be generated from config)
-  repeated ChunkBoundary boundaries = 3;
+  // Desired chunk boundaries. If provided, the backend reconciles against existing
+  // chunks and only re-embeds what changed. If empty, generates and embeds from config.
+  repeated ChunkBoundary desired_boundaries = 3;
 }
 
 // EmbedDocumentResponse - Result of document embedding
@@ -219,33 +223,6 @@ message GetChunkBoundariesResponse {
 
   // Current embedding status
   optional EmbeddingStatus embedding_status = 5;
-}
-
-// UpdateChunkBoundariesRequest - Modify chunk boundaries (marks embeddings stale)
-message UpdateChunkBoundariesRequest {
-  // Document ID to update boundaries for
-  string document_id = 1;
-
-  // Updated chunk boundaries
-  repeated ChunkBoundary boundaries = 2;
-
-  // Configuration used for these boundaries
-  ChunkingConfig config = 3;
-}
-
-// UpdateChunkBoundariesResponse - Result of updating chunk boundaries
-message UpdateChunkBoundariesResponse {
-  // Whether the operation succeeded
-  bool success = 1;
-
-  // Human-readable status/error message
-  string message = 2;
-
-  // Updated boundaries
-  repeated ChunkBoundary boundaries = 3;
-
-  // Embedding status (embeddings_current should be false)
-  optional EmbeddingStatus embedding_status = 4;
 }
 
 // DeleteEmbeddingsRequest - Remove all embeddings for a document

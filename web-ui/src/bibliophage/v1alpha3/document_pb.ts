@@ -315,7 +315,7 @@ export class Metadata extends Message<Metadata> {
  */
 export class Document extends Message<Document> {
   /**
-   * Unique identifier for this document (assigned by the system)
+   * Unique identifier for this document (assigned by the database)
    *
    * @generated from field: string id = 1;
    */
@@ -1033,6 +1033,7 @@ export class SearchDocumentsResponse extends Message<SearchDocumentsResponse> {
   matches: DocumentListItem[] = [];
 
   /**
+   * TODO: i think i want to get rid of these two
    * Total number of results (for pagination)
    *
    * @generated from field: int32 total_count = 4;

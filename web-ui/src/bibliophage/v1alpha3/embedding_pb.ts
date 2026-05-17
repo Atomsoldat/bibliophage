@@ -170,11 +170,11 @@ export class PdfPageReference extends Message<PdfPageReference> {
  */
 export class ChunkBoundary extends Message<ChunkBoundary> {
   /**
-   * Unique identifier for this chunk (e.g., "doc-uuid:chunk:0")
+   * Unique identifier for this chunk (UUIDv7 calculated by DB)
    *
-   * @generated from field: string chunk_id = 1;
+   * @generated from field: optional string chunk_id = 1;
    */
-  chunkId = "";
+  chunkId?: string;
 
   /**
    * Character offset where this chunk starts (0-indexed)
@@ -242,7 +242,7 @@ export class ChunkBoundary extends Message<ChunkBoundary> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "bibliophage.v1alpha3.ChunkBoundary";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "chunk_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "chunk_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 2, name: "char_start", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 3, name: "char_end", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 4, name: "token_start", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
@@ -662,7 +662,11 @@ export class ProposeChunksResponse extends Message<ProposeChunksResponse> {
 }
 
 /**
- * EmbedDocumentRequest - Embed a document with specified or generated boundaries
+ * EmbedDocumentRequest - Embed a document with specified or generated boundaries.
+ * When boundaries are provided, the backend reconciles them against existing chunks:
+ * unchanged boundaries (matching start/end positions) are skipped, orphaned chunks
+ * are deleted, and only new/modified boundaries are embedded.
+ * When boundaries are empty, all existing chunks are replaced using the config strategy.
  *
  * @generated from message bibliophage.v1alpha3.EmbedDocumentRequest
  */
@@ -675,18 +679,19 @@ export class EmbedDocumentRequest extends Message<EmbedDocumentRequest> {
   documentId = "";
 
   /**
-   * Chunking configuration (used to generate boundaries if not provided)
+   * Chunking configuration (used to generate boundaries if none provided)
    *
    * @generated from field: bibliophage.v1alpha3.ChunkingConfig config = 2;
    */
   config?: ChunkingConfig;
 
   /**
-   * Optional: Pre-defined chunk boundaries (if not provided, will be generated from config)
+   * Desired chunk boundaries. If provided, the backend reconciles against existing
+   * chunks and only re-embeds what changed. If empty, generates and embeds from config.
    *
-   * @generated from field: repeated bibliophage.v1alpha3.ChunkBoundary boundaries = 3;
+   * @generated from field: repeated bibliophage.v1alpha3.ChunkBoundary desired_boundaries = 3;
    */
-  boundaries: ChunkBoundary[] = [];
+  desiredBoundaries: ChunkBoundary[] = [];
 
   constructor(data?: PartialMessage<EmbedDocumentRequest>) {
     super();
@@ -698,7 +703,7 @@ export class EmbedDocumentRequest extends Message<EmbedDocumentRequest> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "document_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "config", kind: "message", T: ChunkingConfig },
-    { no: 3, name: "boundaries", kind: "message", T: ChunkBoundary, repeated: true },
+    { no: 3, name: "desired_boundaries", kind: "message", T: ChunkBoundary, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EmbedDocumentRequest {
@@ -886,128 +891,6 @@ export class GetChunkBoundariesResponse extends Message<GetChunkBoundariesRespon
 
   static equals(a: GetChunkBoundariesResponse | PlainMessage<GetChunkBoundariesResponse> | undefined, b: GetChunkBoundariesResponse | PlainMessage<GetChunkBoundariesResponse> | undefined): boolean {
     return proto3.util.equals(GetChunkBoundariesResponse, a, b);
-  }
-}
-
-/**
- * UpdateChunkBoundariesRequest - Modify chunk boundaries (marks embeddings stale)
- *
- * @generated from message bibliophage.v1alpha3.UpdateChunkBoundariesRequest
- */
-export class UpdateChunkBoundariesRequest extends Message<UpdateChunkBoundariesRequest> {
-  /**
-   * Document ID to update boundaries for
-   *
-   * @generated from field: string document_id = 1;
-   */
-  documentId = "";
-
-  /**
-   * Updated chunk boundaries
-   *
-   * @generated from field: repeated bibliophage.v1alpha3.ChunkBoundary boundaries = 2;
-   */
-  boundaries: ChunkBoundary[] = [];
-
-  /**
-   * Configuration used for these boundaries
-   *
-   * @generated from field: bibliophage.v1alpha3.ChunkingConfig config = 3;
-   */
-  config?: ChunkingConfig;
-
-  constructor(data?: PartialMessage<UpdateChunkBoundariesRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "bibliophage.v1alpha3.UpdateChunkBoundariesRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "document_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "boundaries", kind: "message", T: ChunkBoundary, repeated: true },
-    { no: 3, name: "config", kind: "message", T: ChunkingConfig },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateChunkBoundariesRequest {
-    return new UpdateChunkBoundariesRequest().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateChunkBoundariesRequest {
-    return new UpdateChunkBoundariesRequest().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateChunkBoundariesRequest {
-    return new UpdateChunkBoundariesRequest().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: UpdateChunkBoundariesRequest | PlainMessage<UpdateChunkBoundariesRequest> | undefined, b: UpdateChunkBoundariesRequest | PlainMessage<UpdateChunkBoundariesRequest> | undefined): boolean {
-    return proto3.util.equals(UpdateChunkBoundariesRequest, a, b);
-  }
-}
-
-/**
- * UpdateChunkBoundariesResponse - Result of updating chunk boundaries
- *
- * @generated from message bibliophage.v1alpha3.UpdateChunkBoundariesResponse
- */
-export class UpdateChunkBoundariesResponse extends Message<UpdateChunkBoundariesResponse> {
-  /**
-   * Whether the operation succeeded
-   *
-   * @generated from field: bool success = 1;
-   */
-  success = false;
-
-  /**
-   * Human-readable status/error message
-   *
-   * @generated from field: string message = 2;
-   */
-  message = "";
-
-  /**
-   * Updated boundaries
-   *
-   * @generated from field: repeated bibliophage.v1alpha3.ChunkBoundary boundaries = 3;
-   */
-  boundaries: ChunkBoundary[] = [];
-
-  /**
-   * Embedding status (embeddings_current should be false)
-   *
-   * @generated from field: optional bibliophage.v1alpha3.EmbeddingStatus embedding_status = 4;
-   */
-  embeddingStatus?: EmbeddingStatus;
-
-  constructor(data?: PartialMessage<UpdateChunkBoundariesResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "bibliophage.v1alpha3.UpdateChunkBoundariesResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "boundaries", kind: "message", T: ChunkBoundary, repeated: true },
-    { no: 4, name: "embedding_status", kind: "message", T: EmbeddingStatus, opt: true },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateChunkBoundariesResponse {
-    return new UpdateChunkBoundariesResponse().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateChunkBoundariesResponse {
-    return new UpdateChunkBoundariesResponse().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateChunkBoundariesResponse {
-    return new UpdateChunkBoundariesResponse().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: UpdateChunkBoundariesResponse | PlainMessage<UpdateChunkBoundariesResponse> | undefined, b: UpdateChunkBoundariesResponse | PlainMessage<UpdateChunkBoundariesResponse> | undefined): boolean {
-    return proto3.util.equals(UpdateChunkBoundariesResponse, a, b);
   }
 }
 
