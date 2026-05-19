@@ -1,5 +1,13 @@
 # Database services via Docker Compose
-docker_compose('dev-environment/docker-compose.yaml')
+# GPU_VENDOR env var selects an optional overlay: 'nvidia' or 'amd' (default: CPU-only)
+gpu_vendor = os.environ.get('GPU_VENDOR', '')
+pixi_env_flag = {'nvidia': '-e gpu', 'amd': '-e rocm'}.get(gpu_vendor, '')
+compose_files = ['dev-environment/docker-compose.yaml']
+if gpu_vendor == 'nvidia':
+    compose_files.append('dev-environment/docker-compose.nvidia.yml')
+elif gpu_vendor == 'amd':
+    compose_files.append('dev-environment/docker-compose.amd.yml')
+docker_compose(compose_files)
 
 # Configure database resources
 dc_resource('postgres-pgvector', labels=['databases'])
@@ -11,7 +19,7 @@ dc_resource('ollama', labels=['llm'])
 
 local_resource(
     'backend',
-    serve_cmd='cd python-server && pixi run dev',
+    serve_cmd='cd python-server && pixi run {} dev'.format(pixi_env_flag),
     # Tilt will automatically reload when these files change
     # fairly sure, that the --reload flag for uvicorn will handle this
     #deps=[
@@ -31,6 +39,7 @@ local_resource(
         'OLLAMA_DEFAULT_MODEL': 'mistral',
         # Optional: override defaults
         # 'EMBEDDING_MODEL_NAME': 'BAAI/bge-large-en-v1.5',
+        # 'EMBEDDING_DEVICE': 'cuda',  # override auto-detection (cpu, cuda, mps, xpu)
         # 'LOG_LEVEL': 'INFO',
     },
     # do these make sense?

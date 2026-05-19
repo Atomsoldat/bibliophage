@@ -1,0 +1,13 @@
+# AMD ROCm GPU overlay for Ollama
+# Requires: ROCm drivers installed on the host
+# Usage (standalone): docker compose -f docker-compose.yaml -f docker-compose.amd.yml up
+# Usage (Tilt):       GPU_VENDOR=amd tilt up
+#
+# Note: Python embedding model (HuggingFace) will still run on CPU unless
+# you install ROCm PyTorch manually — there is no pixi feature for it yet.
+services:
+  ollama:
+    image: ollama/ollama:rocm
+    devices:
+      - /dev/kfd
+      - /dev/dri

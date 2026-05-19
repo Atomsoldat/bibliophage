@@ -1,0 +1,13 @@
+# NVIDIA GPU overlay for Ollama
+# Requires: nvidia-container-toolkit installed on the host
+# Usage (standalone): docker compose -f docker-compose.yaml -f docker-compose.nvidia.yml up
+# Usage (Tilt):       GPU_VENDOR=nvidia tilt up
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
