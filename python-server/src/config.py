@@ -47,6 +47,13 @@ class EmbeddingConfig(BaseSettings):
         description="HuggingFace embedding model name",
     )
 
+    # Device for model inference. Omit (or set to empty string) for auto-detection
+    # via torch (cuda > mps > cpu). Explicit values: cpu, cuda, mps, xpu, cuda:N
+    embedding_device: str = Field(
+        default="",
+        description="Device for embedding inference. Empty = auto-detect.",
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

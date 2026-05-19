@@ -73,7 +73,7 @@ class DoclingPipeline:
         """
         self.pipeline_options = ThreadedPdfPipelineOptions(
             accelerator_options=AcceleratorOptions(
-                device=AcceleratorDevice.CUDA,
+                device=AcceleratorDevice.AUTO,
             ),
             ocr_batch_size=ocr_batch_size,
             layout_batch_size=layout_batch_size,

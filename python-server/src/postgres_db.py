@@ -23,6 +23,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import Any
 
+import torch
 from langchain_huggingface import HuggingFaceEmbeddings
 from pgvector.psycopg import register_vector_async
 from psycopg import AsyncConnection, sql
@@ -52,16 +53,45 @@ def get_postgres_db() -> BibliophageDatabase:
     return _db
 
 
+def _resolve_embedding_device(override: str) -> str:
+    import re
+
+    if re.fullmatch(r"cpu|cuda(:\d+)?|mps|xpu", override):
+        logger.info(f"Embedding device selected via override: {override}")
+        return override
+
+    if override != "":
+        errormsg = f"Unexpected value for embedding device: {override}"
+        raise ValueError(errormsg)
+
+    # cuda covers both NVIDIA and AMD (ROCm PyTorch exposes torch.cuda API)
+    if torch.cuda.is_available():
+        logger.info("Embedding device detected automatically: cuda")
+        return "cuda"
+    # Intel
+    elif torch.xpu.is_available():
+        logger.info("Embedding device detected automatically: xpu")
+        return "xpu"
+    # this is apparently what the Macintosh people use
+    elif torch.backends.mps.is_available():
+        logger.info("Embedding device detected automatically: mps")
+        return "mps"
+    else:
+        logger.info("Embedding device auto detection failed, falling back to cpu")
+        return "cpu"
+
+
 def get_embeddings_model() -> HuggingFaceEmbeddings:
     """Get the embeddings model singleton."""
     global _embeddings_model
     if _embeddings_model is None:
         settings = get_settings()
         model_name = settings.embedding.embedding_model_name
-        logger.info(f"Loading embeddings model: {model_name}")
+        device = _resolve_embedding_device(settings.embedding.embedding_device)
+        logger.info(f"Loading embeddings model: {model_name} on device: {device}")
         _embeddings_model = HuggingFaceEmbeddings(
             model_name=model_name,
-            model_kwargs={"device": "cpu"},
+            model_kwargs={"device": device},
             encode_kwargs={"normalize_embeddings": True},
         )
         logger.info(f"Embeddings model loaded: {model_name}")
