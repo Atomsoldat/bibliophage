@@ -15,8 +15,14 @@ Currently, there's a rudimentary web-ui which is hooked up to a backend service,
 ## Quick Start
 
 ```bash
-# Start all services (databases, backend, web-ui)
+# CPU only (works everywhere, no GPU required)
 tilt up
+
+# NVIDIA GPU
+GPU_VENDOR=nvidia tilt up
+
+# AMD GPU (requires ROCm drivers)
+GPU_VENDOR=amd tilt up
 ```
 
 This starts:
