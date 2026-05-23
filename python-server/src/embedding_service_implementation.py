@@ -16,6 +16,7 @@ from typing import Any
 import bibliophage.v1alpha3.embedding_pb2 as api
 import chunking_strategies
 from config import get_settings
+from embeddings import embed_texts
 from postgres_db import get_postgres_db
 
 logger = logging.getLogger(__name__)
@@ -229,10 +230,13 @@ class EmbeddingServiceImplementation:
                 message=f"Failed to generate boundaries: {e!s}",
             )
 
+        chunks = self._boundaries_to_chunks(boundaries, content)
         try:
-            embedded_count = await self.db.embed_chunks(
+            embeddings = embed_texts([c["content"] for c in chunks])
+            embedded_count = await self.db.store_chunks(
                 document_id=request.document_id,
-                chunks=self._boundaries_to_chunks(boundaries, content),
+                chunks=chunks,
+                embeddings=embeddings,
             )
         except Exception as e:
             logger.error(f"Error embedding chunks: {e}", exc_info=True)
@@ -274,10 +278,13 @@ class EmbeddingServiceImplementation:
 
         embedded_count = 0
         if diff.to_embed:
+            chunks = self._boundaries_to_chunks(diff.to_embed, content)
             try:
-                embedded_count = await self.db.embed_chunks(
+                vectors = embed_texts([c["content"] for c in chunks])
+                embedded_count = await self.db.store_chunks(
                     document_id=document_id,
-                    chunks=self._boundaries_to_chunks(diff.to_embed, content),
+                    chunks=chunks,
+                    embeddings=vectors,
                 )
             except Exception as e:
                 logger.error(f"Error embedding chunks: {e}", exc_info=True)
