@@ -6,6 +6,7 @@ from google.protobuf import timestamp_pb2
 import bibliophage.v1alpha3.document_pb2 as document_api
 import bibliophage.v1alpha3.embedding_pb2 as embedding_api
 from postgres_db import get_postgres_db
+from proto_converters import metadata_dict_to_proto, metadata_proto_to_dict
 
 logger = logging.getLogger(__name__)
 
@@ -45,19 +46,7 @@ def _row_to_proto_document(
     # Metadata JSONB → proto
     metadata_dict = row.get("metadata") or {}
     if metadata_dict:
-        metadata = document_api.Metadata()
-        metadata.file_size = metadata_dict.get("file_size", 0)
-        if "publication_type" in metadata_dict:
-            metadata.publication_type = metadata_dict["publication_type"]
-        if "pdf" in metadata_dict:
-            pdf = metadata_dict["pdf"]
-            pdf_data = document_api.PdfData(
-                loading_batch_count=pdf.get("loading_batch_count", 0),
-                vector_chunk_count=pdf.get("vector_chunk_count", 0),
-                page_count=pdf.get("page_count", 0),
-            )
-            metadata.pdf.CopyFrom(pdf_data)
-        proto.metadata.CopyFrom(metadata)
+        proto.metadata.CopyFrom(metadata_dict_to_proto(metadata_dict))
 
     # TODO: tags are not yet stored — junction table not wired up
     for tag_data in row.get("tags", []):
@@ -115,19 +104,7 @@ class DocumentServiceImplementation:
         # Convert metadata if provided
         metadata = None
         if request.document.HasField("metadata"):
-            metadata = {
-                "file_size": request.document.metadata.file_size,
-            }
-            if request.document.metadata.HasField("publication_type"):
-                metadata["publication_type"] = (
-                    request.document.metadata.publication_type
-                )
-            if request.document.metadata.HasField("pdf"):
-                metadata["pdf"] = {
-                    "loading_batch_count": request.document.metadata.pdf.loading_batch_count,
-                    "vector_chunk_count": request.document.metadata.pdf.vector_chunk_count,
-                    "page_count": request.document.metadata.pdf.page_count,
-                }
+            metadata = metadata_proto_to_dict(request.document.metadata)
 
         response = await self.db.store_document(
             name=request.document.name,
