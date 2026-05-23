@@ -1,67 +1,15 @@
 import logging
-from typing import Any
 
 import bibliophage.v1alpha3.document_pb2 as document_api
 import bibliophage.v1alpha3.embedding_pb2 as embedding_api
 from postgres_db import get_postgres_db
 from proto_converters import (
     datetime_to_proto_ts,
-    metadata_dict_to_proto,
     metadata_proto_to_dict,
+    row_to_proto_document,
 )
 
 logger = logging.getLogger(__name__)
-
-
-def _row_to_proto_document(
-    row: dict[str, Any],
-    proto_class: type = document_api.Document,
-) -> document_api.Document | document_api.DocumentListItem:
-    """Convert a DB row from the documents table to a proto Document or DocumentListItem.
-
-    Handles column renames (document_id→id, title→name, document_type→type),
-    enum string→proto lookups, metadata JSONB→proto, and timestamp conversion.
-    """
-    proto = proto_class()
-    proto.id = str(row["document_id"])
-    proto.name = row["title"]
-    proto.character_count = row["character_count"]
-
-    # Content field: Document has full content, DocumentListItem has content_snippet
-    if proto_class == document_api.Document:
-        proto.content = row["content"]
-    else:
-        proto.content_snippet = row.get("content_snippet", "")
-
-    # Enum fields — stored as their proto name strings in DB
-    proto.type = getattr(
-        document_api, row["document_type"], document_api.DOCUMENT_TYPE_UNSPECIFIED,
-    )
-    source_type_str = row.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
-    proto.source_type = getattr(
-        document_api, source_type_str, document_api.SOURCE_TYPE_UNSPECIFIED,
-    )
-
-    # TODO: systems are not yet stored — junction table not wired up
-    proto.systems.extend(row.get("systems", []))
-
-    # Metadata JSONB → proto
-    metadata_dict = row.get("metadata") or {}
-    if metadata_dict:
-        proto.metadata.CopyFrom(metadata_dict_to_proto(metadata_dict))
-
-    # TODO: tags are not yet stored — junction table not wired up
-    for tag_data in row.get("tags", []):
-        tag = document_api.Tag()
-        tag.name = tag_data.get("name", "")
-        tag.values.extend(tag_data.get("values", []))
-        proto.tags.append(tag)
-
-    # Timestamps
-    proto.created_at.CopyFrom(datetime_to_proto_ts(row["created_at"]))
-    proto.updated_at.CopyFrom(datetime_to_proto_ts(row["updated_at"]))
-
-    return proto
 
 
 class DocumentServiceImplementation:
@@ -146,7 +94,7 @@ class DocumentServiceImplementation:
                 message=f"Document with ID {request.id} not found",
             )
 
-        document = _row_to_proto_document(doc_data)
+        document = row_to_proto_document(doc_data)
 
         return document_api.GetDocumentResponse(
             success=True,
@@ -171,7 +119,7 @@ class DocumentServiceImplementation:
         TODO: Re-implement against PostgreSQL. Pseudocode below.
 
         Conversion helpers to extract from this method and get_document / search_documents:
-        - _row_to_proto_document(row) — maps DB row to document_api.Document
+        - row_to_proto_document(row) — maps DB row to document_api.Document
           handles column renames (document_id→id, title→name, document_type→type),
           enum lookups, metadata JSONB→proto, and timestamp conversion
         - _proto_to_update_params(proto) — maps document_api.Document fields to
@@ -203,7 +151,7 @@ class DocumentServiceImplementation:
            and tags (delete + re-insert into map_documents_to_tags) within a
            db.transaction() alongside the document UPDATE
 
-        7. document = _row_to_proto_document(updated_row)
+        7. document = row_to_proto_document(updated_row)
            return UpdateDocumentResponse(success=True, document=document)
         """
         raise NotImplementedError(
@@ -279,7 +227,7 @@ class DocumentServiceImplementation:
         # Convert database documents to DocumentListItem protobuf objects
         document_list_items = []
         for doc_data in documents:
-            list_item = _row_to_proto_document(doc_data, document_api.DocumentListItem)
+            list_item = row_to_proto_document(doc_data, document_api.DocumentListItem)
 
             # Populate embedding status from document_chunks table
             doc_id = str(doc_data["document_id"])

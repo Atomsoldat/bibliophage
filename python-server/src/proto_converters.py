@@ -25,6 +25,57 @@ def datetime_to_proto_ts(dt: datetime) -> timestamp_pb2.Timestamp:
     return ts
 
 
+def row_to_proto_document(
+    row: dict[str, Any],
+    proto_class: type = document_api.Document,
+) -> document_api.Document | document_api.DocumentListItem:
+    """Convert a DB row from the documents table to a proto Document or DocumentListItem.
+
+    Handles column renames (document_id→id, title→name, document_type→type),
+    enum string→proto lookups, metadata JSONB→proto, and timestamp conversion.
+    """
+    proto = proto_class()
+    proto.id = str(row["document_id"])
+    proto.name = row["title"]
+    proto.character_count = row["character_count"]
+
+    # Content field: Document has full content, DocumentListItem has content_snippet
+    if proto_class == document_api.Document:
+        proto.content = row["content"]
+    else:
+        proto.content_snippet = row.get("content_snippet", "")
+
+    # Enum fields — stored as their proto name strings in DB
+    proto.type = getattr(
+        document_api, row["document_type"], document_api.DOCUMENT_TYPE_UNSPECIFIED,
+    )
+    source_type_str = row.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
+    proto.source_type = getattr(
+        document_api, source_type_str, document_api.SOURCE_TYPE_UNSPECIFIED,
+    )
+
+    # TODO: systems are not yet stored — junction table not wired up
+    proto.systems.extend(row.get("systems", []))
+
+    # Metadata JSONB → proto
+    metadata_dict = row.get("metadata") or {}
+    if metadata_dict:
+        proto.metadata.CopyFrom(metadata_dict_to_proto(metadata_dict))
+
+    # TODO: tags are not yet stored — junction table not wired up
+    for tag_data in row.get("tags", []):
+        tag = document_api.Tag()
+        tag.name = tag_data.get("name", "")
+        tag.values.extend(tag_data.get("values", []))
+        proto.tags.append(tag)
+
+    # Timestamps
+    proto.created_at.CopyFrom(datetime_to_proto_ts(row["created_at"]))
+    proto.updated_at.CopyFrom(datetime_to_proto_ts(row["updated_at"]))
+
+    return proto
+
+
 def metadata_dict_to_proto(d: dict[str, Any]) -> document_api.Metadata:
     """Build a Metadata proto from a JSONB metadata dict (as returned by Postgres).
 

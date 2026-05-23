@@ -14,7 +14,24 @@ from proto_converters import (
     datetime_to_proto_ts,
     metadata_dict_to_proto,
     metadata_proto_to_dict,
+    row_to_proto_document,
 )
+
+
+def _make_row(**overrides):
+    """Return a minimal complete row dict for row_to_proto_document, with overrides applied."""
+    row = {
+        "document_id": "11111111-1111-1111-1111-111111111111",
+        "title": "Test Doc",
+        "character_count": 42,
+        "content": "hello world",
+        "document_type": "RULEBOOK",
+        "source_type": "CORE",
+        "created_at": datetime(2024, 1, 2, 3, 4, 5, tzinfo=timezone.utc),
+        "updated_at": datetime(2024, 1, 2, 3, 4, 6, tzinfo=timezone.utc),
+    }
+    row.update(overrides)
+    return row
 
 
 # ── metadata_dict_to_proto ──────────────────────────────────────────────
@@ -187,3 +204,94 @@ def test_datetime_to_proto_ts_independent_calls_dont_alias():
 
     assert a.seconds != b.seconds
     assert a is not b
+
+
+# ── row_to_proto_document ───────────────────────────────────────────────
+
+
+@pytest.mark.unit
+def test_row_to_proto_document_default_class_is_document_with_full_content():
+    proto = row_to_proto_document(_make_row())
+
+    assert isinstance(proto, document_api.Document)
+    assert proto.id == "11111111-1111-1111-1111-111111111111"
+    assert proto.name == "Test Doc"
+    assert proto.character_count == 42
+    assert proto.content == "hello world"
+    assert proto.type == document_api.RULEBOOK
+    assert proto.source_type == document_api.CORE
+
+
+@pytest.mark.unit
+def test_row_to_proto_document_list_item_uses_content_snippet():
+    row = _make_row(content_snippet="hello...")
+    # DocumentListItem doesn't carry full content, only content_snippet.
+
+    proto = row_to_proto_document(row, document_api.DocumentListItem)
+
+    assert isinstance(proto, document_api.DocumentListItem)
+    assert proto.content_snippet == "hello..."
+
+
+@pytest.mark.unit
+def test_row_to_proto_document_unknown_enum_falls_back_to_unspecified():
+    row = _make_row(document_type="NOT_A_REAL_ENUM_VALUE")
+
+    proto = row_to_proto_document(row)
+
+    assert proto.type == document_api.DOCUMENT_TYPE_UNSPECIFIED
+
+
+@pytest.mark.unit
+def test_row_to_proto_document_missing_source_type_defaults_to_unspecified():
+    row = _make_row()
+    del row["source_type"]
+
+    proto = row_to_proto_document(row)
+
+    assert proto.source_type == document_api.SOURCE_TYPE_UNSPECIFIED
+
+
+@pytest.mark.unit
+def test_row_to_proto_document_with_metadata_populates_proto_metadata():
+    row = _make_row(metadata={
+        "file_size": 1024,
+        "publication_type": "supplement",
+        "pdf": {"loading_batch_count": 2, "vector_chunk_count": 50, "page_count": 100},
+    })
+
+    proto = row_to_proto_document(row)
+
+    assert proto.HasField("metadata")
+    assert proto.metadata.file_size == 1024
+    assert proto.metadata.HasField("publication_type")
+    assert proto.metadata.publication_type == "supplement"
+    assert proto.metadata.HasField("pdf")
+    assert proto.metadata.pdf.page_count == 100
+
+
+@pytest.mark.unit
+def test_row_to_proto_document_missing_metadata_leaves_proto_metadata_unset():
+    proto = row_to_proto_document(_make_row(metadata=None))
+
+    assert not proto.HasField("metadata")
+
+
+@pytest.mark.unit
+def test_row_to_proto_document_timestamps_match_row_values():
+    row = _make_row(
+        created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        updated_at=datetime(2024, 2, 1, tzinfo=timezone.utc),
+    )
+
+    proto = row_to_proto_document(row)
+
+    assert proto.created_at.seconds == 1704067200  # 2024-01-01T00:00:00Z
+    assert proto.updated_at.seconds == 1706745600  # 2024-02-01T00:00:00Z
+
+
+# NOTE: no test for the tags branch — `row_to_proto_document` calls
+# `document_api.Tag()` but Tag actually lives in common_pb2. The branch is
+# dead in production today (the row's "tags" key is always empty until the
+# junction table is wired up — see TODO in the function body), so a test
+# would only assert the latent bug
