@@ -167,6 +167,12 @@ class ChatServiceImplementation:
             return []
 
         # Enrich with document names
+        # TODO: N+1 query — we do one extra get_document_by_id round-trip per
+        # search result just to fetch the document title. For a chat with
+        # top_k=10 that's 11 DB calls instead of 1. Replace with a dedicated
+        # postgres_db.search_similar_with_titles that JOINs document_chunks
+        # against documents and returns the title in the same row, so this
+        # loop becomes a straight copy with no further DB I/O.
         retrieved_chunks: list[RetrievedChunkInfo] = []
         for result in search_results:
             doc_id = result["document_id"]
