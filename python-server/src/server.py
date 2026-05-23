@@ -3,7 +3,7 @@ import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
 
 import postgres_db
 from bibliophage.v1alpha3.chat_connect import ChatServiceASGIApplication
@@ -46,6 +46,9 @@ async def lifespan(app: FastAPI):
 # import `api_server` and execute `uvicorn.run(api_server)`
 # where uvicorn will look for this object depends on the python path but we are keeping
 # it simple for now and run everything from the same directory
+# uvicorn is just the ASGI server; it parses bytes, builds the scope dict,
+# and hands the request to api_server. It has no opinions about CORS or routing.
+#   uvicorn docs: https://www.uvicorn.org/
 # TODO: We can make  all kinds of configurations for this API, e.g.
 # for interactive API documentation
 # https://fastapi.tiangolo.com/reference/fastapi/#fastapi.FastAPI--example
@@ -57,6 +60,15 @@ api_server = FastAPI(lifespan=lifespan)
 # talked to by a client from a given origin
 # this prevents malicious websites from hijacking a user's browser and talking to the backend
 # i suppose it would not be great if someone could have his LLM API Tokens stolen
+# Background reading:
+#   MDN's CORS overview (start here if you've never seen this before):
+#     https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+#   The actual living standard (the W3C/Fetch spec defining preflight, etc.):
+#     https://fetch.spec.whatwg.org/#http-cors-protocol
+#   Starlette's CORSMiddleware reference (every keyword arg below is documented here):
+#     https://www.starlette.io/middleware/#corsmiddleware
+#   FastAPI's middleware mechanics (explains what add_middleware actually does):
+#     https://fastapi.tiangolo.com/advanced/middleware/
 # TODO: Would be neat to have this set up properly anyway as a finger exercise
 # TODO: Think about whether we want to  restrict and/or configure this somehow
 api_server.add_middleware(
@@ -69,55 +81,14 @@ api_server.add_middleware(
 
 
 # instantiate each of our Service Implementations of the Service Interfaces generated for us
-pdf_service = LoadingServiceImplementation()
-document_service = DocumentServiceImplementation()
-chat_service = ChatServiceImplementation()
-embedding_service = EmbeddingServiceImplementation()
-
-
 # toss our instantiated implementation into the generated wrapper so we don't need to think about
 # how all the communication works
-pdf_service_endpoint = PdfServiceASGIApplication(service=pdf_service)
-document_service_endpoint = DocumentServiceASGIApplication(service=document_service)
-chat_service_endpoint = ChatServiceASGIApplication(service=chat_service)
-embedding_service_endpoint = EmbeddingServiceASGIApplication(service=embedding_service)
-
-
-# TODO: this stuff is getting awfully repetitive we should figure out if we can
-# do this properly instead
-
-# Apply CORS directly to the mounted app
-pdf_service_endpoint_cors = CORSMiddleware(
-    app=pdf_service_endpoint,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-document_service_endpoint_cors = CORSMiddleware(
-    app=document_service_endpoint,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-chat_service_endpoint_cors = CORSMiddleware(
-    app=chat_service_endpoint,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-embedding_service_endpoint_cors = CORSMiddleware(
-    app=embedding_service_endpoint,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+service_endpoints = [
+    PdfServiceASGIApplication(service=LoadingServiceImplementation()),
+    DocumentServiceASGIApplication(service=DocumentServiceImplementation()),
+    ChatServiceASGIApplication(service=ChatServiceImplementation()),
+    EmbeddingServiceASGIApplication(service=EmbeddingServiceImplementation()),
+]
 
 # ASGI (Asynchronous Server Gateway Interface) is a python concept for
 # how web applications can talk to web servers
@@ -129,23 +100,12 @@ embedding_service_endpoint_cors = CORSMiddleware(
 
 
 # mount the ConnectRPC wrapped application
-api_server.mount(
-    pdf_service_endpoint.path,
-    pdf_service_endpoint_cors,
-)
-
-# TODO: is mounting multiple services  done using multiple invocations of mount?
-api_server.mount(
-    document_service_endpoint.path,
-    document_service_endpoint_cors,
-)
-
-api_server.mount(
-    chat_service_endpoint.path,
-    chat_service_endpoint_cors,
-)
-
-api_server.mount(
-    embedding_service_endpoint.path,
-    embedding_service_endpoint_cors,
-)
+# Mounted sub-apps inherit the parent's middleware stack — the top-level
+# add_middleware(CORSMiddleware, ...) above is what serves CORS responses
+# for requests routed here
+#   FastAPI sub-applications:
+#     https://fastapi.tiangolo.com/advanced/sub-applications/
+#   Starlette routing / Mount (the layer under FastAPI's .mount()):
+#     https://www.starlette.io/routing/#submounting-routes
+for endpoint in service_endpoints:
+    api_server.mount(endpoint.path, endpoint)
