@@ -6,7 +6,7 @@ document CRUD, vector embeddings, and similarity search.
 Usage:
     db = get_postgres_db()
     await db.store_document(name, ...)
-    results = await db.search_similar("query text")
+    results = await db.search_similar(query_embedding)
 
 References:
     - https://www.psycopg.org/psycopg3/docs/advanced/pool.html
@@ -368,17 +368,18 @@ class BibliophageDatabase:
 
     async def search_similar(
         self,
-        query: str,
+        query_embedding: list[float],
         top_k: int = 10,
         document_id: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Vector similarity search. Returns list of dicts with chunk_id, document_id, content, metadata, similarity."""
+        """Vector similarity search. Returns list of dicts with chunk_id, document_id, content, metadata, similarity.
+
+        The caller is responsible for producing `query_embedding` (see
+        embeddings.embed_query).
+        """
         if top_k <= 0:
             errmsg = "top_k must be positive"
             raise ValueError(errmsg)
-
-        model = get_embeddings_model()
-        query_embedding = model.embed_query(query)
 
         if document_id is None:
             search_sql = sql.SQL("""

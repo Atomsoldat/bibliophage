@@ -71,3 +71,9 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     model = get_embeddings_model()
     logger.info(f"Generating embeddings for {len(texts)} texts")
     return model.embed_documents(texts)
+
+
+def embed_query(text: str) -> list[float]:
+    """Generate an embedding vector for a single search query."""
+    model = get_embeddings_model()
+    return model.embed_query(text)
