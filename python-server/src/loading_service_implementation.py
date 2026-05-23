@@ -1,12 +1,11 @@
 import logging
 import traceback
 
-from google.protobuf import timestamp_pb2
-
 import bibliophage.v1alpha3.pdf_pb2 as pdf_api
 from config import get_settings
 from postgres_db import get_postgres_db
 from docling_pipeline import DoclingPipeline
+from proto_converters import datetime_to_proto_ts
 
 logger = logging.getLogger(__name__)
 
@@ -140,8 +139,7 @@ class LoadingServiceImplementation:
             stored_pdf.file_size = len(pdf_bytes)
 
             # Set timestamps
-            timestamp = timestamp_pb2.Timestamp()
-            timestamp.FromDatetime(result["created_at"])
+            timestamp = datetime_to_proto_ts(result["created_at"])
             stored_pdf.created_at.CopyFrom(timestamp)
             stored_pdf.updated_at.CopyFrom(timestamp)
 

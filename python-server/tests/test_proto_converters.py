@@ -3,10 +3,18 @@
 These tests touch only the protobuf message types — no database, no services.
 """
 
+from datetime import datetime, timezone
+
 import pytest
 
+from google.protobuf import timestamp_pb2
+
 import bibliophage.v1alpha3.document_pb2 as document_api
-from proto_converters import metadata_dict_to_proto, metadata_proto_to_dict
+from proto_converters import (
+    datetime_to_proto_ts,
+    metadata_dict_to_proto,
+    metadata_proto_to_dict,
+)
 
 
 # ── metadata_dict_to_proto ──────────────────────────────────────────────
@@ -139,3 +147,43 @@ def test_roundtrip_proto_with_file_size_only():
     assert rebuilt.file_size == 42
     assert not rebuilt.HasField("publication_type")
     assert not rebuilt.HasField("pdf")
+
+
+# ── datetime_to_proto_ts ────────────────────────────────────────────────
+
+
+@pytest.mark.unit
+def test_datetime_to_proto_ts_returns_timestamp_instance():
+    ts = datetime_to_proto_ts(datetime(2024, 1, 2, 3, 4, 5, tzinfo=timezone.utc))
+
+    assert isinstance(ts, timestamp_pb2.Timestamp)
+
+
+@pytest.mark.unit
+def test_datetime_to_proto_ts_preserves_value_via_roundtrip():
+    # FromDatetime/ToDatetime is the contract we care about. Use aware UTC
+    # to match the timezone treatment FromDatetime applies internally.
+    original = datetime(2026, 5, 23, 14, 30, 45, tzinfo=timezone.utc)
+
+    ts = datetime_to_proto_ts(original)
+
+    assert ts.ToDatetime(tzinfo=timezone.utc) == original
+
+
+@pytest.mark.unit
+def test_datetime_to_proto_ts_seconds_match_unix_epoch():
+    # 2024-01-01T00:00:00Z = 1704067200 seconds since the unix epoch.
+    ts = datetime_to_proto_ts(datetime(2024, 1, 1, tzinfo=timezone.utc))
+
+    assert ts.seconds == 1704067200
+    assert ts.nanos == 0
+
+
+@pytest.mark.unit
+def test_datetime_to_proto_ts_independent_calls_dont_alias():
+    # Each call must return a fresh Timestamp — mutating one must not affect another.
+    a = datetime_to_proto_ts(datetime(2024, 1, 1, tzinfo=timezone.utc))
+    b = datetime_to_proto_ts(datetime(2025, 1, 1, tzinfo=timezone.utc))
+
+    assert a.seconds != b.seconds
+    assert a is not b

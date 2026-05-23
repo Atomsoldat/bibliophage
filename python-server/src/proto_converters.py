@@ -6,9 +6,23 @@ orchestration. New conversions accumulate as more proto types touch the DB.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
+from google.protobuf import timestamp_pb2
+
 import bibliophage.v1alpha3.document_pb2 as document_api
+
+
+def datetime_to_proto_ts(dt: datetime) -> timestamp_pb2.Timestamp:
+    """Build a google.protobuf.Timestamp from a Python datetime.
+
+    Wraps the two-step `Timestamp()` + `.FromDatetime(dt)` dance that protobuf
+    requires (direct assignment to `.created_at = dt` does not work).
+    """
+    ts = timestamp_pb2.Timestamp()
+    ts.FromDatetime(dt)
+    return ts
 
 
 def metadata_dict_to_proto(d: dict[str, Any]) -> document_api.Metadata:

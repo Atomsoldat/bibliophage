@@ -1,12 +1,14 @@
 import logging
 from typing import Any
 
-from google.protobuf import timestamp_pb2
-
 import bibliophage.v1alpha3.document_pb2 as document_api
 import bibliophage.v1alpha3.embedding_pb2 as embedding_api
 from postgres_db import get_postgres_db
-from proto_converters import metadata_dict_to_proto, metadata_proto_to_dict
+from proto_converters import (
+    datetime_to_proto_ts,
+    metadata_dict_to_proto,
+    metadata_proto_to_dict,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -56,13 +58,8 @@ def _row_to_proto_document(
         proto.tags.append(tag)
 
     # Timestamps
-    created_ts = timestamp_pb2.Timestamp()
-    created_ts.FromDatetime(row["created_at"])
-    proto.created_at.CopyFrom(created_ts)
-
-    updated_ts = timestamp_pb2.Timestamp()
-    updated_ts.FromDatetime(row["updated_at"])
-    proto.updated_at.CopyFrom(updated_ts)
+    proto.created_at.CopyFrom(datetime_to_proto_ts(row["created_at"]))
+    proto.updated_at.CopyFrom(datetime_to_proto_ts(row["updated_at"]))
 
     return proto
 
@@ -123,8 +120,7 @@ class DocumentServiceImplementation:
         stored_document.character_count = response["character_count"]
 
         # Set timestamps — must use FromDatetime, not direct assignment
-        created_ts = timestamp_pb2.Timestamp()
-        created_ts.FromDatetime(response["created_at"])
+        created_ts = datetime_to_proto_ts(response["created_at"])
         stored_document.created_at.CopyFrom(created_ts)
         stored_document.updated_at.CopyFrom(created_ts)
 
