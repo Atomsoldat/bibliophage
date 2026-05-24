@@ -1,0 +1,37 @@
+# GPU variant: cpu (default), gpu (NVIDIA), rocm (AMD)
+extra := env("GPU_VENDOR", "cpu")
+
+dev:
+    uv run --extra {{extra}} python -m uvicorn --reload server:api_server
+
+tests *args:
+    uv run --extra {{extra}} pytest tests {{args}}
+
+lint: linter types deps ded
+
+linter:
+    uv run ruff check
+
+types:
+    uv run ty check
+
+deps:
+    uv run deptry .
+
+ded:
+    uv run vulture . --exclude bibliophage,.venv,__pycache__,__pytest_cache,.ruff_cache
+
+coverage:
+    uv run coverage run -m pytest
+
+coverage-report:
+    uv run coverage report
+
+gen-proto:
+    uv run python -m grpc_tools.protoc \
+        --proto_path=../api \
+        --connect-python_out=./src \
+        --python_out=./src \
+        --pyi_out=./src \
+        ../api/bibliophage/v1alpha3/*.proto
+    touch src/bibliophage/__init__.py src/bibliophage/v1alpha3/__init__.py
