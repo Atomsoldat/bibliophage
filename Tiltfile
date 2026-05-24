@@ -1,7 +1,7 @@
 # Database services via Docker Compose
 # GPU_VENDOR env var selects an optional overlay: 'nvidia' or 'amd' (default: CPU-only)
 gpu_vendor = os.environ.get('GPU_VENDOR', '')
-pixi_env_flag = {'nvidia': '-e gpu', 'amd': '-e rocm'}.get(gpu_vendor, '')
+uv_extra = {'nvidia': 'gpu', 'amd': 'rocm'}.get(gpu_vendor, 'cpu')
 compose_files = ['dev-environment/docker-compose.yaml']
 if gpu_vendor == 'nvidia':
     compose_files.append('dev-environment/docker-compose.nvidia.yml')
@@ -19,7 +19,7 @@ dc_resource('ollama', labels=['llm'])
 
 local_resource(
     'backend',
-    serve_cmd='cd python-server && pixi run {} dev'.format(pixi_env_flag),
+    serve_cmd='cd python-server && GPU_VENDOR={} just dev'.format(gpu_vendor),
     # Tilt will automatically reload when these files change
     # fairly sure, that the --reload flag for uvicorn will handle this
     #deps=[
@@ -67,7 +67,7 @@ local_resource(
 
 local_resource(
     'api',
-    cmd='cd python-server && pixi run api && cd ../web-ui && yarn api',
+    cmd='cd python-server && just gen-proto && cd ../web-ui && yarn api',
     deps=['api/bibliophage/'],
     auto_init=False,  # Don't run automatically on startup
     trigger_mode=TRIGGER_MODE_MANUAL,

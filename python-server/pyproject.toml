@@ -6,7 +6,52 @@ authors = [
     {name = "Leon Welchert", email = "lichturm@posteo.de"}
 ]
 requires-python = ">=3.12"
-dependencies = ["sentence-transformers>=5.5.0,<6"]
+dependencies = [
+    "sentence-transformers>=5.5.0,<6",
+    "langchain-postgres>=0.0.15,<0.0.16",
+    "langchain-community>=0.3.31,<0.4",
+    "langchain-huggingface>=0.3.1,<0.4",
+    "langchain>=0.3.27,<0.4",
+    "langchain-core",
+    "pypdf>=6.6.0,<7",
+    "grpcio>=1.73.1,<2",
+    "grpcio-tools>=1.73.1,<2",
+    "grpcio-reflection>=1.45.0,<2",
+    "fastapi>=0.128.0,<0.129",
+    "uvicorn>=0.40.0,<0.41",
+    "pydantic-settings>=2.12.0,<3",
+    "python-dotenv>=1.2.1,<2",
+    "pymongo>=4.16.0,<5",
+    "psutil>=7.2.1,<8",
+    "pgvector-python>=0.3.5,<0.4",
+    "psycopg>=3.2.10,<4",
+    "connect-python>=0.7.1,<0.8",
+    "protoc-gen-connect-python>=0.7.1,<0.8",
+    "docling>=2.91.0,<3",
+    "pymupdf>=1.26.1,<2",
+    "datasets>=2.16.0",
+    # torch is required but comes from a variant extra below (cpu/gpu/rocm)
+]
+
+[project.optional-dependencies]
+# Install exactly one of these:
+#   uv sync --extra cpu      (default, works everywhere)
+#   uv sync --extra gpu      (NVIDIA, requires CUDA 12.x drivers)
+#   uv sync --extra rocm     (AMD, requires ROCm 6.3 drivers)
+cpu  = ["torch>=2.9.1,<3"]
+gpu  = ["torch>=2.9.1,<3"]
+rocm = ["torch>=2.9.1,<3"]
+
+# Dev/lint tools as a separate optional group
+dev = [
+    "ruff>=0.14.13,<0.15",
+    "ty>=0.0.13,<0.0.14",
+    "deptry>=0.24.0,<0.25",
+    "vulture>=2.14,<3",
+    "pytest>=9.0.2,<10",
+    "pytest-asyncio>=1.3.0,<2",
+    "coverage>=7.13.1,<8",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -20,132 +65,48 @@ build-backend = "hatchling.build"
 only-include = ["src"]
 sources = ["src"]
 
-[tool.pixi.workspace]
-channels = ["conda-forge"]
-platforms = ["linux-64"]
+# ── uv: torch variant indexes ────────────────────────────────────────────
+# explicit=true means the index is only consulted for packages that name it
+# in [tool.uv.sources], so it won't accidentally pull other packages from
+# PyTorch's index.
+#
+# conflicts: the cpu/gpu/rocm extras are mutually exclusive. Without this,
+# uv tries to unify all extras in one lockfile solve and sees torch needing
+# three different indexes simultaneously, which it rejects as a conflict.
+[tool.uv]
+conflicts = [
+    [
+        { extra = "cpu" },
+        { extra = "gpu" },
+        { extra = "rocm" },
+    ],
+]
 
-# TODO: It seems like  most of the crazy ML libraries are
-# made more conveniently available via pypi, when it comes to bundled CUDA
-# at that point we might need to ask ourselves why we use conda to begin with
-[tool.pixi.dependencies]
-python = ">=3.12"
-langchain-postgres = ">=0.0.15,<0.0.16"
-pypdf = ">=6.6.0,<7"
-grpcio = ">=1.73.1,<2"
-grpcio-tools = ">=1.73.1,<2"
-grpcio-reflection = ">=1.45.0,<2"
-fastapi = ">=0.128.0,<0.129"
-uvicorn = ">=0.40.0,<0.41"
-ruff = ">=0.14.13,<0.15"
-pytest = ">=9.0.2,<10"
-pytest-asyncio = ">=1.3.0,<2"
-pydantic-settings = ">=2.12.0,<3"
-python-dotenv = ">=1.2.1,<2"
-vulture = ">=2.14,<3"
-pymongo = ">=4.16.0,<5"
-psutil = ">=7.2.1,<8"
-pgvector-python = ">=0.3.5,<0.4"
-psycopg = ">=3.2.10,<4"
-coverage = ">=7.13.1,<8"
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
-[tool.pixi.feature.gpu.dependencies]
-# read here https://pixi.prefix.dev/dev/python/pytorch
-pytorch-gpu = ">=2.9.1,<3"
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
 
-[tool.pixi.feature.gpu.system-requirements]
-# "this needs to be provided by the environment"
-cuda = "12.4"
-
-[tool.pixi.feature.cpu.dependencies]
-pytorch-cpu = ">=2.9.1,<3"
-
-# AMD ROCm: PyTorch is not on conda-forge for ROCm, so we use PyTorch's own PyPI index.
-# The rocm version in the URL must match the ROCm drivers installed on the host.
+# ROCm version must match host drivers.
 # Check supported versions at: https://pytorch.org/get-started/locally/
-[tool.pixi.feature.rocm.pypi-options]
-extra-index-urls = ["https://download.pytorch.org/whl/rocm6.3"]
+[[tool.uv.index]]
+name = "pytorch-rocm63"
+url = "https://download.pytorch.org/whl/rocm6.3"
+explicit = true
 
-[tool.pixi.feature.rocm.pypi-dependencies]
-torch = ">=2.9.1,<3"
-
-[tool.pixi.environments]
-# which features belong to which environment (i think)
-default = ["cpu"]
-cpu = ["cpu"]
-gpu = ["gpu"]
-rocm = ["rocm"]
-
-[tool.pixi.pypi-dependencies]
-# Install this project itself in editable mode so src/ is on sys.path
-# without needing PYTHONPATH=src.
-bibliophage-data-server = { path = ".", editable = true }
-langchain-community = ">=0.3.31, <0.4"
-langchain-huggingface = ">=0.3.1, <0.4"
-docling = ">=2.91.0, <3"
-pymupdf = ">=1.26.1, <2"
-datasets = ">=2.16.0"
-langchain = ">=0.3.27, <0.4"
-langchain-core = "*"
-connect-python = ">=0.7.1, <0.8"
-protoc-gen-connect-python = ">=0.7.1, <0.8"
-ty = ">=0.0.13, <0.0.14"
-deptry = ">=0.24.0, <0.25"
-
-[tool.pixi.tasks.dev]
-cmd = ["python",
-        "-m",
-        "uvicorn",
-        "--reload",
-        "server:api_server",
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu",   extra = "cpu" },
+    { index = "pytorch-cu124", extra = "gpu" },
+    { index = "pytorch-rocm63", extra = "rocm" },
 ]
 
-[tool.pixi.tasks.gen_proto]
-cmd = [
-    "python", "-m", "grpc_tools.protoc",
-    "--proto_path=../api",
-    "--connect-python_out=./src",
-    "--python_out=./src",
-    "--pyi_out=./src",
-    "../api/bibliophage/v1alpha3/*.proto"
-]
-description = "Generate protobuf code"
-
-[tool.pixi.tasks.touch_inits]
-cmd = [
-    "touch",
-    "src/bibliophage/__init__.py",
-    "src/bibliophage/v1alpha3/__init__.py",
-]
-description = "Create __init__.py files"
-
-[tool.pixi.tasks.api]
-depends-on = ["gen_proto", "touch_inits"]
-
-[tool.pixi.tasks.lint]
-depends-on = ["linter", "types", "deps", "ded"]
-
-[tool.pixi.tasks.linter]
-cmd = ["python", "-m", "ruff", "check"]
-
-[tool.pixi.tasks.types]
-cmd = ["python", "-m", "ty", "check"]
-
-[tool.pixi.tasks.deps]
-cmd = ["python", "-m", "deptry", "."]
-
-[tool.pixi.tasks.tests]
-cmd = ["python", "-m", "pytest", "tests"]
-
-[tool.pixi.tasks.ded]
-cmd = ["python", "-m", "vulture", ".", "--exclude", "bibliophage,.pixi,.mypy_cache,__pycache__,__pytest_cache,.ruff_cache"]
-
-# coverage needs to execute the test suite to create .coverage
-[tool.pixi.tasks.coverage]
-cmd = ["python", "-m", "coverage", "run", "-m", "pytest"]
-
-# we can then get our coverage from the report
-[tool.pixi.tasks.coverage-report]
-cmd = ["python", "-m", "coverage", "report"]
+# ── pytest ────────────────────────────────────────────────────────────────
 
 [tool.pytest.ini_options]
 # Async support
