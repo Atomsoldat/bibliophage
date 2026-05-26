@@ -19,23 +19,23 @@ services:
       timeout: 5s
       retries: 5
 
-  postgres-age:
-    image: apache/age:latest
-    container_name: bibliophage-postgres-age
-    restart: unless-stopped
-    ports:
-      - "5434:5432"
-    environment:
-      - POSTGRES_USER=age
-      - POSTGRES_PASSWORD=age_dev
-      - POSTGRES_DB=age
-    volumes:
-      - postgres_age_data:/var/lib/postgresql/
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U age"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  #postgres-age:
+  #  image: apache/age:latest
+  #  container_name: bibliophage-postgres-age
+  #  restart: unless-stopped
+  #  ports:
+  #    - "5434:5432"
+  #  environment:
+  #    - POSTGRES_USER=age
+  #    - POSTGRES_PASSWORD=age_dev
+  #    - POSTGRES_DB=age
+  #  volumes:
+  #    - postgres_age_data:/var/lib/postgresql/
+  #  healthcheck:
+  #    test: ["CMD-SHELL", "pg_isready -U age"]
+  #    interval: 10s
+  #    timeout: 5s
+  #    retries: 5
 
   # Ollama for local LLM model serving with GPU acceleration
   ollama:
@@ -61,21 +61,21 @@ services:
     command: ["ollama serve & sleep 5 && /init-ollama.sh && wait"]
 
   # ArcadeDB for graph database operations
-  arcadedb:
-    image: arcadedata/arcadedb:latest
-    container_name: bibliophage-arcadedb
-    restart: on-failure:3
-    ports:
-      - "2480:2480"  # HTTP/REST API + Studio UI
-    environment:
-      - JAVA_OPTS=-Darcadedb.server.rootPassword=arcadedb_dev
-    volumes:
-      - arcadedb_data:/home/arcadedb/databases
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:2480/api/v1/ready"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  #arcadedb:
+  #  image: arcadedata/arcadedb:latest
+  #  container_name: bibliophage-arcadedb
+  #  restart: on-failure:3
+  #  ports:
+  #    - "2480:2480"  # HTTP/REST API + Studio UI
+  #  environment:
+  #    - JAVA_OPTS=-Darcadedb.server.rootPassword=arcadedb_dev
+  #  volumes:
+  #    - arcadedb_data:/home/arcadedb/databases
+  #  healthcheck:
+  #    test: ["CMD", "curl", "-f", "http://localhost:2480/api/v1/ready"]
+  #    interval: 10s
+  #    timeout: 5s
+  #    retries: 5
 
 volumes:
   postgres_pgvector_data:
