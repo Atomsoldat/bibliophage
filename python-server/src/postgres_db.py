@@ -416,3 +416,96 @@ class BibliophageDatabase:
         params = {"document_id": document_id}
         row = await self.fetchone(count_sql, params)
         return row["count"] if row else 0
+
+    # ── graph operations ────────────────────────────────────────────────
+
+    async def create_edge(
+        self,
+        source_id: str,
+        target_id: str,
+        relationship: str = "RELATED",
+        directed: bool = False,
+    ) -> dict[str, Any]:
+        """Insert an edge between two documents.
+
+        For undirected edges (directed=False) the endpoints are stored in
+        canonical order (source_id < target_id). The database enforces this
+        via a CHECK constraint; we swap here so the call site does not have
+        to think about it.
+
+        Returns the inserted row as a dict with edge_id, source_id, target_id,
+        relationship, directed, created_at.
+        """
+        if not directed and source_id > target_id:
+            source_id, target_id = target_id, source_id
+
+        insert_sql = sql.SQL("""
+            INSERT INTO graph_edges
+                (source_id, target_id, relationship, directed)
+            VALUES
+                (%(source_id)s, %(target_id)s, %(relationship)s, %(directed)s)
+            RETURNING edge_id, source_id, target_id, relationship, directed, created_at
+        """)
+        params = {
+            "source_id": source_id,
+            "target_id": target_id,
+            "relationship": relationship,
+            "directed": directed,
+        }
+        row = await self.fetchone(insert_sql, params)
+        logger.info(
+            "Edge inserted: %s (%s → %s, %s)",
+            row["edge_id"], row["source_id"], row["target_id"], row["relationship"],
+        )
+        return row
+
+    async def delete_edge(self, edge_id: str) -> bool:
+        """Delete an edge by id. Returns True if a row was removed."""
+        delete_sql = sql.SQL("DELETE FROM graph_edges WHERE edge_id = %(edge_id)s")
+        count = await self.execute(delete_sql, {"edge_id": edge_id})
+        return count == 1
+
+    async def get_neighbours(
+        self,
+        document_id: str,
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        """Return (neighbour_documents, incident_edges) for the given document.
+
+        An edge is incident to the document if either endpoint matches.
+        Neighbour rows are full documents — search_documents-shaped — so the
+        existing row_to_proto_document helper can convert them to DocumentListItems.
+        """
+        edges_sql = sql.SQL("""
+            SELECT edge_id, source_id, target_id, relationship, directed, created_at
+            FROM graph_edges
+            WHERE source_id = %(document_id)s OR target_id = %(document_id)s
+        """)
+        edges = await self.fetchall(edges_sql, {"document_id": document_id})
+
+        neighbour_ids = {
+            str(edge["target_id"]) if str(edge["source_id"]) == document_id
+            else str(edge["source_id"])
+            for edge in edges
+        }
+        if not neighbour_ids:
+            return [], edges
+
+        neighbours_sql = sql.SQL("""
+            SELECT * FROM documents WHERE document_id = ANY(%(ids)s)
+        """)
+        neighbours = await self.fetchall(neighbours_sql, {"ids": list(neighbour_ids)})
+        return neighbours, edges
+
+    async def list_edges_between(
+        self,
+        document_ids: list[str],
+    ) -> list[dict[str, Any]]:
+        """Return every edge whose endpoints both lie in document_ids."""
+        if not document_ids:
+            return []
+        query = sql.SQL("""
+            SELECT edge_id, source_id, target_id, relationship, directed, created_at
+            FROM graph_edges
+            WHERE source_id = ANY(%(ids)s) AND target_id = ANY(%(ids)s)
+        """)
+        return await self.fetchall(query, {"ids": document_ids})
