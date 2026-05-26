@@ -1,11 +1,15 @@
 # GPU variant: cpu (default), gpu (NVIDIA), rocm (AMD)
 extra := env("GPU_VENDOR", "cpu")
 
+# Build the --extra flag only when a variant is set; empty GPU_VENDOR
+# means "no extra" so we just run without one.
+extra_flag := if extra == "" { "" } else { "--extra " + extra }
+
 dev:
-    uv run --extra {{extra}} python -m uvicorn --reload server:api_server
+    uv run {{extra_flag}} python -m uvicorn --reload server:api_server
 
 tests *args:
-    uv run --extra {{extra}} pytest tests {{args}}
+    uv run {{extra_flag}} pytest tests {{args}}
 
 lint: linter types deps ded
 
