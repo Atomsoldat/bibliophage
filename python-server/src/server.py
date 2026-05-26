@@ -9,10 +9,12 @@ import postgres_db
 from bibliophage.v1alpha3.chat_connect import ChatServiceASGIApplication
 from bibliophage.v1alpha3.document_connect import DocumentServiceASGIApplication
 from bibliophage.v1alpha3.embedding_connect import EmbeddingServiceASGIApplication
+from bibliophage.v1alpha3.graph_connect import GraphServiceASGIApplication
 from bibliophage.v1alpha3.pdf_connect import PdfServiceASGIApplication
 from chat_service_implementation import ChatServiceImplementation
 from document_service_implementation import DocumentServiceImplementation
 from embedding_service_implementation import EmbeddingServiceImplementation
+from graph_service_implementation import GraphServiceImplementation
 from loading_service_implementation import LoadingServiceImplementation
 
 
@@ -88,6 +90,7 @@ service_endpoints = [
     DocumentServiceASGIApplication(service=DocumentServiceImplementation()),
     ChatServiceASGIApplication(service=ChatServiceImplementation()),
     EmbeddingServiceASGIApplication(service=EmbeddingServiceImplementation()),
+    GraphServiceASGIApplication(service=GraphServiceImplementation()),
 ]
 
 # ASGI (Asynchronous Server Gateway Interface) is a python concept for

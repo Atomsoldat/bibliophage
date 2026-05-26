@@ -18,6 +18,7 @@ import bibliophage.v1alpha3.document_pb2 as doc_api
 import bibliophage.v1alpha3.embedding_pb2 as emb_api
 from bibliophage.v1alpha3.document_connect import DocumentServiceClient
 from bibliophage.v1alpha3.embedding_connect import EmbeddingServiceClient
+from bibliophage.v1alpha3.graph_connect import GraphServiceClient
 from bibliophage.v1alpha3.pdf_connect import PdfServiceClient
 
 logger = logging.getLogger(__name__)
@@ -67,6 +68,21 @@ async def embedding_client():
 
     """
     async with EmbeddingServiceClient(TEST_SERVER_URL) as client:
+        yield client
+
+
+@pytest.fixture
+async def graph_client():
+    """Provide a GraphServiceClient for tests.
+
+    Yields:
+        GraphServiceClient: Connected client instance
+
+    Note:
+        The client connection is automatically cleaned up after the test.
+
+    """
+    async with GraphServiceClient(TEST_SERVER_URL) as client:
         yield client
 
 
@@ -140,6 +156,40 @@ async def test_document(document_client):
             f"Failed to cleanup test document {document.id}: {e}",
             exc_info=True,
         )
+
+
+@pytest.fixture
+async def two_test_documents(document_client):
+    """Create two test documents for graph-edge tests, cleaning both up after.
+
+    Useful for any test that needs a pair of nodes to connect.
+
+    Yields:
+        tuple[Document, Document]: Two stored documents with IDs assigned.
+
+    """
+    docs = []
+    for idx in range(2):
+        request = doc_api.StoreDocumentRequest()
+        request.document.name = f"Graph Test Document {idx} (auto-cleanup)"
+        request.document.systems.append("Test System")
+        request.document.type = doc_api.NOTE
+        request.document.source_type = doc_api.GM_NOTES
+        request.document.content = f"Graph test document {idx}."
+        response = await document_client.store_document(request)
+        docs.append(response.document)
+
+    yield docs[0], docs[1]
+
+    for doc in docs:
+        try:
+            await document_client.delete_document(
+                doc_api.DeleteDocumentRequest(id=doc.id),
+            )
+        except Exception as e:
+            logger.warning(
+                f"Failed to cleanup test document {doc.id}: {e}", exc_info=True,
+            )
 
 
 @pytest.fixture
