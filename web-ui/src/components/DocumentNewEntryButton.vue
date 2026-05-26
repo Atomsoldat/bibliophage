@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 
-import { useEditorWindows } from '../composables/useEditorWindows.ts'
+import { useEditorWindowStore } from '../stores/editorWindows'
 import { useLogger } from '../composables/useLogger.ts'
 
-const { openWindow } = useEditorWindows()
+const { openWindow } = useEditorWindowStore()
 const logger = useLogger()
 
 function handleNewEntry() {

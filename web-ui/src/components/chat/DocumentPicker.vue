@@ -1,27 +1,17 @@
 <script setup lang="ts">
 import type { DocumentListItem } from '../../bibliophage/v1alpha3/document_pb'
-import type { ContextDocument, RetrievedChunk } from '../../composables/useChatState'
+import type { ContextDocument } from '../../stores/chat'
 import { Icon } from '@iconify/vue'
 import { ref } from 'vue'
 import { useDocumentApi } from '../../composables/useDocumentApi'
+import { useChatStore } from '../../stores/chat'
 
-const props = defineProps<{
-  selectedDocuments: readonly ContextDocument[]
-  autoRetrievalEnabled: boolean
-  retrievedChunks: readonly RetrievedChunk[]
-}>()
-
-const emit = defineEmits<{
-  toggle: [doc: ContextDocument]
-  'update:autoRetrievalEnabled': [enabled: boolean]
-}>()
-
+const chat = useChatStore()
 const documentApi = useDocumentApi()
 const searchQuery = ref('')
 const searchResults = ref<DocumentListItem[]>([])
 const isSearching = ref(false)
 
-// Search documents when query changes
 async function handleSearch() {
   if (!searchQuery.value.trim()) {
     searchResults.value = []
@@ -48,11 +38,11 @@ async function handleSearch() {
 }
 
 function isSelected(docId: string): boolean {
-  return props.selectedDocuments.some(d => d.id === docId)
+  return chat.selectedDocuments.some(d => d.id === docId)
 }
 
 function handleToggle(doc: DocumentListItem) {
-  emit('toggle', {
+  chat.toggleContextDocument({
     id: doc.id,
     name: doc.name,
     snippet: doc.contentSnippet,
@@ -62,10 +52,6 @@ function handleToggle(doc: DocumentListItem) {
 function formatSimilarity(similarity: number): string {
   return `${Math.round(similarity * 100)}%`
 }
-
-function toggleAutoRetrieval() {
-  emit('update:autoRetrievalEnabled', !props.autoRetrievalEnabled)
-}
 </script>
 
 <template>
@@ -73,8 +59,8 @@ function toggleAutoRetrieval() {
     <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
       <Icon icon="heroicons:document-text" />
       Context Documents
-      <span v-if="selectedDocuments.length > 0" class="badge badge-primary">
-        {{ selectedDocuments.length }}
+      <span v-if="chat.selectedDocuments.length > 0" class="badge badge-primary">
+        {{ chat.selectedDocuments.length }}
       </span>
     </h3>
 
@@ -84,8 +70,8 @@ function toggleAutoRetrieval() {
         <input
           type="checkbox"
           class="toggle toggle-sm toggle-primary"
-          :checked="autoRetrievalEnabled"
-          @change="toggleAutoRetrieval"
+          :checked="chat.autoRetrievalEnabled"
+          @change="chat.toggleAutoRetrieval"
         >
         <span class="label-text flex items-center gap-1">
           <Icon icon="heroicons:sparkles" class="text-primary" />
@@ -111,18 +97,18 @@ function toggleAutoRetrieval() {
     </div>
 
     <!-- Selected documents -->
-    <div v-if="selectedDocuments.length > 0" class="mb-3">
+    <div v-if="chat.selectedDocuments.length > 0" class="mb-3">
       <div class="text-xs font-semibold text-base-content/60 mb-2">
         Selected:
       </div>
       <div class="flex flex-wrap gap-2">
         <div
-          v-for="doc in selectedDocuments"
+          v-for="doc in chat.selectedDocuments"
           v-bind:key="doc.id"
           class="badge badge-primary gap-1"
         >
           {{ doc.name }}
-          <button class="btn btn-ghost btn-xs btn-circle" @click="$emit('toggle', doc)">
+          <button class="btn btn-ghost btn-xs btn-circle" @click="chat.toggleContextDocument(doc)">
             <Icon icon="heroicons:x-mark" class="text-xs" />
           </button>
         </div>
@@ -130,15 +116,15 @@ function toggleAutoRetrieval() {
     </div>
 
     <!-- Auto-retrieved chunks -->
-    <div v-if="retrievedChunks.length > 0" class="mb-3">
+    <div v-if="chat.retrievedChunks.length > 0" class="mb-3">
       <div class="text-xs font-semibold text-base-content/60 mb-2 flex items-center gap-1">
         <Icon icon="heroicons:sparkles" class="text-xs" />
         Auto-Retrieved
-        <span class="badge badge-ghost badge-xs">{{ retrievedChunks.length }}</span>
+        <span class="badge badge-ghost badge-xs">{{ chat.retrievedChunks.length }}</span>
       </div>
       <div class="space-y-2 max-h-[200px] overflow-y-auto">
         <div
-          v-for="chunk in retrievedChunks"
+          v-for="chunk in chat.retrievedChunks"
           v-bind:key="chunk.chunkId"
           class="p-2 border border-base-200 rounded bg-base-100"
         >

@@ -1,8 +1,6 @@
-import { computed, ref } from 'vue'
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
 
-/**
- * Configuration for an editor window instance
- */
 export interface EditorWindowConfig {
   id: string
   documentId: string
@@ -15,33 +13,17 @@ export interface EditorWindowConfig {
   isMinimized: boolean
 }
 
-// Global state for window management
-const windows = ref<EditorWindowConfig[]>([])
-let nextWindowId = 1
-let nextZIndex = 10
-
-// Positioning constants
 const INITIAL_OFFSET = { x: 100, y: 100 }
 const CASCADE_OFFSET = 30
 
-/**
- * Composable for global editor window management
- *
- * Provides a singleton-like system for managing floating editor windows
- * that persist across view changes. Windows are managed globally and
- * rendered by the GlobalEditorWindows component in App.vue.
- *
- * @example
- * const { openWindow, closeWindow } = useEditorWindows()
- * openWindow({ title: 'My Document', content: 'Hello world!' })
- */
-export function useEditorWindows() {
+export const useEditorWindowStore = defineStore('editorWindows', () => {
+  const windows = ref<EditorWindowConfig[]>([])
+  let nextWindowId = 1
+  let nextZIndex = 10
+
   function calculatePosition(index: number): { x: number, y: number } {
     const offset = index * CASCADE_OFFSET
-    return {
-      x: INITIAL_OFFSET.x + offset,
-      y: INITIAL_OFFSET.y + offset,
-    }
+    return { x: INITIAL_OFFSET.x + offset, y: INITIAL_OFFSET.y + offset }
   }
 
   function openWindow(config: {
@@ -57,7 +39,7 @@ export function useEditorWindows() {
       ? { x: config.x, y: config.y }
       : calculatePosition(windows.value.length)
 
-    const newWindow: EditorWindowConfig = {
+    windows.value.push({
       id: windowId,
       documentId: config.documentId || '',
       title: config.title || 'New Document',
@@ -67,9 +49,7 @@ export function useEditorWindows() {
       y: position.y,
       zIndex: nextZIndex++,
       isMinimized: false,
-    }
-
-    windows.value.push(newWindow)
+    })
     console.log(`[EditorWindows] Opened window ${windowId} - Total: ${windows.value.length}`)
     return windowId
   }
@@ -83,24 +63,22 @@ export function useEditorWindows() {
   }
 
   function bringToFront(windowId: string): void {
-    const window = windows.value.find(w => w.id === windowId)
-    if (window) {
-      window.zIndex = nextZIndex++
-    }
+    const win = windows.value.find(w => w.id === windowId)
+    if (win)
+      win.zIndex = nextZIndex++
   }
 
   function toggleMinimize(windowId: string): void {
-    const window = windows.value.find(w => w.id === windowId)
-    if (window) {
-      window.isMinimized = !window.isMinimized
-    }
+    const win = windows.value.find(w => w.id === windowId)
+    if (win)
+      win.isMinimized = !win.isMinimized
   }
 
   function updatePosition(windowId: string, x: number, y: number): void {
-    const window = windows.value.find(w => w.id === windowId)
-    if (window) {
-      window.x = x
-      window.y = y
+    const win = windows.value.find(w => w.id === windowId)
+    if (win) {
+      win.x = x
+      win.y = y
     }
   }
 
@@ -110,17 +88,17 @@ export function useEditorWindows() {
     content?: string
     isNew?: boolean
   }): void {
-    const window = windows.value.find(w => w.id === windowId)
-    if (window) {
-      if (updates.documentId !== undefined)
-        window.documentId = updates.documentId
-      if (updates.title !== undefined)
-        window.title = updates.title
-      if (updates.content !== undefined)
-        window.content = updates.content
-      if (updates.isNew !== undefined)
-        window.isNew = updates.isNew
-    }
+    const win = windows.value.find(w => w.id === windowId)
+    if (!win)
+      return
+    if (updates.documentId !== undefined)
+      win.documentId = updates.documentId
+    if (updates.title !== undefined)
+      win.title = updates.title
+    if (updates.content !== undefined)
+      win.content = updates.content
+    if (updates.isNew !== undefined)
+      win.isNew = updates.isNew
   }
 
   function getWindow(windowId: string): EditorWindowConfig | undefined {
@@ -130,13 +108,12 @@ export function useEditorWindows() {
   function closeAll(): void {
     const count = windows.value.length
     windows.value = []
-    if (count > 0) {
+    if (count > 0)
       console.log(`[EditorWindows] Closed all ${count} windows`)
-    }
   }
 
   return {
-    windows: computed(() => windows.value),
+    windows,
     openWindow,
     closeWindow,
     bringToFront,
@@ -146,4 +123,4 @@ export function useEditorWindows() {
     getWindow,
     closeAll,
   }
-}
+})

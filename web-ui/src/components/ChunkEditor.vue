@@ -4,8 +4,7 @@ import { Icon } from '@iconify/vue'
 import { computed, onMounted, ref } from 'vue'
 import { ChunkingStrategy } from '../bibliophage/v1alpha3/embedding_pb'
 import { useDocumentApi } from '../composables/useDocumentApi'
-import { useDocumentTableRefresh } from '../composables/useDocumentTableRefresh'
-
+import { useDocumentStore } from '../stores/documents'
 import { useEmbeddingApi } from '../composables/useEmbeddingApi'
 import TextEditor from './TextEditor.vue'
 
@@ -17,7 +16,7 @@ const props = defineProps<{
 const documentApi = useDocumentApi()
 const embeddingApi = useEmbeddingApi()
 
-const { triggerRefresh } = useDocumentTableRefresh()
+const documentStore = useDocumentStore()
 
 // State
 const documentContent = ref('')
@@ -173,7 +172,7 @@ async function embedDocument() {
   }
   finally {
     isEmbedding.value = false
-    triggerRefresh()
+    documentStore.reload()
   }
 }
 

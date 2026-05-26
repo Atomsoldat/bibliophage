@@ -1,4 +1,4 @@
-import { useAppConsole } from './useAppConsole'
+import { useConsoleStore } from '../stores/console'
 
 /**
  * Log level types
@@ -26,7 +26,7 @@ export type LogDestination = 'both' | 'browserOnly' | 'uiOnly'
  * logger.notify('Document saved successfully', 'success')
  */
 export function useLogger() {
-  const uiConsole = useAppConsole()
+  const uiConsole = useConsoleStore()
 
   /**
    * Log a message with specified level and destination

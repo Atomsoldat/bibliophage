@@ -1,47 +1,36 @@
-import type { Ref } from 'vue'
-import { DocumentListItem, DocumentType, Document } from '../bibliophage/v1alpha3/document_pb.ts'
+import { DocumentType } from '../bibliophage/v1alpha3/document_pb.ts'
 import type { MetadataEditFormData } from '../components/MetadataEditModal.vue'
-import type { useDocumentApi } from './useDocumentApi.ts'
 
 import { computed, ref } from 'vue'
 import { Tag } from '../bibliophage/v1alpha3/common_pb.ts'
+import { useDocumentApi } from './useDocumentApi.ts'
+import { useDocumentStore } from '../stores/documents'
 import { useLogger } from './useLogger.ts'
 
 /**
  * Composable for bulk metadata editing of documents.
- * Encapsulates modal state, loading state, and the update logic.
- *
- * @param selectedIds - Reactive set of selected document IDs
- * @param documents - Reactive array of document list items (for pre-population)
- * @param api - Document API instance
+ * Reads selected IDs and document list from DocumentStore.
  */
-export function useBulkMetadataEdit(
-  selectedIds: Ref<Set<string>>,
-  documents: Ref<DocumentListItem[]>,
-  api: ReturnType<typeof useDocumentApi>,
-  onUpdateComplete?: () => void,
-) {
+export function useBulkMetadataEdit() {
   const logger = useLogger()
+  const api = useDocumentApi()
+  const documentStore = useDocumentStore()
 
   const showModal = ref(false)
-
-  // Loading state during update operations
   const loading = ref(false)
 
-  // Computed: Get the initial document for pre-population when a single item is selected
-  const initialDocument = computed<DocumentListItem | null>(() => {
-    if (selectedIds.value.size !== 1) {
+  const initialDocument = computed(() => {
+    if (documentStore.selectedIds.size !== 1) {
       return null
     }
-    const selectedId = Array.from(selectedIds.value)[0]
-    return documents.value.find(doc => doc.id === selectedId) || null
+    const selectedId = Array.from(documentStore.selectedIds)[0]
+    return documentStore.documents.find(doc => doc.id === selectedId) || null
   })
 
-  // Computed: Number of selected documents (for modal display)
-  const selectedCount = computed(() => selectedIds.value.size)
+  const selectedCount = computed(() => documentStore.selectedIds.size)
 
   function openModal() {
-    if (selectedIds.value.size === 0) {
+    if (documentStore.selectedIds.size === 0) {
       logger.warn('No documents selected for bulk edit')
       return
     }
@@ -60,13 +49,13 @@ export function useBulkMetadataEdit(
   async function handleUpdate(formData: MetadataEditFormData): Promise<void> {
     loading.value = true
 
-    // Track results
     let successCount = 0
     let failureCount = 0
     const errors: string[] = []
 
     try {
-      for (const id of selectedIds.value) {
+      await api.initialise()
+      for (const id of documentStore.selectedIds) {
         const response = await api.getDocument(id)
         if (!response.success || !response.document) {
           logger.error(`Failed to fetch document ${id}: ${response.message}`)
@@ -106,7 +95,6 @@ export function useBulkMetadataEdit(
         }
       }
 
-      // Log summary
       if (successCount > 0) {
         logger.success(`Successfully updated ${successCount} document${successCount > 1 ? 's' : ''}`)
       }
@@ -117,11 +105,10 @@ export function useBulkMetadataEdit(
         }
       }
 
-      // Close modal and clear selection on any success
       if (successCount > 0) {
         showModal.value = false
-        selectedIds.value.clear()
-        onUpdateComplete?.()
+        documentStore.selectedIds.clear()
+        await documentStore.reload()
       }
     }
     finally {
@@ -130,15 +117,10 @@ export function useBulkMetadataEdit(
   }
 
   return {
-    // State
     showModal,
     loading,
-
-    // Computed
     initialDocument,
     selectedCount,
-
-    // Methods
     openModal,
     closeModal,
     handleUpdate,

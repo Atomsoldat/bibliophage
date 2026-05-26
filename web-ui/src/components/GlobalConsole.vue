@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { ConsoleMessageType } from '../composables/useAppConsole'
+import type { ConsoleMessageType } from '../stores/console'
 import { Icon } from '@iconify/vue'
 import { nextTick, ref, watch } from 'vue'
-import { useAppConsole } from '../composables/useAppConsole'
+import { useConsoleStore } from '../stores/console'
 
-const { messages, isVisible, unreadCount, toggleVisibility, clear } = useAppConsole()
+const { messages, isVisible, unreadCount, toggleVisibility, clear } = useConsoleStore()
 
 // Ref to scroll container for auto-scroll
 const messagesContainer = ref<HTMLElement | null>(null)

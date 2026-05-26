@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import './style.css'
@@ -17,6 +18,7 @@ const app = createApp(App)
 
 // install the Vue router so we can move between views using the sidebar
 // we imported ./router above
+app.use(createPinia())
 app.use(router)
 
 // mount our instantiated App to the <div id="app"></div> element in index.html

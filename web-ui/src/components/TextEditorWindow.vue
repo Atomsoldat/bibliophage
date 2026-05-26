@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { EditorWindowConfig } from '../composables/useEditorWindows'
+import type { EditorWindowConfig } from '../stores/editorWindows'
 import { useDraggable } from '@vueuse/core'
 import { computed, ref, useTemplateRef, watch } from 'vue'
 import TextEditorCard from '../components/TextEditorCard.vue'

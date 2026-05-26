@@ -3,7 +3,8 @@ import type { DocumentBasicFilterValue } from '../components/DocumentBasicFilter
 
 import { Icon } from '@iconify/vue'
 import { onBeforeMount, ref } from 'vue'
-import { buildSearchDocumentsRequest, type DocumentListItem, DocumentType, getAllDocumentTypes, SortOrder } from '../utils/protoHelpers.ts'
+import { type DocumentListItem, DocumentType, getAllDocumentTypes, SortOrder } from '../utils/protoHelpers.ts'
+import { storeToRefs } from 'pinia'
 import ChunkEditorModal from '../components/ChunkEditorModal.vue'
 import DocumentBasicFilter from '../components/DocumentBasicFilter.vue'
 import DocumentEditMetadataButton from '../components/DocumentEditMetadataButton.vue'
@@ -11,25 +12,19 @@ import DocumentNewEntryButton from '../components/DocumentNewEntryButton.vue'
 import DocumentTable from '../components/DocumentTable.vue'
 import DocumentTypeFilter from '../components/DocumentTypeFilter.vue'
 import { useBulkMetadataEdit } from '../composables/useBulkMetadataEdit.ts'
-import { useDocumentApi } from '../composables/useDocumentApi.ts'
-import { useDocumentTableRefresh } from '../composables/useDocumentTableRefresh.ts'
-import { useEditorWindows } from '../composables/useEditorWindows.ts'
+import { useDocumentStore } from '../stores/documents'
+import { useEditorWindowStore } from '../stores/editorWindows'
 import { useLogger } from '../composables/useLogger.ts'
+import { useDocumentApi } from '../composables/useDocumentApi.ts'
 
 const logger = useLogger()
-const { openWindow } = useEditorWindows()
-const { onRefreshTriggered } = useDocumentTableRefresh()
-
+const { openWindow } = useEditorWindowStore()
+const documentStore = useDocumentStore()
+const { documents, loading, selectedIds } = storeToRefs(documentStore)
 const api = useDocumentApi()
 
-const documents = ref([] as DocumentListItem[])
-const loading = ref(false)
-const selectedIds = ref<Set<string>>(new Set())
-
 // Bulk metadata editing (composable handles modal state and update logic)
-const bulkMetadataEdit = useBulkMetadataEdit(selectedIds, documents, api, () => {
-  handleSearchSubmit()
-})
+const bulkMetadataEdit = useBulkMetadataEdit()
 
 // Embed modal state
 const showEmbedModal = ref(false)
@@ -47,25 +42,11 @@ const pageNumber = ref(0)
 const enabledDocumentTypes = ref<DocumentType[]>(getAllDocumentTypes())
 
 onBeforeMount(async () => {
-  try {
-    await api.initialise()
-    logger.info('[Library] Document-API initialised successfully')
-  }
-  catch (error) {
-    logger.error(`[Library] Failed to initialise API: ${(error as Error).message}`)
-  }
-
-  // Send initial search to populate table
   handleSearchSubmit()
-
-  // Watch for refresh triggers from other components (e.g., after save in GlobalEditorWindows)
-  onRefreshTriggered(() => {
-    handleSearchSubmit()
-  })
 })
 
-function createSearchRequest() {
-  return buildSearchDocumentsRequest({
+async function handleSearchSubmit() {
+  await documentStore.search({
     nameQuery: basicFilters.value.nameQuery,
     systemFilters: basicFilters.value.systemFilters,
     typeFilters: enabledDocumentTypes.value,
@@ -75,43 +56,12 @@ function createSearchRequest() {
   })
 }
 
-async function handleSearchSubmit() {
-  if (!api) {
-    logger.error('Error: Document  API client not yet initialised.')
-    return
-  }
-
-  loading.value = true
-
-  try {
-    const request = createSearchRequest()
-    logger.info('Searching for documents...')
-
-    const response = await api.searchDocuments(request)
-
-    // Store the results
-    documents.value = response.matches
-    logger.success(`Success! Found ${response.matches.length} PDF documents (${response.totalCount} total documents)`)
-    logger.info(`Returned ${response.matches.length} PDF results on page ${response.pageNumber}`)
-  }
-  catch (error) {
-    logger.error(`Error during document search: ${(error as Error).message}`)
-  }
-  finally {
-    loading.value = false
-  }
-}
-
 // Open a global editor window for the selected document
 async function handleEditDocument(target: DocumentListItem) {
-  if (!api) {
-    logger.error('Error: Document API not initialised')
-    return
-  }
-
   try {
     logger.info(`Fetching content for: ${target.name}`)
 
+    await api.initialise()
     const response = await api.getDocument(target.id)
 
     if (!response.success || !response.document) {
@@ -119,7 +69,6 @@ async function handleEditDocument(target: DocumentListItem) {
       return
     }
 
-    // Open editor window with the fetched content
     openWindow({
       title: response.document.name,
       content: response.document.content || '',
@@ -130,7 +79,7 @@ async function handleEditDocument(target: DocumentListItem) {
     logger.success(`Opened editor for: ${response.document.name} (${response.document.content?.length || 0} characters)`)
   }
   catch (error) {
-    logger.error(`Error fetching PDF: ${(error as Error).message}`)
+    logger.error(`Error fetching document: ${(error as Error).message}`)
   }
 }
 
@@ -146,7 +95,6 @@ function closeEmbedModal() {
   showEmbedModal.value = false
   embedDocumentId.value = null
 }
-
 </script>
 
 <template>

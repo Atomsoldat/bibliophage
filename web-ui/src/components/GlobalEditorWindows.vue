@@ -1,24 +1,15 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useDocumentApi } from '../composables/useDocumentApi'
-import { useDocumentTableRefresh } from '../composables/useDocumentTableRefresh.ts'
-import { useEditorWindows } from '../composables/useEditorWindows'
 import { useLogger } from '../composables/useLogger'
+import { useEditorWindowStore } from '../stores/editorWindows'
+import { useDocumentStore } from '../stores/documents'
 import TextEditorWindow from './TextEditorWindow.vue'
 
-const {
-  windows,
-  closeWindow,
-  toggleMinimize,
-  updatePosition,
-  updateDocument,
-  bringToFront,
-  getWindow,
-} = useEditorWindows()
-
+const editorWindows = useEditorWindowStore()
+const documentStore = useDocumentStore()
 const api = useDocumentApi()
 const logger = useLogger()
-const { triggerRefresh } = useDocumentTableRefresh()
 
 // Store refs to editor window components
 const editorWindowRefs = ref<Map<string, InstanceType<typeof TextEditorWindow>>>(new Map())
@@ -44,7 +35,7 @@ onMounted(async () => {
 })
 
 async function handleSave(windowId: string) {
-  const window = getWindow(windowId)
+  const window = editorWindows.getWindow(windowId)
   if (!window) {
     logger.error('Window not found')
     return
@@ -65,13 +56,12 @@ async function handleSave(windowId: string) {
         tags: [], // Empty tags array
       })
       if (response?.success && response.document) {
-        updateDocument(windowId, {
+        editorWindows.updateDocument(windowId, {
           documentId: response.document.id,
           isNew: false,
         })
         logger.success(`Document created: ${response.document.id}`)
-        // Trigger journal list refresh to fetch new document from backend
-        triggerRefresh()
+        await documentStore.reload()
         // Switch to preview mode after successful save
         editorWindowRefs.value.get(windowId)?.switchToPreview()
       }
@@ -88,8 +78,7 @@ async function handleSave(windowId: string) {
       })
       if (response?.success) {
         logger.success('Document updated')
-        // Trigger journal list refresh to fetch updated document from backend
-        triggerRefresh()
+        await documentStore.reload()
         // Switch to preview mode after successful save
         editorWindowRefs.value.get(windowId)?.switchToPreview()
       }
@@ -106,7 +95,7 @@ async function handleSave(windowId: string) {
 
 function handleDiscard(windowId: string) {
   // TODO: Add confirmation dialog for unsaved changes
-  closeWindow(windowId)
+  editorWindows.closeWindow(windowId)
   logger.info('Document discarded')
 }
 </script>
@@ -114,15 +103,15 @@ function handleDiscard(windowId: string) {
 <template>
   <div class="global-editor-windows">
     <TextEditorWindow
-      v-for="window in windows"
+      v-for="window in editorWindows.windows"
       v-bind:key="window.id"
       v-bind:ref="(el) => setEditorWindowRef(window.id, el)"
       v-bind:window="window"
-      @close="closeWindow"
-      @minimize="toggleMinimize"
-      @position-change="updatePosition"
-      @document-update="updateDocument"
-      @bring-to-front="bringToFront"
+      @close="editorWindows.closeWindow"
+      @minimize="editorWindows.toggleMinimize"
+      @position-change="editorWindows.updatePosition"
+      @document-update="editorWindows.updateDocument"
+      @bring-to-front="editorWindows.bringToFront"
       @save="handleSave"
       @discard="handleDiscard"
     />

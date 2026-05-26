@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { DisplayMessage } from '../../composables/useChatState'
+import type { DisplayMessage } from '../../stores/chat'
 import { Icon } from '@iconify/vue'
 import { marked } from 'marked'
 import { computed } from 'vue'

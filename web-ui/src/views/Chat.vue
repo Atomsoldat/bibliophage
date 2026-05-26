@@ -5,11 +5,11 @@ import ChatInput from '../components/chat/ChatInput.vue'
 import ChatMessage from '../components/chat/ChatMessage.vue'
 import DocumentPicker from '../components/chat/DocumentPicker.vue'
 import { useChatApi } from '../composables/useChatApi'
-import { useChatState } from '../composables/useChatState'
+import { useChatStore } from '../stores/chat'
 import { useLogger } from '../composables/useLogger'
 
 const chatApi = useChatApi()
-const chatState = useChatState()
+const chat = useChatStore()
 const logger = useLogger()
 
 const messagesContainer = ref<HTMLElement | null>(null)
@@ -20,40 +20,31 @@ onMounted(async () => {
 })
 
 async function handleSend(message: string) {
-  // Add user message to UI
-  chatState.addUserMessage(message)
-
-  // Start assistant message
-  chatState.startAssistantMessage()
-
-  // Scroll to bottom
+  chat.addUserMessage(message)
+  chat.startAssistantMessage()
   await scrollToBottom()
 
-  // Debug info (browser console only)
   logger.debug('Starting chat stream', {
     message,
-    contextDocs: chatState.selectedDocuments.value.length,
+    contextDocs: chat.selectedDocuments.length,
   })
 
   try {
-    // Clear previous retrieved chunks before starting new request
-    chatState.clearRetrievedChunks()
+    chat.clearRetrievedChunks()
 
-    // Stream response from backend
     await chatApi.streamChat(
       message,
-      Array.from(chatState.selectedDocuments.value).map(d => d.id),
-      [], // Empty history for now (can extend later with full conversation)
+      Array.from(chat.selectedDocuments).map(d => d.id),
+      [],
       (chunk) => {
         if (chunk.type === ChunkType.TOKEN) {
-          chatState.appendToken(chunk.content)
+          chat.appendToken(chunk.content)
           scrollToBottom()
         }
         else if (chunk.type === ChunkType.METADATA) {
           currentMetadata.value = chunk.metadata
-          // Store retrieved chunks in state
           if (chunk.metadata?.retrievedChunks) {
-            chatState.setRetrievedChunks(
+            chat.setRetrievedChunks(
               chunk.metadata.retrievedChunks.map(c => ({
                 chunkId: c.chunkId,
                 documentId: c.documentId,
@@ -63,32 +54,28 @@ async function handleSend(message: string) {
               })),
             )
           }
-          // User-facing notification
           const docCount = chunk.metadata?.contextDocuments.length || 0
           const chunkCount = chunk.metadata?.retrievedChunks.length || 0
           logger.notify(
             `Using ${docCount} documents, ${chunkCount} auto-retrieved chunks`,
             'info',
           )
-          // Technical details (browser only)
           logger.debug('Context metadata', chunk.metadata)
         }
         else if (chunk.type === ChunkType.DONE) {
-          chatState.finishStreaming()
+          chat.finishStreaming()
           logger.success('Response complete')
         }
         else if (chunk.type === ChunkType.ERROR) {
-          chatState.finishStreaming()
-          // Show error to user and log details for debugging
+          chat.finishStreaming()
           logger.error(`Error: ${chunk.content}`)
         }
       },
-      { enableAutoRetrieval: chatState.autoRetrievalEnabled.value },
+      { enableAutoRetrieval: chat.autoRetrievalEnabled },
     )
   }
   catch (error) {
-    chatState.finishStreaming()
-    // Both consoles get error notification (default behavior)
+    chat.finishStreaming()
     logger.error(`Failed to send message: ${error}`, 'both', error)
   }
 }
@@ -116,7 +103,7 @@ async function scrollToBottom() {
           class="flex-1 overflow-y-auto mb-4 p-4 border border-base-300 rounded-lg bg-base-100"
         >
           <div
-            v-if="chatState.messages.value.length === 0"
+            v-if="chat.messages.length === 0"
             class="text-center text-base-content/50 py-12"
           >
             <p class="text-lg">
@@ -128,7 +115,7 @@ async function scrollToBottom() {
           </div>
           <div v-else class="space-y-4">
             <ChatMessage
-              v-for="msg in chatState.messages.value"
+              v-for="msg in chat.messages"
               v-bind:key="msg.id"
               v-bind:message="msg"
             />
@@ -136,18 +123,12 @@ async function scrollToBottom() {
         </div>
 
         <!-- Input -->
-        <ChatInput v-bind:disabled="chatState.isStreaming.value" @send="handleSend" />
+        <ChatInput v-bind:disabled="chat.isStreaming" @send="handleSend" />
       </div>
 
       <!-- Sidebar: Document picker -->
       <div class="w-96 flex-shrink-0">
-        <DocumentPicker
-          v-bind:selected-documents="chatState.selectedDocuments.value"
-          v-bind:auto-retrieval-enabled="chatState.autoRetrievalEnabled.value"
-          v-bind:retrieved-chunks="chatState.retrievedChunks.value"
-          @toggle="chatState.toggleContextDocument"
-          @update:auto-retrieval-enabled="chatState.setAutoRetrievalEnabled"
-        />
+        <DocumentPicker />
       </div>
     </div>
   </div>
