@@ -21,6 +21,10 @@ const router = createRouter({
       component: () => import('../views/Chat.vue'),
     },
     {
+      path: '/graph',
+      component: () => import('../views/GraphView.vue'),
+    },
+    {
       path: '/chunks',
       component: () => import('../views/Chunks.vue'),
     },

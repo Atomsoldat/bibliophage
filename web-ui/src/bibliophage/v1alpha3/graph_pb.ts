@@ -702,4 +702,3 @@ export class ListEdgesResponse extends Message<ListEdgesResponse> {
     return proto3.util.equals(ListEdgesResponse, a, b);
   }
 }
-

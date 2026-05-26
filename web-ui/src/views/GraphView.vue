@@ -2,24 +2,16 @@
 import type { DocumentListItem } from '../utils/protoHelpers'
 import { Icon } from '@iconify/vue'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
+import { storeToRefs } from 'pinia'
 import Sigma from 'sigma'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import GraphSearchPanel from '../components/GraphSearchPanel.vue'
-import { useGraphStore } from '../composables/useGraphStore'
+import { useGraphStore } from '../stores/graph'
 import { useLogger } from '../composables/useLogger'
 
-const {
-  graph,
-  pinnedDoc,
-  selectedNodeId,
-  expandedNodeIds,
-  lastError,
-  pinNode,
-  expand,
-  collapse,
-  setSelection,
-  addEdge,
-} = useGraphStore()
+const store = useGraphStore()
+const { pinnedDoc, selectedNodeId, expandedNodeIds, lastError } = storeToRefs(store)
+const { graph, pinNode, expand, collapse, setSelection, addEdge } = store
 
 const logger = useLogger()
 const containerRef = ref<HTMLDivElement | null>(null)
