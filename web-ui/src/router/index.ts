@@ -25,6 +25,10 @@ const router = createRouter({
       component: () => import('../views/Chunks.vue'),
     },
     {
+      path: '/graph',
+      component: () => import('../views/GraphView.vue'),
+    },
+    {
       path: '/sandbox',
       component: () => import('../views/Sandbox.vue'),
     },
