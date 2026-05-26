@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { DocumentListItem } from '../utils/protoHelpers'
+import { Icon } from '@iconify/vue'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
 import Sigma from 'sigma'
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import GraphSearchPanel from '../components/GraphSearchPanel.vue'
 import { useGraphStore } from '../composables/useGraphStore'
 import { useLogger } from '../composables/useLogger'
@@ -17,6 +18,7 @@ const {
   expand,
   collapse,
   setSelection,
+  addEdge,
 } = useGraphStore()
 
 const logger = useLogger()
@@ -55,7 +57,36 @@ function scheduleLayout(): void {
 let lastTabTime = 0
 const DOUBLE_TAB_WINDOW_MS = 400
 
+// Connect mode: when active, the next two node clicks form an edge.
+// `connectFirstEndpoint` holds the first picked node id, if any.
+const connectMode = ref(false)
+const connectFirstEndpoint = ref<string | null>(null)
+
+const connectBannerText = computed(() => {
+  if (!connectMode.value) {
+    return ''
+  }
+  return connectFirstEndpoint.value
+    ? 'Click a second node to connect — or Esc to cancel.'
+    : 'Click the first node to connect — or Esc to cancel.'
+})
+
+function toggleConnectMode(): void {
+  connectMode.value = !connectMode.value
+  connectFirstEndpoint.value = null
+}
+
+function cancelConnectMode(): void {
+  connectMode.value = false
+  connectFirstEndpoint.value = null
+}
+
 function handleKeyDown(event: KeyboardEvent): void {
+  if (event.key === 'Escape' && connectMode.value) {
+    event.preventDefault()
+    cancelConnectMode()
+    return
+  }
   if (event.key !== 'Tab') {
     return
   }
@@ -81,6 +112,20 @@ onMounted(() => {
   sigma = new Sigma(graph, containerRef.value)
 
   sigma.on('clickNode', ({ node, event }) => {
+    if (connectMode.value) {
+      if (connectFirstEndpoint.value === null) {
+        connectFirstEndpoint.value = node
+        return
+      }
+      // Second click — only attempt the edge if it's a different node;
+      // self-loops are rejected server-side anyway, but bailing here avoids
+      // a wasted round-trip.
+      if (node !== connectFirstEndpoint.value) {
+        void addEdge(connectFirstEndpoint.value, node)
+      }
+      cancelConnectMode()
+      return
+    }
     // Shift+click collapses an expanded node — the pinned node ignores this
     // in the store, so no special-case here.
     if (event.original instanceof MouseEvent && event.original.shiftKey) {
@@ -142,15 +187,34 @@ function handlePick(doc: DocumentListItem): void {
       <h1 class="text-2xl font-bold">
         Graph
       </h1>
-      <div class="text-sm opacity-70">
-        <template v-if="pinnedDoc">
-          Pinned: <span class="font-mono">{{ pinnedDoc.name }}</span>
-          <span class="ml-2">· {{ expandedNodeIds.size }} expanded</span>
-        </template>
-        <template v-else>
-          No node pinned — search and click a result to start.
-        </template>
+      <div class="flex items-center gap-3">
+        <div class="text-sm opacity-70">
+          <template v-if="pinnedDoc">
+            Pinned: <span class="font-mono">{{ pinnedDoc.name }}</span>
+            <span class="ml-2">· {{ expandedNodeIds.size }} expanded</span>
+          </template>
+          <template v-else>
+            No node pinned — search and click a result to start.
+          </template>
+        </div>
+        <button
+          type="button"
+          class="btn btn-sm gap-1"
+          v-bind:class="connectMode ? 'btn-warning' : 'btn-outline'"
+          v-bind:disabled="!pinnedDoc"
+          @click="toggleConnectMode"
+        >
+          <Icon icon="mdi:vector-polyline-plus" />
+          {{ connectMode ? 'Cancel connect' : 'Connect' }}
+        </button>
       </div>
+    </div>
+
+    <div
+      v-if="connectMode"
+      class="alert alert-info py-1 px-3 text-sm mb-2"
+    >
+      {{ connectBannerText }}
     </div>
 
     <div class="flex-1 flex gap-3 min-h-0">
