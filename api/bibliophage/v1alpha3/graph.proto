@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package bibliophage.v1alpha3;
 
+import "bibliophage/v1alpha3/document.proto";
 import "google/protobuf/struct.proto";
 
 // ============================================================================
@@ -13,6 +14,15 @@ service GraphService {
   rpc CreateEdge(CreateEdgeRequest) returns (CreateEdgeResponse);
   rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
   rpc DeleteEdge(DeleteEdgeRequest) returns (DeleteEdgeResponse);
+
+  // Return the neighbours (one hop) of a given node along with the edges
+  // connecting them. Used by the graph view to expand a node on demand.
+  rpc GetNeighbours(GetNeighboursRequest) returns (GetNeighboursResponse);
+
+  // Return every edge whose endpoints both lie in the provided node set.
+  // Used to draw edges between nodes that are already in the client's
+  // view (e.g. after a search adds a new node next to existing ones).
+  rpc ListEdges(ListEdgesRequest) returns (ListEdgesResponse);
 }
 
 // ============================================================================
@@ -109,4 +119,36 @@ message DeleteEdgeRequest {
 message DeleteEdgeResponse {
   bool success = 1;
   string message = 2;
+}
+
+// Fetch all neighbours of a single node in one round-trip.
+message GetNeighboursRequest {
+  // ID of the node whose neighbourhood should be returned
+  string document_id = 1;
+}
+
+message GetNeighboursResponse {
+  bool success = 1;
+  string message = 2;
+
+  // Lightweight summaries of every adjacent document.
+  // Use DocumentService.GetDocument to retrieve full content.
+  repeated DocumentListItem neighbours = 3;
+
+  // Every edge incident to the requested node
+  repeated Edge edges = 4;
+}
+
+// Fetch every edge whose endpoints both lie in the provided node set.
+message ListEdgesRequest {
+  // IDs of nodes to consider. Only edges with both endpoints in this
+  // set are returned.
+  repeated string document_ids = 1;
+}
+
+message ListEdgesResponse {
+  bool success = 1;
+  string message = 2;
+
+  repeated Edge edges = 3;
 }

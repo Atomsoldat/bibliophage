@@ -28,6 +28,12 @@ class GraphService(Protocol):
     async def delete_edge(self, request: bibliophage_dot_v1alpha3_dot_graph__pb2.DeleteEdgeRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_graph__pb2.DeleteEdgeResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
+    async def get_neighbours(self, request: bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursResponse:
+        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
+    async def list_edges(self, request: bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesResponse:
+        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+
 
 class GraphServiceASGIApplication(ConnectASGIApplication[GraphService]):
     def __init__(self, service: GraphService | AsyncGenerator[GraphService], *, interceptors: Iterable[Interceptor]=(), read_max_bytes: int | None = None) -> None:
@@ -73,6 +79,26 @@ class GraphServiceASGIApplication(ConnectASGIApplication[GraphService]):
                         idempotency_level=IdempotencyLevel.UNKNOWN,
                     ),
                     function=svc.delete_edge,
+                ),
+                "/bibliophage.v1alpha3.GraphService/GetNeighbours": Endpoint.unary(
+                    method=MethodInfo(
+                        name="GetNeighbours",
+                        service_name="bibliophage.v1alpha3.GraphService",
+                        input=bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursRequest,
+                        output=bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursResponse,
+                        idempotency_level=IdempotencyLevel.UNKNOWN,
+                    ),
+                    function=svc.get_neighbours,
+                ),
+                "/bibliophage.v1alpha3.GraphService/ListEdges": Endpoint.unary(
+                    method=MethodInfo(
+                        name="ListEdges",
+                        service_name="bibliophage.v1alpha3.GraphService",
+                        input=bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesRequest,
+                        output=bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesResponse,
+                        idempotency_level=IdempotencyLevel.UNKNOWN,
+                    ),
+                    function=svc.list_edges,
                 ),
             },
             interceptors=interceptors,
@@ -166,6 +192,46 @@ class GraphServiceClient(ConnectClient):
             timeout_ms=timeout_ms,
         )
 
+    async def get_neighbours(
+        self,
+        request: bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursRequest,
+        *,
+        headers: Headers | Mapping[str, str] | None = None,
+        timeout_ms: int | None = None,
+    ) -> bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursResponse:
+        return await self.execute_unary(
+            request=request,
+            method=MethodInfo(
+                name="GetNeighbours",
+                service_name="bibliophage.v1alpha3.GraphService",
+                input=bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursRequest,
+                output=bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursResponse,
+                idempotency_level=IdempotencyLevel.UNKNOWN,
+            ),
+            headers=headers,
+            timeout_ms=timeout_ms,
+        )
+
+    async def list_edges(
+        self,
+        request: bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesRequest,
+        *,
+        headers: Headers | Mapping[str, str] | None = None,
+        timeout_ms: int | None = None,
+    ) -> bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesResponse:
+        return await self.execute_unary(
+            request=request,
+            method=MethodInfo(
+                name="ListEdges",
+                service_name="bibliophage.v1alpha3.GraphService",
+                input=bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesRequest,
+                output=bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesResponse,
+                idempotency_level=IdempotencyLevel.UNKNOWN,
+            ),
+            headers=headers,
+            timeout_ms=timeout_ms,
+        )
+
 
 class GraphServiceSync(Protocol):
     def create_node(self, request: bibliophage_dot_v1alpha3_dot_graph__pb2.CreateNodeRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_graph__pb2.CreateNodeResponse:
@@ -175,6 +241,10 @@ class GraphServiceSync(Protocol):
     def delete_node(self, request: bibliophage_dot_v1alpha3_dot_graph__pb2.DeleteNodeRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_graph__pb2.DeleteNodeResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
     def delete_edge(self, request: bibliophage_dot_v1alpha3_dot_graph__pb2.DeleteEdgeRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_graph__pb2.DeleteEdgeResponse:
+        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+    def get_neighbours(self, request: bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursResponse:
+        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
+    def list_edges(self, request: bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
@@ -221,6 +291,26 @@ class GraphServiceWSGIApplication(ConnectWSGIApplication):
                         idempotency_level=IdempotencyLevel.UNKNOWN,
                     ),
                     function=service.delete_edge,
+                ),
+                "/bibliophage.v1alpha3.GraphService/GetNeighbours": EndpointSync.unary(
+                    method=MethodInfo(
+                        name="GetNeighbours",
+                        service_name="bibliophage.v1alpha3.GraphService",
+                        input=bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursRequest,
+                        output=bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursResponse,
+                        idempotency_level=IdempotencyLevel.UNKNOWN,
+                    ),
+                    function=service.get_neighbours,
+                ),
+                "/bibliophage.v1alpha3.GraphService/ListEdges": EndpointSync.unary(
+                    method=MethodInfo(
+                        name="ListEdges",
+                        service_name="bibliophage.v1alpha3.GraphService",
+                        input=bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesRequest,
+                        output=bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesResponse,
+                        idempotency_level=IdempotencyLevel.UNKNOWN,
+                    ),
+                    function=service.list_edges,
                 ),
             },
             interceptors=interceptors,
@@ -308,6 +398,46 @@ class GraphServiceClientSync(ConnectClientSync):
                 service_name="bibliophage.v1alpha3.GraphService",
                 input=bibliophage_dot_v1alpha3_dot_graph__pb2.DeleteEdgeRequest,
                 output=bibliophage_dot_v1alpha3_dot_graph__pb2.DeleteEdgeResponse,
+                idempotency_level=IdempotencyLevel.UNKNOWN,
+            ),
+            headers=headers,
+            timeout_ms=timeout_ms,
+        )
+
+    def get_neighbours(
+        self,
+        request: bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursRequest,
+        *,
+        headers: Headers | Mapping[str, str] | None = None,
+        timeout_ms: int | None = None,
+    ) -> bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursResponse:
+        return self.execute_unary(
+            request=request,
+            method=MethodInfo(
+                name="GetNeighbours",
+                service_name="bibliophage.v1alpha3.GraphService",
+                input=bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursRequest,
+                output=bibliophage_dot_v1alpha3_dot_graph__pb2.GetNeighboursResponse,
+                idempotency_level=IdempotencyLevel.UNKNOWN,
+            ),
+            headers=headers,
+            timeout_ms=timeout_ms,
+        )
+
+    def list_edges(
+        self,
+        request: bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesRequest,
+        *,
+        headers: Headers | Mapping[str, str] | None = None,
+        timeout_ms: int | None = None,
+    ) -> bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesResponse:
+        return self.execute_unary(
+            request=request,
+            method=MethodInfo(
+                name="ListEdges",
+                service_name="bibliophage.v1alpha3.GraphService",
+                input=bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesRequest,
+                output=bibliophage_dot_v1alpha3_dot_graph__pb2.ListEdgesResponse,
                 idempotency_level=IdempotencyLevel.UNKNOWN,
             ),
             headers=headers,

@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateEdgeRequest, CreateEdgeResponse, CreateNodeRequest, CreateNodeResponse, DeleteEdgeRequest, DeleteEdgeResponse, DeleteNodeRequest, DeleteNodeResponse } from "./graph_pb.js";
+import { CreateEdgeRequest, CreateEdgeResponse, CreateNodeRequest, CreateNodeResponse, DeleteEdgeRequest, DeleteEdgeResponse, DeleteNodeRequest, DeleteNodeResponse, GetNeighboursRequest, GetNeighboursResponse, ListEdgesRequest, ListEdgesResponse } from "./graph_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -46,6 +46,31 @@ export const GraphService = {
       name: "DeleteEdge",
       I: DeleteEdgeRequest,
       O: DeleteEdgeResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Return the neighbours (one hop) of a given node along with the edges
+     * connecting them. Used by the graph view to expand a node on demand.
+     *
+     * @generated from rpc bibliophage.v1alpha3.GraphService.GetNeighbours
+     */
+    getNeighbours: {
+      name: "GetNeighbours",
+      I: GetNeighboursRequest,
+      O: GetNeighboursResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Return every edge whose endpoints both lie in the provided node set.
+     * Used to draw edges between nodes that are already in the client's
+     * view (e.g. after a search adds a new node next to existing ones).
+     *
+     * @generated from rpc bibliophage.v1alpha3.GraphService.ListEdges
+     */
+    listEdges: {
+      name: "ListEdges",
+      I: ListEdgesRequest,
+      O: ListEdgesResponse,
       kind: MethodKind.Unary,
     },
   }

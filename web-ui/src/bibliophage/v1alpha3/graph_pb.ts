@@ -5,6 +5,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3, Struct } from "@bufbuild/protobuf";
+import { DocumentListItem } from "./document_pb.js";
 
 /**
  * Node represents a vertex in the knowledge graph
@@ -507,6 +508,198 @@ export class DeleteEdgeResponse extends Message<DeleteEdgeResponse> {
 
   static equals(a: DeleteEdgeResponse | PlainMessage<DeleteEdgeResponse> | undefined, b: DeleteEdgeResponse | PlainMessage<DeleteEdgeResponse> | undefined): boolean {
     return proto3.util.equals(DeleteEdgeResponse, a, b);
+  }
+}
+
+/**
+ * Fetch all neighbours of a single node in one round-trip.
+ *
+ * @generated from message bibliophage.v1alpha3.GetNeighboursRequest
+ */
+export class GetNeighboursRequest extends Message<GetNeighboursRequest> {
+  /**
+   * ID of the node whose neighbourhood should be returned
+   *
+   * @generated from field: string document_id = 1;
+   */
+  documentId = "";
+
+  constructor(data?: PartialMessage<GetNeighboursRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.GetNeighboursRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "document_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetNeighboursRequest {
+    return new GetNeighboursRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetNeighboursRequest {
+    return new GetNeighboursRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetNeighboursRequest {
+    return new GetNeighboursRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetNeighboursRequest | PlainMessage<GetNeighboursRequest> | undefined, b: GetNeighboursRequest | PlainMessage<GetNeighboursRequest> | undefined): boolean {
+    return proto3.util.equals(GetNeighboursRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message bibliophage.v1alpha3.GetNeighboursResponse
+ */
+export class GetNeighboursResponse extends Message<GetNeighboursResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * @generated from field: string message = 2;
+   */
+  message = "";
+
+  /**
+   * Lightweight summaries of every adjacent document.
+   * Use DocumentService.GetDocument to retrieve full content.
+   *
+   * @generated from field: repeated bibliophage.v1alpha3.DocumentListItem neighbours = 3;
+   */
+  neighbours: DocumentListItem[] = [];
+
+  /**
+   * Every edge incident to the requested node
+   *
+   * @generated from field: repeated bibliophage.v1alpha3.Edge edges = 4;
+   */
+  edges: Edge[] = [];
+
+  constructor(data?: PartialMessage<GetNeighboursResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.GetNeighboursResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "neighbours", kind: "message", T: DocumentListItem, repeated: true },
+    { no: 4, name: "edges", kind: "message", T: Edge, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetNeighboursResponse {
+    return new GetNeighboursResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetNeighboursResponse {
+    return new GetNeighboursResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetNeighboursResponse {
+    return new GetNeighboursResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetNeighboursResponse | PlainMessage<GetNeighboursResponse> | undefined, b: GetNeighboursResponse | PlainMessage<GetNeighboursResponse> | undefined): boolean {
+    return proto3.util.equals(GetNeighboursResponse, a, b);
+  }
+}
+
+/**
+ * Fetch every edge whose endpoints both lie in the provided node set.
+ *
+ * @generated from message bibliophage.v1alpha3.ListEdgesRequest
+ */
+export class ListEdgesRequest extends Message<ListEdgesRequest> {
+  /**
+   * IDs of nodes to consider. Only edges with both endpoints in this
+   * set are returned.
+   *
+   * @generated from field: repeated string document_ids = 1;
+   */
+  documentIds: string[] = [];
+
+  constructor(data?: PartialMessage<ListEdgesRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.ListEdgesRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "document_ids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListEdgesRequest {
+    return new ListEdgesRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListEdgesRequest {
+    return new ListEdgesRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListEdgesRequest {
+    return new ListEdgesRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListEdgesRequest | PlainMessage<ListEdgesRequest> | undefined, b: ListEdgesRequest | PlainMessage<ListEdgesRequest> | undefined): boolean {
+    return proto3.util.equals(ListEdgesRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message bibliophage.v1alpha3.ListEdgesResponse
+ */
+export class ListEdgesResponse extends Message<ListEdgesResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * @generated from field: string message = 2;
+   */
+  message = "";
+
+  /**
+   * @generated from field: repeated bibliophage.v1alpha3.Edge edges = 3;
+   */
+  edges: Edge[] = [];
+
+  constructor(data?: PartialMessage<ListEdgesResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.ListEdgesResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "edges", kind: "message", T: Edge, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListEdgesResponse {
+    return new ListEdgesResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListEdgesResponse {
+    return new ListEdgesResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListEdgesResponse {
+    return new ListEdgesResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListEdgesResponse | PlainMessage<ListEdgesResponse> | undefined, b: ListEdgesResponse | PlainMessage<ListEdgesResponse> | undefined): boolean {
+    return proto3.util.equals(ListEdgesResponse, a, b);
   }
 }
 

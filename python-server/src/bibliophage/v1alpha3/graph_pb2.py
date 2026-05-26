@@ -22,36 +22,45 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
+from bibliophage.v1alpha3 import document_pb2 as bibliophage_dot_v1alpha3_dot_document__pb2
 from google.protobuf import struct_pb2 as google_dot_protobuf_dot_struct__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n bibliophage/v1alpha3/graph.proto\x12\x14\x62ibliophage.v1alpha3\x1a\x1cgoogle/protobuf/struct.proto\"P\n\x04Node\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07type_id\x18\x02 \x01(\t\x12+\n\nproperties\x18\x03 \x01(\x0b\x32\x17.google.protobuf.Struct\"Z\n\x04\x45\x64ge\x12\n\n\x02id\x18\x01 \x01(\t\x12\x14\n\x0crelationship\x18\x02 \x01(\t\x12\x10\n\x08\x64irected\x18\x03 \x01(\x08\x12\x0e\n\x06node_a\x18\x04 \x01(\t\x12\x0e\n\x06node_b\x18\x05 \x01(\t\"Q\n\x11\x43reateNodeRequest\x12\x0f\n\x07type_id\x18\x01 \x01(\t\x12+\n\nproperties\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\"`\n\x12\x43reateNodeResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12(\n\x04node\x18\x03 \x01(\x0b\x32\x1a.bibliophage.v1alpha3.Node\"k\n\x11\x43reateEdgeRequest\x12\x14\n\x0crelationship\x18\x01 \x01(\t\x12\x10\n\x08\x64irected\x18\x02 \x01(\x08\x12\x16\n\x0esource_node_id\x18\x03 \x01(\t\x12\x16\n\x0etarget_node_id\x18\x04 \x01(\t\"`\n\x12\x43reateEdgeResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12(\n\x04\x65\x64ge\x18\x03 \x01(\x0b\x32\x1a.bibliophage.v1alpha3.Edge\"\x1f\n\x11\x44\x65leteNodeRequest\x12\n\n\x02id\x18\x01 \x01(\t\"6\n\x12\x44\x65leteNodeResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\x1f\n\x11\x44\x65leteEdgeRequest\x12\n\n\x02id\x18\x01 \x01(\t\"6\n\x12\x44\x65leteEdgeResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t2\x92\x03\n\x0cGraphService\x12_\n\nCreateNode\x12\'.bibliophage.v1alpha3.CreateNodeRequest\x1a(.bibliophage.v1alpha3.CreateNodeResponse\x12_\n\nCreateEdge\x12\'.bibliophage.v1alpha3.CreateEdgeRequest\x1a(.bibliophage.v1alpha3.CreateEdgeResponse\x12_\n\nDeleteNode\x12\'.bibliophage.v1alpha3.DeleteNodeRequest\x1a(.bibliophage.v1alpha3.DeleteNodeResponse\x12_\n\nDeleteEdge\x12\'.bibliophage.v1alpha3.DeleteEdgeRequest\x1a(.bibliophage.v1alpha3.DeleteEdgeResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n bibliophage/v1alpha3/graph.proto\x12\x14\x62ibliophage.v1alpha3\x1a#bibliophage/v1alpha3/document.proto\x1a\x1cgoogle/protobuf/struct.proto\"P\n\x04Node\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07type_id\x18\x02 \x01(\t\x12+\n\nproperties\x18\x03 \x01(\x0b\x32\x17.google.protobuf.Struct\"Z\n\x04\x45\x64ge\x12\n\n\x02id\x18\x01 \x01(\t\x12\x14\n\x0crelationship\x18\x02 \x01(\t\x12\x10\n\x08\x64irected\x18\x03 \x01(\x08\x12\x0e\n\x06node_a\x18\x04 \x01(\t\x12\x0e\n\x06node_b\x18\x05 \x01(\t\"Q\n\x11\x43reateNodeRequest\x12\x0f\n\x07type_id\x18\x01 \x01(\t\x12+\n\nproperties\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\"`\n\x12\x43reateNodeResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12(\n\x04node\x18\x03 \x01(\x0b\x32\x1a.bibliophage.v1alpha3.Node\"k\n\x11\x43reateEdgeRequest\x12\x14\n\x0crelationship\x18\x01 \x01(\t\x12\x10\n\x08\x64irected\x18\x02 \x01(\x08\x12\x16\n\x0esource_node_id\x18\x03 \x01(\t\x12\x16\n\x0etarget_node_id\x18\x04 \x01(\t\"`\n\x12\x43reateEdgeResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12(\n\x04\x65\x64ge\x18\x03 \x01(\x0b\x32\x1a.bibliophage.v1alpha3.Edge\"\x1f\n\x11\x44\x65leteNodeRequest\x12\n\n\x02id\x18\x01 \x01(\t\"6\n\x12\x44\x65leteNodeResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\x1f\n\x11\x44\x65leteEdgeRequest\x12\n\n\x02id\x18\x01 \x01(\t\"6\n\x12\x44\x65leteEdgeResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"+\n\x14GetNeighboursRequest\x12\x13\n\x0b\x64ocument_id\x18\x01 \x01(\t\"\xa0\x01\n\x15GetNeighboursResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12:\n\nneighbours\x18\x03 \x03(\x0b\x32&.bibliophage.v1alpha3.DocumentListItem\x12)\n\x05\x65\x64ges\x18\x04 \x03(\x0b\x32\x1a.bibliophage.v1alpha3.Edge\"(\n\x10ListEdgesRequest\x12\x14\n\x0c\x64ocument_ids\x18\x01 \x03(\t\"`\n\x11ListEdgesResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12)\n\x05\x65\x64ges\x18\x03 \x03(\x0b\x32\x1a.bibliophage.v1alpha3.Edge2\xda\x04\n\x0cGraphService\x12_\n\nCreateNode\x12\'.bibliophage.v1alpha3.CreateNodeRequest\x1a(.bibliophage.v1alpha3.CreateNodeResponse\x12_\n\nCreateEdge\x12\'.bibliophage.v1alpha3.CreateEdgeRequest\x1a(.bibliophage.v1alpha3.CreateEdgeResponse\x12_\n\nDeleteNode\x12\'.bibliophage.v1alpha3.DeleteNodeRequest\x1a(.bibliophage.v1alpha3.DeleteNodeResponse\x12_\n\nDeleteEdge\x12\'.bibliophage.v1alpha3.DeleteEdgeRequest\x1a(.bibliophage.v1alpha3.DeleteEdgeResponse\x12h\n\rGetNeighbours\x12*.bibliophage.v1alpha3.GetNeighboursRequest\x1a+.bibliophage.v1alpha3.GetNeighboursResponse\x12\\\n\tListEdges\x12&.bibliophage.v1alpha3.ListEdgesRequest\x1a\'.bibliophage.v1alpha3.ListEdgesResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'bibliophage.v1alpha3.graph_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_NODE']._serialized_start=88
-  _globals['_NODE']._serialized_end=168
-  _globals['_EDGE']._serialized_start=170
-  _globals['_EDGE']._serialized_end=260
-  _globals['_CREATENODEREQUEST']._serialized_start=262
-  _globals['_CREATENODEREQUEST']._serialized_end=343
-  _globals['_CREATENODERESPONSE']._serialized_start=345
-  _globals['_CREATENODERESPONSE']._serialized_end=441
-  _globals['_CREATEEDGEREQUEST']._serialized_start=443
-  _globals['_CREATEEDGEREQUEST']._serialized_end=550
-  _globals['_CREATEEDGERESPONSE']._serialized_start=552
-  _globals['_CREATEEDGERESPONSE']._serialized_end=648
-  _globals['_DELETENODEREQUEST']._serialized_start=650
-  _globals['_DELETENODEREQUEST']._serialized_end=681
-  _globals['_DELETENODERESPONSE']._serialized_start=683
-  _globals['_DELETENODERESPONSE']._serialized_end=737
-  _globals['_DELETEEDGEREQUEST']._serialized_start=739
-  _globals['_DELETEEDGEREQUEST']._serialized_end=770
-  _globals['_DELETEEDGERESPONSE']._serialized_start=772
-  _globals['_DELETEEDGERESPONSE']._serialized_end=826
-  _globals['_GRAPHSERVICE']._serialized_start=829
-  _globals['_GRAPHSERVICE']._serialized_end=1231
+  _globals['_NODE']._serialized_start=125
+  _globals['_NODE']._serialized_end=205
+  _globals['_EDGE']._serialized_start=207
+  _globals['_EDGE']._serialized_end=297
+  _globals['_CREATENODEREQUEST']._serialized_start=299
+  _globals['_CREATENODEREQUEST']._serialized_end=380
+  _globals['_CREATENODERESPONSE']._serialized_start=382
+  _globals['_CREATENODERESPONSE']._serialized_end=478
+  _globals['_CREATEEDGEREQUEST']._serialized_start=480
+  _globals['_CREATEEDGEREQUEST']._serialized_end=587
+  _globals['_CREATEEDGERESPONSE']._serialized_start=589
+  _globals['_CREATEEDGERESPONSE']._serialized_end=685
+  _globals['_DELETENODEREQUEST']._serialized_start=687
+  _globals['_DELETENODEREQUEST']._serialized_end=718
+  _globals['_DELETENODERESPONSE']._serialized_start=720
+  _globals['_DELETENODERESPONSE']._serialized_end=774
+  _globals['_DELETEEDGEREQUEST']._serialized_start=776
+  _globals['_DELETEEDGEREQUEST']._serialized_end=807
+  _globals['_DELETEEDGERESPONSE']._serialized_start=809
+  _globals['_DELETEEDGERESPONSE']._serialized_end=863
+  _globals['_GETNEIGHBOURSREQUEST']._serialized_start=865
+  _globals['_GETNEIGHBOURSREQUEST']._serialized_end=908
+  _globals['_GETNEIGHBOURSRESPONSE']._serialized_start=911
+  _globals['_GETNEIGHBOURSRESPONSE']._serialized_end=1071
+  _globals['_LISTEDGESREQUEST']._serialized_start=1073
+  _globals['_LISTEDGESREQUEST']._serialized_end=1113
+  _globals['_LISTEDGESRESPONSE']._serialized_start=1115
+  _globals['_LISTEDGESRESPONSE']._serialized_end=1211
+  _globals['_GRAPHSERVICE']._serialized_start=1214
+  _globals['_GRAPHSERVICE']._serialized_end=1816
 # @@protoc_insertion_point(module_scope)

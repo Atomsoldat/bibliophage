@@ -1,7 +1,9 @@
+from bibliophage.v1alpha3 import document_pb2 as _document_pb2
 from google.protobuf import struct_pb2 as _struct_pb2
+from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from collections.abc import Mapping as _Mapping
+from collections.abc import Iterable as _Iterable, Mapping as _Mapping
 from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
@@ -97,3 +99,37 @@ class DeleteEdgeResponse(_message.Message):
     success: bool
     message: str
     def __init__(self, success: bool = ..., message: _Optional[str] = ...) -> None: ...
+
+class GetNeighboursRequest(_message.Message):
+    __slots__ = ("document_id",)
+    DOCUMENT_ID_FIELD_NUMBER: _ClassVar[int]
+    document_id: str
+    def __init__(self, document_id: _Optional[str] = ...) -> None: ...
+
+class GetNeighboursResponse(_message.Message):
+    __slots__ = ("success", "message", "neighbours", "edges")
+    SUCCESS_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    NEIGHBOURS_FIELD_NUMBER: _ClassVar[int]
+    EDGES_FIELD_NUMBER: _ClassVar[int]
+    success: bool
+    message: str
+    neighbours: _containers.RepeatedCompositeFieldContainer[_document_pb2.DocumentListItem]
+    edges: _containers.RepeatedCompositeFieldContainer[Edge]
+    def __init__(self, success: bool = ..., message: _Optional[str] = ..., neighbours: _Optional[_Iterable[_Union[_document_pb2.DocumentListItem, _Mapping]]] = ..., edges: _Optional[_Iterable[_Union[Edge, _Mapping]]] = ...) -> None: ...
+
+class ListEdgesRequest(_message.Message):
+    __slots__ = ("document_ids",)
+    DOCUMENT_IDS_FIELD_NUMBER: _ClassVar[int]
+    document_ids: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, document_ids: _Optional[_Iterable[str]] = ...) -> None: ...
+
+class ListEdgesResponse(_message.Message):
+    __slots__ = ("success", "message", "edges")
+    SUCCESS_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    EDGES_FIELD_NUMBER: _ClassVar[int]
+    success: bool
+    message: str
+    edges: _containers.RepeatedCompositeFieldContainer[Edge]
+    def __init__(self, success: bool = ..., message: _Optional[str] = ..., edges: _Optional[_Iterable[_Union[Edge, _Mapping]]] = ...) -> None: ...
