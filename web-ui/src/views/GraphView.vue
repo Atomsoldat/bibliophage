@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import type { DocumentListItem } from '../utils/protoHelpers'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
 import Sigma from 'sigma'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import GraphSearchPanel from '../components/GraphSearchPanel.vue'
 import { useGraphStore } from '../composables/useGraphStore'
 import { useLogger } from '../composables/useLogger'
 
@@ -11,6 +13,7 @@ const {
   selectedNodeId,
   expandedNodeIds,
   lastError,
+  pinNode,
   expand,
   collapse,
   setSelection,
@@ -122,6 +125,10 @@ watch(lastError, (err) => {
     logger.error(`[GraphView] ${err}`)
   }
 })
+
+function handlePick(doc: DocumentListItem): void {
+  void pinNode(doc)
+}
 </script>
 
 <template>
@@ -141,15 +148,21 @@ watch(lastError, (err) => {
           <span class="ml-2">· {{ expandedNodeIds.size }} expanded</span>
         </template>
         <template v-else>
-          No node pinned — use the search panel (coming next) to start.
+          No node pinned — search and click a result to start.
         </template>
       </div>
     </div>
 
-    <div
-      ref="containerRef"
-      class="flex-1 bg-base-200 rounded border border-base-300 min-h-[400px]"
-    />
+    <div class="flex-1 flex gap-3 min-h-0">
+      <aside class="w-80 shrink-0 overflow-hidden">
+        <GraphSearchPanel @pick="handlePick" />
+      </aside>
+
+      <div
+        ref="containerRef"
+        class="flex-1 bg-base-200 rounded border border-base-300 min-h-[400px]"
+      />
+    </div>
 
     <div class="text-xs opacity-60 mt-2 flex gap-3 flex-wrap">
       <span><kbd class="kbd kbd-xs">click</kbd> select</span>
