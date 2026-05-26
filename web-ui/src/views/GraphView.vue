@@ -10,8 +10,8 @@ import { useGraphStore } from '../stores/graph'
 import { useLogger } from '../composables/useLogger'
 
 const store = useGraphStore()
-const { pinnedDoc, selectedNodeId, expandedNodeIds, lastError } = storeToRefs(store)
-const { graph, pinNode, expand, collapse, setSelection, addEdge } = store
+const { pinnedDoc, selectedNodeId, expandedNodeIds, lastError, showAllNodes } = storeToRefs(store)
+const { graph, pinNode, expand, collapse, setSelection, addEdge, toggleShowAll } = store
 
 const logger = useLogger()
 const containerRef = ref<HTMLDivElement | null>(null)
@@ -185,10 +185,22 @@ function handlePick(doc: DocumentListItem): void {
             Pinned: <span class="font-mono">{{ pinnedDoc.name }}</span>
             <span class="ml-2">· {{ expandedNodeIds.size }} expanded</span>
           </template>
+          <template v-else-if="showAllNodes">
+            {{ graph.order }} node(s) loaded
+          </template>
           <template v-else>
             No node pinned — search and click a result to start.
           </template>
         </div>
+        <button
+          type="button"
+          class="btn btn-sm gap-1"
+          v-bind:class="showAllNodes ? 'btn-accent' : 'btn-outline'"
+          @click="toggleShowAll"
+        >
+          <Icon icon="mdi:dots-hexagon" />
+          {{ showAllNodes ? 'Hide unconnected' : 'Show all' }}
+        </button>
         <button
           type="button"
           class="btn btn-sm gap-1"

@@ -23,13 +23,16 @@ import type { Edge } from '../bibliophage/v1alpha3/graph_pb'
 import Graph from 'graphology'
 import { defineStore } from 'pinia'
 import { markRaw, reactive, ref } from 'vue'
+import { useDocumentApi } from '../composables/useDocumentApi'
 import { useGraphApi } from '../composables/useGraphApi'
 
 // Visual constants — kept here so the view stays declarative.
 const NODE_BASE_SIZE = 10
 const PINNED_NODE_SIZE = 16
+const UNCONNECTED_NODE_SIZE = 6
 const PINNED_NODE_COLOR = '#f59e0b'
 const NEIGHBOUR_NODE_COLOR = '#3b82f6'
+const UNCONNECTED_NODE_COLOR = '#6b7280'
 const EDGE_COLOR = '#9ca3af'
 
 interface NeighbourhoodCacheEntry {
@@ -38,7 +41,8 @@ interface NeighbourhoodCacheEntry {
 }
 
 export const useGraphStore = defineStore('graph', () => {
-  const api = useGraphApi()
+  const graphApi = useGraphApi()
+  const documentApi = useDocumentApi()
 
   // Sigma listens to graphology events directly — markRaw prevents Vue from
   // wrapping it in a reactive proxy, which would break sigma's event wiring.
@@ -49,6 +53,12 @@ export const useGraphStore = defineStore('graph', () => {
   const selectedNodeId = ref<string | null>(null)
   const lastError = ref<string | null>(null)
 
+  // "Show all" mode — displays every document as a node, even those with
+  // no edges. Useful for seeing the full picture and spotting unconnected
+  // documents. Also a good canary for performance issues.
+  const showAllNodes = ref(false)
+  const allDocuments = ref<DocumentListItem[]>([])
+
   const neighbourCache = new Map<string, NeighbourhoodCacheEntry>()
 
   // Edges created via addEdge() that haven't yet appeared in any
@@ -58,12 +68,22 @@ export const useGraphStore = defineStore('graph', () => {
 
   // ── graph helpers ────────────────────────────────────────────────
 
-  function ensureNode(doc: DocumentListItem): void {
-    const isPinned = doc.id === pinnedDoc.value?.id
+  function nodeAppearance(doc: DocumentListItem, isConnected: boolean): { size: number, color: string } {
+    if (doc.id === pinnedDoc.value?.id) {
+      return { size: PINNED_NODE_SIZE, color: PINNED_NODE_COLOR }
+    }
+    if (isConnected) {
+      return { size: NODE_BASE_SIZE, color: NEIGHBOUR_NODE_COLOR }
+    }
+    return { size: UNCONNECTED_NODE_SIZE, color: UNCONNECTED_NODE_COLOR }
+  }
+
+  function ensureNode(doc: DocumentListItem, isConnected = true): void {
+    const { size, color } = nodeAppearance(doc, isConnected)
     if (graph.hasNode(doc.id)) {
       graph.setNodeAttribute(doc.id, 'label', doc.name)
-      graph.setNodeAttribute(doc.id, 'size', isPinned ? PINNED_NODE_SIZE : NODE_BASE_SIZE)
-      graph.setNodeAttribute(doc.id, 'color', isPinned ? PINNED_NODE_COLOR : NEIGHBOUR_NODE_COLOR)
+      graph.setNodeAttribute(doc.id, 'size', size)
+      graph.setNodeAttribute(doc.id, 'color', color)
       return
     }
     // Sigma requires x/y; the force-atlas2 pass in the view refines them.
@@ -71,8 +91,8 @@ export const useGraphStore = defineStore('graph', () => {
       label: doc.name,
       x: Math.random(),
       y: Math.random(),
-      size: isPinned ? PINNED_NODE_SIZE : NODE_BASE_SIZE,
-      color: isPinned ? PINNED_NODE_COLOR : NEIGHBOUR_NODE_COLOR,
+      size,
+      color,
     })
   }
 
@@ -93,23 +113,32 @@ export const useGraphStore = defineStore('graph', () => {
    * clear-and-rebuild, so node positions survive across expand/collapse.
    */
   function reconcile(): void {
-    if (!pinnedDoc.value) {
-      graph.clear()
-      return
+    // Connected nodes: pinned doc + expanded neighbourhoods.
+    const connectedNodes = new Map<string, DocumentListItem>()
+    if (pinnedDoc.value) {
+      connectedNodes.set(pinnedDoc.value.id, pinnedDoc.value)
     }
-
-    const visibleNodes = new Map<string, DocumentListItem>()
-    visibleNodes.set(pinnedDoc.value.id, pinnedDoc.value)
     for (const expandedId of expandedNodeIds) {
       const cached = neighbourCache.get(expandedId)
       if (!cached) {
         continue
       }
       for (const neighbour of cached.neighbours) {
-        visibleNodes.set(neighbour.id, neighbour)
+        connectedNodes.set(neighbour.id, neighbour)
       }
     }
 
+    // All visible nodes = connected nodes + (optionally) every document.
+    const visibleNodes = new Map<string, DocumentListItem>(connectedNodes)
+    if (showAllNodes.value) {
+      for (const doc of allDocuments.value) {
+        if (!visibleNodes.has(doc.id)) {
+          visibleNodes.set(doc.id, doc)
+        }
+      }
+    }
+
+    // Edges: only between visible nodes.
     const visibleEdges = new Map<string, Edge>()
     for (const expandedId of expandedNodeIds) {
       const cached = neighbourCache.get(expandedId)
@@ -141,7 +170,7 @@ export const useGraphStore = defineStore('graph', () => {
     }
 
     for (const [, doc] of visibleNodes) {
-      ensureNode(doc)
+      ensureNode(doc, connectedNodes.has(doc.id))
     }
     for (const [, edge] of visibleEdges) {
       ensureEdge(edge)
@@ -152,7 +181,7 @@ export const useGraphStore = defineStore('graph', () => {
 
   /** Pin a document as the centre of the view. Clears prior exploration. */
   async function pinNode(doc: DocumentListItem): Promise<void> {
-    await api.initialise()
+    await graphApi.initialise()
     pinnedDoc.value = doc
     expandedNodeIds.clear()
     neighbourCache.clear()
@@ -169,7 +198,7 @@ export const useGraphStore = defineStore('graph', () => {
       return
     }
     if (!neighbourCache.has(nodeId)) {
-      const resp = await api.getNeighbours(nodeId)
+      const resp = await graphApi.getNeighbours(nodeId)
       if (!resp.success) {
         lastError.value = resp.message
         return
@@ -199,8 +228,8 @@ export const useGraphStore = defineStore('graph', () => {
   }
 
   async function addEdge(sourceId: string, targetId: string): Promise<void> {
-    await api.initialise()
-    const resp = await api.createEdge(sourceId, targetId)
+    await graphApi.initialise()
+    const resp = await graphApi.createEdge(sourceId, targetId)
     if (!resp.success || !resp.edge) {
       lastError.value = resp.message || 'createEdge failed'
       return
@@ -213,8 +242,8 @@ export const useGraphStore = defineStore('graph', () => {
   }
 
   async function removeEdge(edgeId: string): Promise<void> {
-    await api.initialise()
-    const resp = await api.deleteEdge(edgeId)
+    await graphApi.initialise()
+    const resp = await graphApi.deleteEdge(edgeId)
     if (!resp.success) {
       lastError.value = resp.message
       return
@@ -233,6 +262,16 @@ export const useGraphStore = defineStore('graph', () => {
     selectedNodeId.value = nodeId
   }
 
+  async function toggleShowAll(): Promise<void> {
+    showAllNodes.value = !showAllNodes.value
+    if (showAllNodes.value && allDocuments.value.length === 0) {
+      await documentApi.initialise()
+      const resp = await documentApi.searchDocuments({ pageSize: 10000 })
+      allDocuments.value = resp.matches
+    }
+    reconcile()
+  }
+
   function clear(): void {
     pinnedDoc.value = null
     expandedNodeIds.clear()
@@ -240,6 +279,7 @@ export const useGraphStore = defineStore('graph', () => {
     manualEdges.clear()
     selectedNodeId.value = null
     lastError.value = null
+    showAllNodes.value = false
     graph.clear()
   }
 
@@ -251,8 +291,10 @@ export const useGraphStore = defineStore('graph', () => {
     expandedNodeIds,
     selectedNodeId,
     lastError,
+    showAllNodes,
     // Actions.
     pinNode,
+    toggleShowAll,
     expand,
     collapse,
     addEdge,
