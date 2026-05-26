@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import type { ConsoleMessageType } from '../stores/console'
 import { Icon } from '@iconify/vue'
+import { storeToRefs } from 'pinia'
 import { nextTick, ref, watch } from 'vue'
 import { useConsoleStore } from '../stores/console'
 
-const { messages, isVisible, unreadCount, toggleVisibility, clear } = useConsoleStore()
+const store = useConsoleStore()
+const { messages, isVisible, unreadCount } = storeToRefs(store)
+const { toggleVisibility, clear } = store
 
 // Ref to scroll container for auto-scroll
 const messagesContainer = ref<HTMLElement | null>(null)

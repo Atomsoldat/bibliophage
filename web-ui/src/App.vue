@@ -2,9 +2,10 @@
 import GlobalConsole from './components/GlobalConsole.vue'
 import GlobalEditorWindows from './components/GlobalEditorWindows.vue'
 import Sidebar from './components/Sidebar.vue'
+import { storeToRefs } from 'pinia'
 import { useConsoleStore } from './stores/console'
 
-const { isVisible } = useConsoleStore()
+const { isVisible } = storeToRefs(useConsoleStore())
 </script>
 
 <template>
