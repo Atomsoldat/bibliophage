@@ -10,8 +10,14 @@ import { useGraphStore } from '../stores/graph'
 import { useLogger } from '../composables/useLogger'
 
 const store = useGraphStore()
-const { pinnedDoc, selectedNodeId, expandedNodeIds, lastError, showAllNodes } = storeToRefs(store)
-const { graph, pinNode, expand, collapse, setSelection, addEdge, toggleShowAll } = store
+const {
+  pinnedDoc, selectedNodeId, expandedNodeIds, lastError, showAllNodes,
+  hopDepth, isExpandingDepth, trail, anchoredNodeIds,
+} = storeToRefs(store)
+const {
+  graph, pinNode, pinNodeById, expand, collapse, setSelection,
+  addEdge, toggleShowAll, setHopDepth, toggleAnchor, isAnchored,
+} = store
 
 const logger = useLogger()
 const containerRef = ref<HTMLDivElement | null>(null)
@@ -73,12 +79,43 @@ function cancelConnectMode(): void {
   connectFirstEndpoint.value = null
 }
 
+// Right-click context menu state.
+const contextMenu = ref<{ x: number, y: number, nodeId: string } | null>(null)
+
+function closeContextMenu(): void {
+  contextMenu.value = null
+}
+
+function handleContextAction(action: 'pin' | 'anchor' | 'expand' | 'collapse', nodeId: string): void {
+  closeContextMenu()
+  switch (action) {
+    case 'pin': void pinNodeById(nodeId); break
+    case 'anchor': void toggleAnchor(nodeId); break
+    case 'expand': void expand(nodeId); break
+    case 'collapse': collapse(nodeId); break
+  }
+}
+
 function handleKeyDown(event: KeyboardEvent): void {
+  // Dismiss context menu on any key.
+  if (contextMenu.value) {
+    closeContextMenu()
+  }
+
   if (event.key === 'Escape' && connectMode.value) {
     event.preventDefault()
     cancelConnectMode()
     return
   }
+
+  // `A` toggles anchor on the selected node.
+  if (event.key === 'a' || event.key === 'A') {
+    if (selectedNodeId.value) {
+      void toggleAnchor(selectedNodeId.value)
+    }
+    return
+  }
+
   if (event.key !== 'Tab') {
     return
   }
@@ -88,7 +125,7 @@ function handleKeyDown(event: KeyboardEvent): void {
   }
   const now = Date.now()
   if (now - lastTabTime < DOUBLE_TAB_WINDOW_MS) {
-    void expand(selectedNodeId.value)
+    void pinNodeById(selectedNodeId.value)
     lastTabTime = 0
   }
   else {
@@ -124,10 +161,22 @@ onMounted(() => {
       collapse(node)
       return
     }
-    setSelection(node)
+    void pinNodeById(node)
   })
 
-  sigma.on('clickStage', () => setSelection(null))
+  sigma.on('rightClickNode', ({ node, event }) => {
+    event.original.preventDefault()
+    contextMenu.value = {
+      x: (event.original as MouseEvent).clientX,
+      y: (event.original as MouseEvent).clientY,
+      nodeId: node,
+    }
+  })
+
+  sigma.on('clickStage', () => {
+    setSelection(null)
+    closeContextMenu()
+  })
 
   graph.on('nodeAdded', scheduleLayout)
   graph.on('nodeDropped', scheduleLayout)
@@ -192,6 +241,18 @@ function handlePick(doc: DocumentListItem): void {
             No node pinned — search and click a result to start.
           </template>
         </div>
+
+        <!-- Hop depth stepper -->
+        <div class="join" v-bind:class="{ 'opacity-50 pointer-events-none': !pinnedDoc || isExpandingDepth }">
+          <button class="btn btn-xs join-item" @click="setHopDepth(hopDepth - 1)" v-bind:disabled="hopDepth <= 1">
+            −
+          </button>
+          <span class="btn btn-xs join-item no-animation cursor-default">{{ hopDepth }} hop{{ hopDepth > 1 ? 's' : '' }}</span>
+          <button class="btn btn-xs join-item" @click="setHopDepth(hopDepth + 1)" v-bind:disabled="hopDepth >= 5">
+            +
+          </button>
+        </div>
+
         <button
           type="button"
           class="btn btn-sm gap-1"
@@ -221,6 +282,36 @@ function handlePick(doc: DocumentListItem): void {
       {{ connectBannerText }}
     </div>
 
+    <!-- Trail breadcrumbs -->
+    <div v-if="trail.length > 0" class="flex items-center gap-1 mb-1 flex-wrap">
+      <span class="text-xs opacity-50 mr-1">Trail:</span>
+      <button
+        v-for="doc in trail"
+        v-bind:key="doc.id"
+        class="badge badge-sm badge-outline cursor-pointer gap-1"
+        style="border-color: #a855f7; color: #a855f7;"
+        @click="pinNode(doc)"
+      >
+        <Icon icon="mdi:map-marker-path" class="text-xs" />
+        {{ doc.name }}
+      </button>
+    </div>
+
+    <!-- Anchored nodes -->
+    <div v-if="anchoredNodeIds.size > 0" class="flex items-center gap-1 mb-1 flex-wrap">
+      <span class="text-xs opacity-50 mr-1">Anchored:</span>
+      <span
+        v-for="nodeId in anchoredNodeIds"
+        v-bind:key="nodeId"
+        class="badge badge-sm gap-1"
+        style="background-color: #14b8a6; color: #fff; border: none;"
+      >
+        <Icon icon="mdi:anchor" class="text-xs" />
+        {{ graph.hasNode(nodeId) ? graph.getNodeAttribute(nodeId, 'label') : nodeId }}
+        <button class="ml-0.5 hover:opacity-70" @click="toggleAnchor(nodeId)">×</button>
+      </span>
+    </div>
+
     <div class="flex-1 flex gap-3 min-h-0">
       <aside class="w-80 shrink-0 overflow-hidden">
         <GraphSearchPanel @pick="handlePick" />
@@ -232,10 +323,45 @@ function handlePick(doc: DocumentListItem): void {
       />
     </div>
 
+    <!-- Right-click context menu -->
+    <Teleport to="body">
+      <div
+        v-if="contextMenu"
+        class="fixed z-[100] menu bg-base-200 rounded-box shadow-xl w-48 p-2"
+        v-bind:style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
+      >
+        <li>
+          <button @click="handleContextAction('pin', contextMenu!.nodeId)">
+            <Icon icon="mdi:pin" class="text-amber-500" />
+            Pin
+          </button>
+        </li>
+        <li>
+          <button @click="handleContextAction('anchor', contextMenu!.nodeId)">
+            <Icon
+              v-bind:icon="isAnchored(contextMenu!.nodeId) ? 'mdi:anchor-off' : 'mdi:anchor'"
+              class="text-teal-400"
+            />
+            {{ isAnchored(contextMenu!.nodeId) ? 'Unanchor' : 'Anchor' }}
+          </button>
+        </li>
+        <li>
+          <button @click="handleContextAction(expandedNodeIds.has(contextMenu!.nodeId) ? 'collapse' : 'expand', contextMenu!.nodeId)">
+            <Icon
+              v-bind:icon="expandedNodeIds.has(contextMenu!.nodeId) ? 'mdi:arrow-collapse-all' : 'mdi:arrow-expand-all'"
+              class="text-blue-400"
+            />
+            {{ expandedNodeIds.has(contextMenu!.nodeId) ? 'Collapse' : 'Expand' }}
+          </button>
+        </li>
+      </div>
+    </Teleport>
+
     <div class="text-xs opacity-60 mt-2 flex gap-3 flex-wrap">
-      <span><kbd class="kbd kbd-xs">click</kbd> select</span>
-      <span><kbd class="kbd kbd-xs">double Tab</kbd> expand selected</span>
+      <span><kbd class="kbd kbd-xs">click</kbd> pin</span>
       <span><kbd class="kbd kbd-xs">Shift+click</kbd> collapse</span>
+      <span><kbd class="kbd kbd-xs">A</kbd> anchor/unanchor</span>
+      <span><kbd class="kbd kbd-xs">right-click</kbd> context menu</span>
       <span><kbd class="kbd kbd-xs">drag</kbd> pan</span>
       <span><kbd class="kbd kbd-xs">wheel</kbd> zoom</span>
     </div>

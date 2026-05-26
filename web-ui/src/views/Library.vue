@@ -7,10 +7,12 @@ import { type DocumentListItem, DocumentType, getAllDocumentTypes, SortOrder } f
 import { storeToRefs } from 'pinia'
 import ChunkEditorModal from '../components/ChunkEditorModal.vue'
 import DocumentBasicFilter from '../components/DocumentBasicFilter.vue'
+import DocumentDeleteButton from '../components/DocumentDeleteButton.vue'
 import DocumentEditMetadataButton from '../components/DocumentEditMetadataButton.vue'
 import DocumentNewEntryButton from '../components/DocumentNewEntryButton.vue'
 import DocumentTable from '../components/DocumentTable.vue'
 import DocumentTypeFilter from '../components/DocumentTypeFilter.vue'
+import { useBulkDelete } from '../composables/useBulkDelete.ts'
 import { useBulkMetadataEdit } from '../composables/useBulkMetadataEdit.ts'
 import { useDocumentStore } from '../stores/documents'
 import { useEditorWindowStore } from '../stores/editorWindows'
@@ -23,8 +25,9 @@ const documentStore = useDocumentStore()
 const { documents, loading, selectedIds } = storeToRefs(documentStore)
 const api = useDocumentApi()
 
-// Bulk metadata editing (composable handles modal state and update logic)
+// Bulk actions (composables handle modal state and logic)
 const bulkMetadataEdit = useBulkMetadataEdit()
+const bulkDelete = useBulkDelete()
 
 // Embed modal state
 const showEmbedModal = ref(false)
@@ -141,6 +144,7 @@ function closeEmbedModal() {
     </div>
     <div class="flex gap-2">
       <DocumentEditMetadataButton :bulk-edit="bulkMetadataEdit" />
+      <DocumentDeleteButton :bulk-delete="bulkDelete" />
       <button type="button" class="btn btn-sm btn-ghost gap-1" @click="selectedIds.clear()">
         <Icon icon="heroicons:x-mark" />
         Clear Selection
