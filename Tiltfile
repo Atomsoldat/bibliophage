@@ -44,7 +44,8 @@ local_resource(
         # 'EMBEDDING_DEVICE': 'cuda',  # override auto-detection (cpu, cuda, mps, xpu)
         # 'LOG_LEVEL': 'INFO',
     },
-    # do these make sense?
+    # do these make sense? currently, the API docs are empty
+    # TODO: would be neat to actually have API docs here
     #links=[
     #    link('http://localhost:8000', 'Backend API'),
     #    link('http://localhost:8000/docs', 'API Docs (FastAPI)'),

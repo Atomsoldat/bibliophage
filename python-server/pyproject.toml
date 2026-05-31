@@ -38,9 +38,9 @@ dependencies = [
 #   uv sync --extra cpu      (default, works everywhere)
 #   uv sync --extra gpu      (NVIDIA, requires CUDA 12.x drivers)
 #   uv sync --extra rocm     (AMD, requires ROCm 6.3 drivers)
-cpu  = ["torch>=2.9.1,<3"]
-gpu  = ["torch>=2.9.1,<3"]
-rocm = ["torch>=2.9.1,<3", "pytorch-triton-rocm>=3.5.1,<4"]
+cpu  = ["torch>=2.9.1,<3", "torchvision>=0.24,<1"]
+gpu  = ["torch>=2.9.1,<3", "torchvision>=0.24,<1"]
+rocm = ["torch>=2.9.1,<3", "torchvision>=0.24,<1", "pytorch-triton-rocm>=3.5.1,<4"]
 
 # Dev/lint tools as a separate optional group
 dev = [
@@ -103,6 +103,14 @@ explicit = true
 torch = [
     { index = "pytorch-cpu",   extra = "cpu" },
     { index = "pytorch-cu126", extra = "gpu" },
+    { index = "pytorch-rocm63", extra = "rocm" },
+]
+# torchvision must follow the same variant routing as torch — the PyPI wheel
+# is built against the CUDA torch ABI and breaks at import time when paired
+# with a +cpu / +rocm torch (RuntimeError: operator torchvision::nms does not exist).
+torchvision = [
+    { index = "pytorch-cpu",    extra = "cpu" },
+    { index = "pytorch-cu126",  extra = "gpu" },
     { index = "pytorch-rocm63", extra = "rocm" },
 ]
 # Transitive dep of torch+rocm — must be sourced from the ROCm index
