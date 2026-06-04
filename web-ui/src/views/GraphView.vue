@@ -6,17 +6,33 @@ import { storeToRefs } from 'pinia'
 import Sigma from 'sigma'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import GraphSearchPanel from '../components/GraphSearchPanel.vue'
-import { useGraphStore } from '../stores/graph'
 import { useLogger } from '../composables/useLogger'
+import { useGraphStore } from '../stores/graph'
 
 const store = useGraphStore()
 const {
-  pinnedDoc, selectedNodeId, expandedNodeIds, lastError, showAllNodes,
-  hopDepth, isExpandingDepth, trail, anchoredNodeIds,
+  pinnedDoc,
+  selectedNodeId,
+  expandedNodeIds,
+  lastError,
+  showAllNodes,
+  hopDepth,
+  isExpandingDepth,
+  trail,
+  anchoredNodeIds,
 } = storeToRefs(store)
 const {
-  graph, pinNode, pinNodeById, expand, collapse, setSelection,
-  addEdge, toggleShowAll, setHopDepth, toggleAnchor, isAnchored,
+  graph,
+  pinNode,
+  pinNodeById,
+  expand,
+  collapse,
+  setSelection,
+  addEdge,
+  toggleShowAll,
+  setHopDepth,
+  toggleAnchor,
+  isAnchored,
 } = store
 
 const logger = useLogger()
@@ -222,7 +238,7 @@ function handlePick(doc: DocumentListItem): void {
     ref="rootRef"
     class="flex flex-col h-full focus:outline-none"
     tabindex="0"
-    v-on:keydown="handleKeyDown"
+    @keydown="handleKeyDown"
   >
     <div class="flex justify-between items-baseline mb-2">
       <h1 class="text-2xl font-bold">
@@ -244,11 +260,11 @@ function handlePick(doc: DocumentListItem): void {
 
         <!-- Hop depth stepper -->
         <div class="join" v-bind:class="{ 'opacity-50 pointer-events-none': !pinnedDoc || isExpandingDepth }">
-          <button class="btn btn-xs join-item" @click="setHopDepth(hopDepth - 1)" v-bind:disabled="hopDepth <= 1">
+          <button class="btn btn-xs join-item" v-bind:disabled="hopDepth <= 1" @click="setHopDepth(hopDepth - 1)">
             −
           </button>
           <span class="btn btn-xs join-item no-animation cursor-default">{{ hopDepth }} hop{{ hopDepth > 1 ? 's' : '' }}</span>
-          <button class="btn btn-xs join-item" @click="setHopDepth(hopDepth + 1)" v-bind:disabled="hopDepth >= 5">
+          <button class="btn btn-xs join-item" v-bind:disabled="hopDepth >= 5" @click="setHopDepth(hopDepth + 1)">
             +
           </button>
         </div>
@@ -328,7 +344,7 @@ function handlePick(doc: DocumentListItem): void {
       <div
         v-if="contextMenu"
         class="fixed z-[100] menu bg-base-200 rounded-box shadow-xl w-48 p-2"
-        v-bind:style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
+        v-bind:style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
       >
         <li>
           <button @click="handleContextAction('pin', contextMenu!.nodeId)">

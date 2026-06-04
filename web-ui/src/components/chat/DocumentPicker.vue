@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { DocumentListItem } from '../../bibliophage/v1alpha3/document_pb'
-import type { ContextDocument } from '../../stores/chat'
 import { Icon } from '@iconify/vue'
 import { ref } from 'vue'
 import { useDocumentApi } from '../../composables/useDocumentApi'
@@ -70,7 +69,7 @@ function formatSimilarity(similarity: number): string {
         <input
           type="checkbox"
           class="toggle toggle-sm toggle-primary"
-          :checked="chat.autoRetrievalEnabled"
+          v-bind:checked="chat.autoRetrievalEnabled"
           @change="chat.toggleAutoRetrieval"
         >
         <span class="label-text flex items-center gap-1">

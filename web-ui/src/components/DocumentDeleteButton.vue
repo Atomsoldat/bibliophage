@@ -15,7 +15,7 @@ const props = defineProps<{
   </button>
 
   <!-- Delete Confirmation Modal -->
-  <dialog class="modal" :class="{ 'modal-open': props.bulkDelete.showModal.value }">
+  <dialog class="modal" v-bind:class="{ 'modal-open': props.bulkDelete.showModal.value }">
     <div class="modal-box">
       <h3 class="text-lg font-bold">
         Confirm Deletion
@@ -28,7 +28,7 @@ const props = defineProps<{
 
       <!-- List affected documents -->
       <ul v-if="props.bulkDelete.selectedDocumentNames.value.length > 0" class="list-disc list-inside mb-4 max-h-40 overflow-y-auto">
-        <li v-for="name in props.bulkDelete.selectedDocumentNames.value" :key="name" class="truncate">
+        <li v-for="name in props.bulkDelete.selectedDocumentNames.value" v-bind:key="name" class="truncate">
           {{ name }}
         </li>
       </ul>
@@ -42,7 +42,7 @@ const props = defineProps<{
         <button
           type="button"
           class="btn btn-ghost"
-          :disabled="props.bulkDelete.loading.value"
+          v-bind:disabled="props.bulkDelete.loading.value"
           @click="props.bulkDelete.closeModal"
         >
           Cancel
@@ -50,7 +50,7 @@ const props = defineProps<{
         <button
           type="button"
           class="btn btn-error gap-1"
-          :disabled="props.bulkDelete.loading.value"
+          v-bind:disabled="props.bulkDelete.loading.value"
           @click="props.bulkDelete.handleDelete"
         >
           <span v-if="props.bulkDelete.loading.value" class="loading loading-spinner loading-sm" />
@@ -60,7 +60,9 @@ const props = defineProps<{
       </div>
     </div>
     <form method="dialog" class="modal-backdrop" @click="props.bulkDelete.closeModal">
-      <button type="button">close</button>
+      <button type="button">
+        close
+      </button>
     </form>
   </dialog>
 </template>

@@ -223,7 +223,7 @@ export function useGraphStore() {
     }
     manualEdges.delete(edgeId)
     for (const cached of neighbourCache.values()) {
-      const idx = cached.edges.findIndex((edge) => edge.id === edgeId)
+      const idx = cached.edges.findIndex(edge => edge.id === edgeId)
       if (idx !== -1) {
         cached.edges.splice(idx, 1)
       }

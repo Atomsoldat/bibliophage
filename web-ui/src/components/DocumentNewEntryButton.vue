@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 
-import { useEditorWindowStore } from '../stores/editorWindows'
 import { useLogger } from '../composables/useLogger.ts'
+import { useEditorWindowStore } from '../stores/editorWindows'
 
 const { openWindow } = useEditorWindowStore()
 const logger = useLogger()

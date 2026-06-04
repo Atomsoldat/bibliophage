@@ -2,8 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { useDocumentApi } from '../composables/useDocumentApi'
 import { useLogger } from '../composables/useLogger'
-import { useEditorWindowStore } from '../stores/editorWindows'
 import { useDocumentStore } from '../stores/documents'
+import { useEditorWindowStore } from '../stores/editorWindows'
 import TextEditorWindow from './TextEditorWindow.vue'
 
 const editorWindows = useEditorWindowStore()

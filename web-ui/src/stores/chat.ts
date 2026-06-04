@@ -1,5 +1,5 @@
-import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 
 export interface DisplayMessage {
   id: string

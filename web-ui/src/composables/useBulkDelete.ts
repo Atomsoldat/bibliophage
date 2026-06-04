@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
-import { useDocumentApi } from './useDocumentApi.ts'
 import { useDocumentStore } from '../stores/documents'
+import { useDocumentApi } from './useDocumentApi.ts'
 import { useLogger } from './useLogger.ts'
 
 /**

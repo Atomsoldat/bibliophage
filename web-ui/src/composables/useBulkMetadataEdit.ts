@@ -1,10 +1,10 @@
-import { DocumentType } from '../bibliophage/v1alpha3/document_pb.ts'
 import type { MetadataEditFormData } from '../components/MetadataEditModal.vue'
-
 import { computed, ref } from 'vue'
+
 import { Tag } from '../bibliophage/v1alpha3/common_pb.ts'
-import { useDocumentApi } from './useDocumentApi.ts'
+import { DocumentType } from '../bibliophage/v1alpha3/document_pb.ts'
 import { useDocumentStore } from '../stores/documents'
+import { useDocumentApi } from './useDocumentApi.ts'
 import { useLogger } from './useLogger.ts'
 
 /**

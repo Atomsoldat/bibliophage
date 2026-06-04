@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type { DocumentBasicFilterValue } from '../components/DocumentBasicFilter.vue'
 
+import type { DocumentListItem, DocumentType } from '../utils/protoHelpers.ts'
 import { Icon } from '@iconify/vue'
-import { onBeforeMount, ref } from 'vue'
-import { type DocumentListItem, DocumentType, getAllDocumentTypes, SortOrder } from '../utils/protoHelpers.ts'
 import { storeToRefs } from 'pinia'
+import { onBeforeMount, ref } from 'vue'
 import ChunkEditorModal from '../components/ChunkEditorModal.vue'
 import DocumentBasicFilter from '../components/DocumentBasicFilter.vue'
 import DocumentDeleteButton from '../components/DocumentDeleteButton.vue'
@@ -14,10 +14,11 @@ import DocumentTable from '../components/DocumentTable.vue'
 import DocumentTypeFilter from '../components/DocumentTypeFilter.vue'
 import { useBulkDelete } from '../composables/useBulkDelete.ts'
 import { useBulkMetadataEdit } from '../composables/useBulkMetadataEdit.ts'
+import { useDocumentApi } from '../composables/useDocumentApi.ts'
+import { useLogger } from '../composables/useLogger.ts'
 import { useDocumentStore } from '../stores/documents'
 import { useEditorWindowStore } from '../stores/editorWindows'
-import { useLogger } from '../composables/useLogger.ts'
-import { useDocumentApi } from '../composables/useDocumentApi.ts'
+import { getAllDocumentTypes, SortOrder } from '../utils/protoHelpers.ts'
 
 const logger = useLogger()
 const { openWindow } = useEditorWindowStore()
@@ -133,7 +134,7 @@ function closeEmbedModal() {
       </button>
     </form>
 
-    <DocumentNewEntryButton/>
+    <DocumentNewEntryButton />
   </div>
 
   <!-- Bulk actions toolbar (shown when items are selected) -->
@@ -143,8 +144,8 @@ function closeEmbedModal() {
       <span>{{ selectedIds.size }} document{{ selectedIds.size > 1 ? 's' : '' }} selected</span>
     </div>
     <div class="flex gap-2">
-      <DocumentEditMetadataButton :bulk-edit="bulkMetadataEdit" />
-      <DocumentDeleteButton :bulk-delete="bulkDelete" />
+      <DocumentEditMetadataButton v-bind:bulk-edit="bulkMetadataEdit" />
+      <DocumentDeleteButton v-bind:bulk-delete="bulkDelete" />
       <button type="button" class="btn btn-sm btn-ghost gap-1" @click="selectedIds.clear()">
         <Icon icon="heroicons:x-mark" />
         Clear Selection

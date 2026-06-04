@@ -1,8 +1,9 @@
+import type { DocumentListItem, SearchDocumentsParams } from '../utils/protoHelpers.ts'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { type DocumentListItem, type SearchDocumentsParams, buildSearchDocumentsRequest } from '../utils/protoHelpers.ts'
 import { useDocumentApi } from '../composables/useDocumentApi.ts'
 import { useLogger } from '../composables/useLogger.ts'
+import { buildSearchDocumentsRequest } from '../utils/protoHelpers.ts'
 
 export const useDocumentStore = defineStore('documents', () => {
   const api = useDocumentApi()

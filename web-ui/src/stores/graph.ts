@@ -25,14 +25,14 @@ import { useGraphApi } from '../composables/useGraphApi'
 
 // ── Node roles & visual constants ──────────────────────────────────────
 
-type NodeRole =
-  | 'pinned'
-  | 'trail-center'
-  | 'trail-neighbour'
-  | 'anchored'
-  | 'anchored-neighbour'
-  | 'neighbour'
-  | 'unconnected'
+type NodeRole
+  = | 'pinned'
+    | 'trail-center'
+    | 'trail-neighbour'
+    | 'anchored'
+    | 'anchored-neighbour'
+    | 'neighbour'
+    | 'unconnected'
 
 // Higher number = higher priority. When a node qualifies for multiple
 // roles, the highest-priority role wins.
@@ -153,7 +153,8 @@ export const useGraphStore = defineStore('graph', () => {
         const nextFrontier = new Set<string>()
         for (const nodeId of frontier) {
           const cached = neighbourCache.get(nodeId)
-          if (!cached) continue
+          if (!cached)
+            continue
           for (const neighbour of cached.neighbours) {
             assignRole(neighbour.id, 'neighbour')
             nextFrontier.add(neighbour.id)
@@ -177,7 +178,8 @@ export const useGraphStore = defineStore('graph', () => {
     // 3. Anchored nodes (each gets 1-hop neighbourhood).
     for (const anchoredId of anchoredNodeIds) {
       const doc = knownDocs.get(anchoredId)
-      if (doc) assignRole(doc.id, 'anchored')
+      if (doc)
+        assignRole(doc.id, 'anchored')
       const cached = neighbourCache.get(anchoredId)
       if (cached) {
         for (const n of cached.neighbours) {
@@ -197,14 +199,16 @@ export const useGraphStore = defineStore('graph', () => {
     const visibleNodes = new Map<string, DocumentListItem>()
     for (const [id] of roleMap) {
       const doc = knownDocs.get(id)
-      if (doc) visibleNodes.set(id, doc)
+      if (doc)
+        visibleNodes.set(id, doc)
     }
 
     // Visible edges: collect from all sources whose nodes are visible.
     const visibleEdges = new Map<string, Edge>()
     function collectEdges(cacheKey: string): void {
       const cached = neighbourCache.get(cacheKey)
-      if (!cached) return
+      if (!cached)
+        return
       for (const edge of cached.edges) {
         if (visibleNodes.has(edge.nodeA) && visibleNodes.has(edge.nodeB)) {
           visibleEdges.set(edge.id, edge)
@@ -223,10 +227,12 @@ export const useGraphStore = defineStore('graph', () => {
 
     // Diff against graphology.
     for (const nodeId of [...graph.nodes()]) {
-      if (!visibleNodes.has(nodeId)) graph.dropNode(nodeId)
+      if (!visibleNodes.has(nodeId))
+        graph.dropNode(nodeId)
     }
     for (const edgeKey of [...graph.edges()]) {
-      if (!visibleEdges.has(edgeKey)) graph.dropEdge(edgeKey)
+      if (!visibleEdges.has(edgeKey))
+        graph.dropEdge(edgeKey)
     }
     for (const [id, doc] of visibleNodes) {
       ensureNode(doc, roleMap.get(id) ?? 'unconnected')
@@ -243,7 +249,8 @@ export const useGraphStore = defineStore('graph', () => {
    * reconcile — callers batch multiple fetches then reconcile once.
    */
   async function expandSingle(nodeId: string): Promise<void> {
-    if (neighbourCache.has(nodeId)) return
+    if (neighbourCache.has(nodeId))
+      return
     const resp = await graphApi.getNeighbours(nodeId)
     if (!resp.success) {
       lastError.value = resp.message
@@ -286,14 +293,16 @@ export const useGraphStore = defineStore('graph', () => {
     if (pinnedDoc.value) {
       // Remove if already in trail (avoid duplicates when re-pinning).
       const idx = trail.findIndex(d => d.id === pinnedDoc.value!.id)
-      if (idx !== -1) trail.splice(idx, 1)
+      if (idx !== -1)
+        trail.splice(idx, 1)
       trail.push(pinnedDoc.value)
       while (trail.length > trailMaxLength.value) trail.shift()
     }
 
     // If the new doc is in the trail, pull it out.
     const trailIdx = trail.findIndex(d => d.id === doc.id)
-    if (trailIdx !== -1) trail.splice(trailIdx, 1)
+    if (trailIdx !== -1)
+      trail.splice(trailIdx, 1)
 
     // Preserve anchor caches; clear the rest.
     const preservedCacheKeys = new Set([
@@ -301,7 +310,8 @@ export const useGraphStore = defineStore('graph', () => {
       ...trail.map(d => d.id),
     ])
     for (const key of [...neighbourCache.keys()]) {
-      if (!preservedCacheKeys.has(key)) neighbourCache.delete(key)
+      if (!preservedCacheKeys.has(key))
+        neighbourCache.delete(key)
     }
 
     pinnedDoc.value = doc
@@ -309,7 +319,8 @@ export const useGraphStore = defineStore('graph', () => {
     // Re-add anchored + trail nodes so their caches aren't orphaned.
     for (const id of anchoredNodeIds) expandedNodeIds.add(id)
     for (const d of trail) {
-      if (neighbourCache.has(d.id)) expandedNodeIds.add(d.id)
+      if (neighbourCache.has(d.id))
+        expandedNodeIds.add(d.id)
     }
 
     selectedNodeId.value = null
@@ -338,8 +349,10 @@ export const useGraphStore = defineStore('graph', () => {
 
   /** Hide a previously-expanded node's neighbourhood. */
   function collapse(nodeId: string): void {
-    if (nodeId === pinnedDoc.value?.id) return
-    if (!expandedNodeIds.has(nodeId)) return
+    if (nodeId === pinnedDoc.value?.id)
+      return
+    if (!expandedNodeIds.has(nodeId))
+      return
     expandedNodeIds.delete(nodeId)
     reconcile()
   }
@@ -358,7 +371,8 @@ export const useGraphStore = defineStore('graph', () => {
   async function toggleAnchor(nodeId: string): Promise<void> {
     if (anchoredNodeIds.has(nodeId)) {
       anchoredNodeIds.delete(nodeId)
-    } else {
+    }
+    else {
       anchoredNodeIds.add(nodeId)
       await graphApi.initialise()
       await expandSingle(nodeId)
@@ -393,7 +407,8 @@ export const useGraphStore = defineStore('graph', () => {
     manualEdges.delete(edgeId)
     for (const cached of neighbourCache.values()) {
       const idx = cached.edges.findIndex(e => e.id === edgeId)
-      if (idx !== -1) cached.edges.splice(idx, 1)
+      if (idx !== -1)
+        cached.edges.splice(idx, 1)
     }
     reconcile()
   }

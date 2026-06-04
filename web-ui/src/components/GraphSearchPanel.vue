@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { DocumentListItem, DocumentType } from '../utils/protoHelpers'
 import type { DocumentBasicFilterValue } from './DocumentBasicFilter.vue'
 import { Icon } from '@iconify/vue'
 import { onBeforeMount, ref } from 'vue'
@@ -6,8 +7,7 @@ import { useDocumentApi } from '../composables/useDocumentApi'
 import { useLogger } from '../composables/useLogger'
 import {
   buildSearchDocumentsRequest,
-  type DocumentListItem,
-  type DocumentType,
+
   getAllDocumentTypes,
   SortOrder,
 } from '../utils/protoHelpers'

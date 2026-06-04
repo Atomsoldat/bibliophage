@@ -17,10 +17,10 @@ const props = defineProps<{
 
   <!-- Bulk Edit Modal -->
   <MetadataEditModal
-    :show="props.bulkEdit.showModal.value"
-    :loading="props.bulkEdit.loading.value"
-    :selected-count="props.bulkEdit.selectedCount.value"
-    :initial-document="props.bulkEdit.initialDocument.value"
+    v-bind:show="props.bulkEdit.showModal.value"
+    v-bind:loading="props.bulkEdit.loading.value"
+    v-bind:selected-count="props.bulkEdit.selectedCount.value"
+    v-bind:initial-document="props.bulkEdit.initialDocument.value"
     @close="props.bulkEdit.closeModal"
     @submit="props.bulkEdit.handleUpdate"
   />

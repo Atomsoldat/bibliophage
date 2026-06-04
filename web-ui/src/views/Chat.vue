@@ -5,8 +5,8 @@ import ChatInput from '../components/chat/ChatInput.vue'
 import ChatMessage from '../components/chat/ChatMessage.vue'
 import DocumentPicker from '../components/chat/DocumentPicker.vue'
 import { useChatApi } from '../composables/useChatApi'
-import { useChatStore } from '../stores/chat'
 import { useLogger } from '../composables/useLogger'
+import { useChatStore } from '../stores/chat'
 
 const chatApi = useChatApi()
 const chat = useChatStore()
