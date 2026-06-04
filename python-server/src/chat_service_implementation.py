@@ -12,8 +12,8 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from bibliophage.v1alpha3 import chat_pb2 as api
 from embeddings import embed_query
-from postgres_db import get_postgres_db
 from llm_access import DocumentContext, get_llm_client
+from postgres_db import get_postgres_db
 
 logger = logging.getLogger(__name__)
 

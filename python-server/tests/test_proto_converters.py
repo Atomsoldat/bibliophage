@@ -3,10 +3,9 @@
 These tests touch only the protobuf message types — no database, no services.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
-
 from google.protobuf import timestamp_pb2
 
 import bibliophage.v1alpha3.document_pb2 as document_api
@@ -27,8 +26,8 @@ def _make_row(**overrides):
         "content": "hello world",
         "document_type": "RULEBOOK",
         "source_type": "CORE",
-        "created_at": datetime(2024, 1, 2, 3, 4, 5, tzinfo=timezone.utc),
-        "updated_at": datetime(2024, 1, 2, 3, 4, 6, tzinfo=timezone.utc),
+        "created_at": datetime(2024, 1, 2, 3, 4, 5, tzinfo=UTC),
+        "updated_at": datetime(2024, 1, 2, 3, 4, 6, tzinfo=UTC),
     }
     row.update(overrides)
     return row
@@ -171,7 +170,7 @@ def test_roundtrip_proto_with_file_size_only():
 
 @pytest.mark.unit
 def test_datetime_to_proto_ts_returns_timestamp_instance():
-    ts = datetime_to_proto_ts(datetime(2024, 1, 2, 3, 4, 5, tzinfo=timezone.utc))
+    ts = datetime_to_proto_ts(datetime(2024, 1, 2, 3, 4, 5, tzinfo=UTC))
 
     assert isinstance(ts, timestamp_pb2.Timestamp)
 
@@ -180,17 +179,17 @@ def test_datetime_to_proto_ts_returns_timestamp_instance():
 def test_datetime_to_proto_ts_preserves_value_via_roundtrip():
     # FromDatetime/ToDatetime is the contract we care about. Use aware UTC
     # to match the timezone treatment FromDatetime applies internally.
-    original = datetime(2026, 5, 23, 14, 30, 45, tzinfo=timezone.utc)
+    original = datetime(2026, 5, 23, 14, 30, 45, tzinfo=UTC)
 
     ts = datetime_to_proto_ts(original)
 
-    assert ts.ToDatetime(tzinfo=timezone.utc) == original
+    assert ts.ToDatetime(tzinfo=UTC) == original
 
 
 @pytest.mark.unit
 def test_datetime_to_proto_ts_seconds_match_unix_epoch():
     # 2024-01-01T00:00:00Z = 1704067200 seconds since the unix epoch.
-    ts = datetime_to_proto_ts(datetime(2024, 1, 1, tzinfo=timezone.utc))
+    ts = datetime_to_proto_ts(datetime(2024, 1, 1, tzinfo=UTC))
 
     assert ts.seconds == 1704067200
     assert ts.nanos == 0
@@ -199,8 +198,8 @@ def test_datetime_to_proto_ts_seconds_match_unix_epoch():
 @pytest.mark.unit
 def test_datetime_to_proto_ts_independent_calls_dont_alias():
     # Each call must return a fresh Timestamp — mutating one must not affect another.
-    a = datetime_to_proto_ts(datetime(2024, 1, 1, tzinfo=timezone.utc))
-    b = datetime_to_proto_ts(datetime(2025, 1, 1, tzinfo=timezone.utc))
+    a = datetime_to_proto_ts(datetime(2024, 1, 1, tzinfo=UTC))
+    b = datetime_to_proto_ts(datetime(2025, 1, 1, tzinfo=UTC))
 
     assert a.seconds != b.seconds
     assert a is not b
@@ -280,8 +279,8 @@ def test_row_to_proto_document_missing_metadata_leaves_proto_metadata_unset():
 @pytest.mark.unit
 def test_row_to_proto_document_timestamps_match_row_values():
     row = _make_row(
-        created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
-        updated_at=datetime(2024, 2, 1, tzinfo=timezone.utc),
+        created_at=datetime(2024, 1, 1, tzinfo=UTC),
+        updated_at=datetime(2024, 2, 1, tzinfo=UTC),
     )
 
     proto = row_to_proto_document(row)

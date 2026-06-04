@@ -3,8 +3,8 @@ import traceback
 
 import bibliophage.v1alpha3.pdf_pb2 as pdf_api
 from config import get_settings
-from postgres_db import get_postgres_db
 from docling_pipeline import DoclingPipeline
+from postgres_db import get_postgres_db
 from proto_converters import datetime_to_proto_ts
 
 logger = logging.getLogger(__name__)

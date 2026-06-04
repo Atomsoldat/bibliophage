@@ -20,7 +20,6 @@ import importlib.resources
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
 from typing import Any
 
 from pgvector.psycopg import register_vector_async
@@ -162,9 +161,8 @@ class BibliophageDatabase:
                 await conn.execute(insert_sql, params)
                 await conn.execute(tags_sql, params)
         """
-        async with self._pool.connection() as conn:
-            async with conn.transaction():
-                yield conn
+        async with self._pool.connection() as conn, conn.transaction():
+            yield conn
 
     # ── document CRUD ───────────────────────────────────────────────────
 

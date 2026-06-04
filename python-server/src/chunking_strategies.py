@@ -96,8 +96,8 @@ class TokenBasedStrategy(ChunkingStrategy):
         document_id: str,
     ) -> list[ChunkBoundary]:
         """Split content into token-based chunks."""
-        chunk_size = config.token_chunk_size if config.token_chunk_size else 512
-        chunk_overlap = config.token_chunk_overlap if config.token_chunk_overlap else 50
+        chunk_size = config.token_chunk_size or 512
+        chunk_overlap = config.token_chunk_overlap or 50
 
         logger.info(
             "Splitting content with token-based strategy: chunk_size=%d, overlap=%d",
@@ -168,7 +168,7 @@ class MarkdownStructureStrategy(ChunkingStrategy):
         document_id: str,
     ) -> list[ChunkBoundary]:
         """Split content at markdown heading boundaries."""
-        max_level = config.max_heading_level if config.max_heading_level else 3
+        max_level = config.max_heading_level or 3
 
         logger.info(
             "Splitting content with markdown structure strategy: max_level=%d",
@@ -271,7 +271,7 @@ class MarkdownWithTokenLimitStrategy(ChunkingStrategy):
         document_id: str,
     ) -> list[ChunkBoundary]:
         """Split content at headings, with token limit fallback."""
-        max_chunk_size = config.token_chunk_size if config.token_chunk_size else 1000
+        max_chunk_size = config.token_chunk_size or 1000
 
         logger.info(
             "Splitting content with hybrid strategy: max_chunk_size=%d",

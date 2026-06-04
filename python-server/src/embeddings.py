@@ -34,16 +34,15 @@ def _resolve_embedding_device(override: str) -> str:
         logger.info("Embedding device detected automatically: cuda")
         return "cuda"
     # Intel
-    elif torch.xpu.is_available():
+    if torch.xpu.is_available():
         logger.info("Embedding device detected automatically: xpu")
         return "xpu"
     # this is apparently what the Macintosh people use
-    elif torch.backends.mps.is_available():
+    if torch.backends.mps.is_available():
         logger.info("Embedding device detected automatically: mps")
         return "mps"
-    else:
-        logger.info("Embedding device auto detection failed, falling back to cpu")
-        return "cpu"
+    logger.info("Embedding device auto detection failed, falling back to cpu")
+    return "cpu"
 
 
 def get_embeddings_model() -> HuggingFaceEmbeddings:
