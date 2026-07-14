@@ -1,0 +1,146 @@
+syntax = "proto3";
+
+package bibliophage.v1alpha3;
+
+import "bibliophage/v1alpha3/common.proto";
+
+service CanonService {
+  rpc StoreCanon(StoreCanonRequest) returns (StoreCanonResponse);
+  rpc GetCanon(GetCanonRequest) returns (GetCanonResponse);
+  rpc UpdateCanon(UpdateCanonRequest) returns (UpdateCanonResponse);
+  rpc SearchCanons(SearchCanonsRequest) returns (SearchCanonsResponse);
+  rpc DeleteCanon(DeleteCanonRequest) returns (DeleteCanonResponse);
+}
+
+message Canon {
+  // Unique identifier for this canon (assigned by the database)
+  string id = 1;
+
+  // Human-readable name (e.g., "Pathfinder 1E", "Rogue Trader")
+  string name = 2;
+
+  // When this canon was created
+  google.protobuf.Timestamp created_at = 8;
+
+  // When this canon was last updated
+  google.protobuf.Timestamp updated_at = 9;
+
+  // Structured tags for organization (name + multiple values)
+  repeated Tag tags = 10;
+}
+
+// StoreCanonRequest - Create a new canon
+message StoreCanonRequest {
+  // The canon to store (ID will be assigned by server)
+  Canon canon = 1;
+}
+
+// StoreCanonResponse - Result of storing a canon
+message StoreCanonResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // The stored canon with assigned ID
+  Canon canon = 3;
+}
+
+// GetCanonRequest - Retrieve a specific canon by ID
+message GetCanonRequest {
+  // The unique ID of the canon to retrieve
+  string id = 1;
+}
+
+// GetCanonResponse - Result of getting a canon
+message GetCanonResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // The requested canon (null if not found)
+  optional Canon canon = 3;
+}
+
+// UpdateCanonRequest - Update an existing canon
+message UpdateCanonRequest {
+  // The canon to update (must include ID)
+  Canon canon = 1;
+}
+
+// UpdateCanonResponse - Result of updating a canon
+message UpdateCanonResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // The updated canon
+  Canon canon = 3;
+}
+
+// CanonFilter - Reusable filter criteria for canon searches
+// This can be used across different search endpoints and services
+message CanonFilter {
+  // Search by name (partial match, case-insensitive)
+  optional string name_query = 1;
+
+  // Filter by tags (canons must match ALL specified tag filters)
+  // Example: [{"name": "genre", "value": "fantasy"}, {"name": "tone", "value": "dark"}]
+  // would match canons that have both genre=fantasy AND tone=dark
+  repeated TagFilter tag_filters = 4;
+}
+
+// SearchCanonsRequest - Search for canons by various criteria
+message SearchCanonsRequest {
+  // Filter criteria (all fields are optional)
+  optional CanonFilter filter = 1;
+
+  // Pagination (optional, server applies defaults if not specified)
+  optional int32 page_size = 2; // Max results to return (default: 50)
+  optional int32 page_number = 3; // Which page of results (0-indexed, default: 0)
+
+  // Sorting
+  optional SortOrder sort_order = 4;
+}
+
+// SearchCanonsResponse - Results of canon search
+message SearchCanonsResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+
+  // Array of matching canon summaries (with snippets, not full content)
+  // To retrieve full content, use GetCanon RPC with the canon ID
+  repeated Canon matches = 3;
+
+  // TODO: i think i want to get rid of these two
+  // Total number of results (for pagination)
+  int32 total_count = 4;
+  // Current page number
+  int32 page_number = 5;
+
+  // Whether there are more pages
+  bool has_more = 6;
+}
+
+// DeleteCanonRequest - Delete a canon by ID
+message DeleteCanonRequest {
+  // The unique ID of the canon to delete
+  string id = 1;
+}
+
+// DeleteCanonResponse - Result of deleting a canon
+message DeleteCanonResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+
+  // Human-readable status/error message
+  string message = 2;
+}
