@@ -323,6 +323,138 @@ class BibliophageDatabase:
         rows = await self._enrich_documents_with_junction_data([row])
         return rows[0]
 
+    async def update_document(
+        self,
+        document_id: str,
+        name: str,
+        systems: list[str],
+        source_type: str,
+        content: str,
+        doc_type: str,
+        tags: list[dict[str, Any]],
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        """Update a document by ID using full replace semantics (D-01).
+
+        All fields are overwritten. If content changed, sets embeddings_current=false (D-02).
+        Junction tables are delete-reinserted within the transaction (D-08).
+        Returns {"document_id": document_id} on success, or None if not found (D-04).
+        Raises ValueError for unknown system or tag names (D-05, D-06).
+        """
+        character_count = len(content)
+
+        async with self.transaction() as conn:
+            # Check existence and lock the row; detect content change (D-04)
+            cursor = await conn.execute(
+                "SELECT content FROM documents WHERE document_id = %(document_id)s FOR UPDATE",
+                {"document_id": document_id},
+            )
+            cursor.row_factory = dict_row
+            existing = await cursor.fetchone()
+            if existing is None:
+                return None
+
+            # Determine if content changed — stale embeddings when it does (D-02)
+            embeddings_current = existing["content"] == content
+
+            # Full replace of all document fields (D-01)
+            update_sql = sql.SQL("""
+                UPDATE documents
+                SET title = %(name)s,
+                    source_type = %(source_type)s,
+                    metadata = %(metadata)s,
+                    content = %(content)s,
+                    document_type = %(doc_type)s,
+                    character_count = %(character_count)s,
+                    updated_at = now(),
+                    embeddings_current = %(embeddings_current)s
+                WHERE document_id = %(document_id)s
+            """)
+            await conn.execute(update_sql, {
+                "name": name,
+                "source_type": source_type,
+                "metadata": Jsonb(metadata or {}),
+                "content": content,
+                "doc_type": doc_type,
+                "character_count": character_count,
+                "embeddings_current": embeddings_current,
+                "document_id": document_id,
+            })
+
+            # Resolve system names — fail fast if any are unknown (D-05)
+            if systems:
+                sys_cursor = await conn.execute(
+                    "SELECT system_id, title FROM systems WHERE title = ANY(%(names)s)",
+                    {"names": systems},
+                )
+                sys_cursor.row_factory = dict_row
+                found_systems = await sys_cursor.fetchall()
+                found_titles = {r["title"] for r in found_systems}
+                unknown = [s for s in systems if s not in found_titles]
+                if unknown:
+                    errmsg = f"Unknown system(s): {', '.join(unknown)}"
+                    raise ValueError(errmsg)
+
+                # Delete-reinsert junction rows for systems (D-08)
+                await conn.execute(
+                    "DELETE FROM map_documents_to_systems WHERE document_id = %(document_id)s",
+                    {"document_id": document_id},
+                )
+                for sys_row in found_systems:
+                    await conn.execute(
+                        "INSERT INTO map_documents_to_systems (document_id, system_id) "
+                        "VALUES (%(document_id)s, %(system_id)s)",
+                        {"document_id": document_id, "system_id": sys_row["system_id"]},
+                    )
+            else:
+                # No systems provided — clear any existing mappings
+                await conn.execute(
+                    "DELETE FROM map_documents_to_systems WHERE document_id = %(document_id)s",
+                    {"document_id": document_id},
+                )
+
+            # Resolve tag names — fail fast if any are unknown (D-06)
+            if tags:
+                tag_names = [t["name"] for t in tags]
+                tag_cursor = await conn.execute(
+                    "SELECT tag_id, title FROM tags WHERE title = ANY(%(names)s)",
+                    {"names": tag_names},
+                )
+                tag_cursor.row_factory = dict_row
+                found_tags = await tag_cursor.fetchall()
+                found_tag_map = {r["title"]: r["tag_id"] for r in found_tags}
+                unknown = [n for n in tag_names if n not in found_tag_map]
+                if unknown:
+                    errmsg = f"Unknown tag(s): {', '.join(unknown)}"
+                    raise ValueError(errmsg)
+
+                # Delete-reinsert junction rows for tags (D-08)
+                await conn.execute(
+                    "DELETE FROM map_documents_to_tags WHERE document_id = %(document_id)s",
+                    {"document_id": document_id},
+                )
+                for tag in tags:
+                    tag_id = found_tag_map[tag["name"]]
+                    # Store tag values as JSON string in tags.info (D-07)
+                    await conn.execute(
+                        "UPDATE tags SET info = %(info)s WHERE tag_id = %(tag_id)s",
+                        {"info": json.dumps(tag.get("values", [])), "tag_id": tag_id},
+                    )
+                    await conn.execute(
+                        "INSERT INTO map_documents_to_tags (document_id, tag_id) "
+                        "VALUES (%(document_id)s, %(tag_id)s)",
+                        {"document_id": document_id, "tag_id": tag_id},
+                    )
+            else:
+                # No tags provided — clear any existing mappings
+                await conn.execute(
+                    "DELETE FROM map_documents_to_tags WHERE document_id = %(document_id)s",
+                    {"document_id": document_id},
+                )
+
+        logger.info("Document updated: %s (embeddings_current=%s)", document_id, embeddings_current)
+        return {"document_id": document_id}
+
     async def delete_document(self, document_id: str) -> bool:
         """Delete a document (cascades to document_chunks). Returns True if deleted."""
         delete_sql = sql.SQL("DELETE FROM documents WHERE document_id = %(document_id)s")

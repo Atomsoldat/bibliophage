@@ -108,61 +108,67 @@ class DocumentServiceImplementation:
             document=document,
         )
 
-    # TODO: We should have an update function that allows us to update a document by ID
-    # This function should store previous versions of documents, so that people don't accidentally
-    # Nuke their stuff
-    # TODO: We may want to be able to clean up these old versions globally somehow
-    # Or maybe we expire them after a certain time period?
-    # But then what about losing the history of a document? That sounds pretty meh
-    # Using git for this seems heavy...
     async def update_document(
         self,
         request: document_api.UpdateDocumentRequest,
         ctx,
     ) -> document_api.UpdateDocumentResponse:
-        """Update a document by ID.
+        """Update a document by ID. Full replace strategy per D-01."""
+        logger.info(f"Received UpdateDocumentRequest for ID: {request.document.id}")
 
-        TODO: Re-implement against PostgreSQL. Pseudocode below.
+        # Validate document ID is provided
+        if not request.document.id:
+            return document_api.UpdateDocumentResponse(
+                success=False,
+                message="Document ID is required",
+            )
 
-        Conversion helpers to extract from this method and get_document / search_documents:
-        - row_to_proto_document(row) — maps DB row to document_api.Document
-          handles column renames (document_id→id, title→name, document_type→type),
-          enum lookups, metadata JSONB→proto, and timestamp conversion
-        - _proto_to_update_params(proto) — maps document_api.Document fields to
-          a dict of DB column names and values, only including fields that are
-          actually set on the proto (partial update semantics)
+        # Convert protobuf tags to dict format for database storage
+        tags = [
+            {"name": tag.name, "values": list(tag.values)}
+            for tag in request.document.tags
+        ]
 
-        Pseudocode:
-        1. params = _proto_to_update_params(request.document)
-           — skip unset fields (empty strings, UNSPECIFIED enums)
-           — convert enums to string names (DocumentType.Name, SourceType.Name)
-           — convert metadata proto to JSONB dict
-           — if content changed, update character_count and content_snippet too
+        # Convert enum to string name for database storage
+        doc_type = document_api.DocumentType.Name(request.document.type)
+        source_type = document_api.SourceType.Name(request.document.source_type)
 
-        2. if not params:
-               return error "no fields to update"
+        # Convert metadata if provided
+        metadata = None
+        if request.document.HasField("metadata"):
+            metadata = metadata_proto_to_dict(request.document.metadata)
 
-        3. updated_row = await self.db.update_document(request.document.id, params)
-           — db.update_document builds: UPDATE documents SET col1=%(col1)s, ...
-             WHERE document_id = %(document_id)s RETURNING *
-           — single query, no ORM, uses psycopg sql.SQL + sql.Identifier for
-             dynamic column names so we don't need to enumerate every combination
+        try:
+            result = await self.db.update_document(
+                document_id=request.document.id,
+                name=request.document.name,
+                systems=list(request.document.systems),
+                source_type=source_type,
+                content=request.document.content,
+                doc_type=doc_type,
+                tags=tags,
+                metadata=metadata,
+            )
+        except ValueError as e:
+            return document_api.UpdateDocumentResponse(
+                success=False,
+                message=str(e),
+            )
 
-        4. if updated_row is None:
-               return error "not found"
+        if result is None:
+            return document_api.UpdateDocumentResponse(
+                success=False,
+                message="Document not found",
+            )
 
-        5. TODO: if "content" in params, flag embeddings as stale or re-embed
+        # Re-fetch the full document so server-computed fields are accurate (D-03)
+        doc_data = await self.db.get_document_by_id(request.document.id)
+        proto_document = row_to_proto_document(doc_data)
 
-        6. TODO: handle systems (delete + re-insert into map_documents_to_systems)
-           and tags (delete + re-insert into map_documents_to_tags) within a
-           db.transaction() alongside the document UPDATE
-
-        7. document = row_to_proto_document(updated_row)
-           return UpdateDocumentResponse(success=True, document=document)
-        """
-        raise NotImplementedError(
-            "UpdateDocument is not yet implemented against PostgreSQL. "
-            "See pseudocode in docstring for implementation plan."
+        return document_api.UpdateDocumentResponse(
+            success=True,
+            message="Document updated successfully",
+            document=proto_document,
         )
 
     async def search_documents(
