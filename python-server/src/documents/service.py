@@ -51,15 +51,21 @@ class DocumentServiceImplementation:
         if request.document.HasField("metadata"):
             metadata = metadata_proto_to_dict(request.document.metadata)
 
-        response = await self.db.store_document(
-            name=request.document.name,
-            systems=list(request.document.systems),
-            source_type=source_type,
-            content=request.document.content,
-            doc_type=doc_type,
-            tags=tags,
-            metadata=metadata,
-        )
+        try:
+            response = await self.db.store_document(
+                name=request.document.name,
+                systems=list(request.document.systems),
+                source_type=source_type,
+                content=request.document.content,
+                doc_type=doc_type,
+                tags=tags,
+                metadata=metadata,
+            )
+        except ValueError as e:
+            return document_api.StoreDocumentResponse(
+                success=False,
+                message=str(e),
+            )
 
         # Create response with stored document metadata
         stored_document = document_api.Document()

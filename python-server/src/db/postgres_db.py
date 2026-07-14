@@ -17,6 +17,7 @@ References:
 from __future__ import annotations
 
 import importlib.resources
+import json
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -176,7 +177,11 @@ class BibliophageDatabase:
         tags: list[dict[str, Any]],
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Insert a document. Returns dict with document_id, created_at, character_count."""
+        """Insert a document and wire junction tables within a transaction.
+
+        Returns dict with document_id, created_at, character_count.
+        Raises ValueError if any system or tag name is unknown.
+        """
         character_count = len(content)
 
         insert_sql = sql.SQL("""
@@ -188,7 +193,7 @@ class BibliophageDatabase:
                  %(doc_type)s, %(character_count)s)
             RETURNING document_id, created_at, character_count
         """)
-        params = {
+        doc_params = {
             "name": name,
             "source_type": source_type,
             "metadata": Json(metadata or {}),
@@ -197,22 +202,126 @@ class BibliophageDatabase:
             "character_count": character_count,
         }
 
-        # TODO: insert systems into map_documents_to_systems
-        # TODO: insert tags into map_documents_to_tags
+        async with self.transaction() as conn:
+            # Insert the document and retrieve generated fields
+            cursor = await conn.execute(insert_sql, doc_params)
+            cursor.row_factory = dict_row
+            row = await cursor.fetchone()
+            document_id = str(row["document_id"])
 
-        row = await self.fetchone(insert_sql, params)
+            # Resolve system names — fail fast if any are unknown (D-05)
+            if systems:
+                sys_cursor = await conn.execute(
+                    "SELECT system_id, title FROM systems WHERE title = ANY(%(names)s)",
+                    {"names": systems},
+                )
+                sys_cursor.row_factory = dict_row
+                found_systems = await sys_cursor.fetchall()
+                found_titles = {r["title"] for r in found_systems}
+                unknown = [s for s in systems if s not in found_titles]
+                if unknown:
+                    errmsg = f"Unknown system(s): {', '.join(unknown)}"
+                    raise ValueError(errmsg)
+                for sys_row in found_systems:
+                    await conn.execute(
+                        "INSERT INTO map_documents_to_systems (document_id, system_id) "
+                        "VALUES (%(document_id)s, %(system_id)s)",
+                        {"document_id": document_id, "system_id": sys_row["system_id"]},
+                    )
+
+            # Resolve tag names — fail fast if any are unknown (D-06)
+            if tags:
+                tag_names = [t["name"] for t in tags]
+                tag_cursor = await conn.execute(
+                    "SELECT tag_id, title FROM tags WHERE title = ANY(%(names)s)",
+                    {"names": tag_names},
+                )
+                tag_cursor.row_factory = dict_row
+                found_tags = await tag_cursor.fetchall()
+                found_tag_map = {r["title"]: r["tag_id"] for r in found_tags}
+                unknown = [n for n in tag_names if n not in found_tag_map]
+                if unknown:
+                    errmsg = f"Unknown tag(s): {', '.join(unknown)}"
+                    raise ValueError(errmsg)
+                for tag in tags:
+                    tag_id = found_tag_map[tag["name"]]
+                    # Store tag values as JSON string in tags.info (D-07)
+                    await conn.execute(
+                        "UPDATE tags SET info = %(info)s WHERE tag_id = %(tag_id)s",
+                        {"info": json.dumps(tag.get("values", [])), "tag_id": tag_id},
+                    )
+                    await conn.execute(
+                        "INSERT INTO map_documents_to_tags (document_id, tag_id) "
+                        "VALUES (%(document_id)s, %(tag_id)s)",
+                        {"document_id": document_id, "tag_id": tag_id},
+                    )
+
         result = {
-            "document_id": str(row["document_id"]),
+            "document_id": document_id,
             "created_at": row["created_at"],
             "character_count": int(row["character_count"]),
         }
         logger.info(f"Document inserted: {result['document_id']}")
         return result
 
+    async def _enrich_documents_with_junction_data(
+        self,
+        documents: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Add systems and tags from junction tables to each document row.
+
+        Batches the junction table queries across all document IDs to avoid N+1.
+        Mutates each row dict in-place and returns the list.
+        """
+        if not documents:
+            return documents
+
+        doc_ids = [str(d["document_id"]) for d in documents]
+
+        systems_rows = await self.fetchall(
+            "SELECT m.document_id, s.title "
+            "FROM map_documents_to_systems m "
+            "JOIN systems s ON m.system_id = s.system_id "
+            "WHERE m.document_id = ANY(%(ids)s)",
+            {"ids": doc_ids},
+        )
+        tags_rows = await self.fetchall(
+            "SELECT m.document_id, t.title, t.info "
+            "FROM map_documents_to_tags m "
+            "JOIN tags t ON m.tag_id = t.tag_id "
+            "WHERE m.document_id = ANY(%(ids)s)",
+            {"ids": doc_ids},
+        )
+
+        # Index by document_id for O(1) lookup
+        systems_by_doc: dict[str, list[str]] = {}
+        for r in systems_rows:
+            key = str(r["document_id"])
+            systems_by_doc.setdefault(key, []).append(r["title"])
+
+        tags_by_doc: dict[str, list[dict[str, Any]]] = {}
+        for r in tags_rows:
+            key = str(r["document_id"])
+            tags_by_doc.setdefault(key, []).append({
+                "name": r["title"],
+                "values": json.loads(r["info"]) if r["info"] else [],
+            })
+
+        for doc in documents:
+            key = str(doc["document_id"])
+            doc["systems"] = systems_by_doc.get(key, [])
+            doc["tags"] = tags_by_doc.get(key, [])
+
+        return documents
+
     async def get_document_by_id(self, document_id: str) -> dict[str, Any] | None:
-        """Retrieve a document by ID."""
+        """Retrieve a document by ID, enriched with systems and tags."""
         fetch_sql = sql.SQL("SELECT * FROM documents WHERE document_id = %(document_id)s")
-        return await self.fetchone(fetch_sql, {"document_id": document_id})
+        row = await self.fetchone(fetch_sql, {"document_id": document_id})
+        if row is None:
+            return None
+        rows = await self._enrich_documents_with_junction_data([row])
+        return rows[0]
 
     async def delete_document(self, document_id: str) -> bool:
         """Delete a document (cascades to document_chunks). Returns True if deleted."""
@@ -230,7 +339,12 @@ class BibliophageDatabase:
         page_size: int = 50,
         page_number: int = 0,
     ) -> tuple[list[dict[str, Any]], int]:
-        """Search documents with optional filters. Returns (rows, total_count)."""
+        """Search documents with optional filters. Returns (rows, total_count).
+
+        system_filters matches documents associated with ANY of the given system names.
+        tag_filters matches documents associated with ALL of the given tag names.
+        Each result row is enriched with systems and tags from junction tables.
+        """
         conditions: list[sql.Composable] = []
         params: dict[str, Any] = {}
 
@@ -243,11 +357,32 @@ class BibliophageDatabase:
             conditions.append(sql.SQL("document_type = ANY(%(type_filters)s)"))
             params["type_filters"] = type_filters
         if system_filters:
-            conditions.append(sql.SQL("document_system = ANY(%(system_filters)s)"))
+            # EXISTS subquery replaces the broken "document_system = ANY(...)" ref
+            conditions.append(sql.SQL(
+                "EXISTS ("
+                "  SELECT 1 FROM map_documents_to_systems m"
+                "  JOIN systems s ON m.system_id = s.system_id"
+                "  WHERE m.document_id = documents.document_id"
+                "  AND s.title = ANY(%(system_filters)s)"
+                ")"
+            ))
             params["system_filters"] = system_filters
         if tag_filters:
-            conditions.append(sql.SQL("document_tag = ANY(%(tag_filters)s)"))
-            params["tag_filters"] = tag_filters
+            # One EXISTS condition per tag filter — document must match ALL
+            for idx, tag_f in enumerate(tag_filters):
+                name_key = "tag_name_" + str(idx)
+                conditions.append(
+                    sql.SQL(
+                        "EXISTS ("
+                        "  SELECT 1 FROM map_documents_to_tags m"
+                        "  JOIN tags t ON m.tag_id = t.tag_id"
+                        "  WHERE m.document_id = documents.document_id"
+                        "  AND t.title = "
+                    )
+                    + sql.Placeholder(name_key)
+                    + sql.SQL(")")
+                )
+                params[name_key] = tag_f["name"]
 
         where = (
             sql.SQL(" WHERE ") + sql.SQL(" AND ").join(conditions)
@@ -265,6 +400,7 @@ class BibliophageDatabase:
         params_data = {**params, "page_size": page_size, "offset": page_number * page_size}
 
         documents = await self.fetchall(query_data, params_data)
+        documents = await self._enrich_documents_with_junction_data(documents)
 
         count_row = await self.fetchone(query_count, params)
         total = count_row["count"] if count_row else 0
@@ -492,6 +628,7 @@ class BibliophageDatabase:
             SELECT * FROM documents WHERE document_id = ANY(%(ids)s)
         """)
         neighbours = await self.fetchall(neighbours_sql, {"ids": list(neighbour_ids)})
+        neighbours = await self._enrich_documents_with_junction_data(neighbours)
         return neighbours, edges
 
     async def list_edges_between(

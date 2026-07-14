@@ -11,6 +11,7 @@ from typing import Any
 
 from google.protobuf import timestamp_pb2
 
+import bibliophage.v1alpha3.common_pb2 as common_api
 import bibliophage.v1alpha3.document_pb2 as document_api
 
 
@@ -54,7 +55,6 @@ def row_to_proto_document(
         document_api, source_type_str, document_api.SOURCE_TYPE_UNSPECIFIED,
     )
 
-    # TODO: systems are not yet stored — junction table not wired up
     proto.systems.extend(row.get("systems", []))
 
     # Metadata JSONB → proto
@@ -62,9 +62,8 @@ def row_to_proto_document(
     if metadata_dict:
         proto.metadata.CopyFrom(metadata_dict_to_proto(metadata_dict))
 
-    # TODO: tags are not yet stored — junction table not wired up
     for tag_data in row.get("tags", []):
-        tag = document_api.Tag()
+        tag = common_api.Tag()
         tag.name = tag_data.get("name", "")
         tag.values.extend(tag_data.get("values", []))
         proto.tags.append(tag)

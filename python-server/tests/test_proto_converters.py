@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 import pytest
 from google.protobuf import timestamp_pb2
 
+import bibliophage.v1alpha3.common_pb2 as common_api
 import bibliophage.v1alpha3.document_pb2 as document_api
 from proto_converters import (
     datetime_to_proto_ts,
@@ -289,8 +290,52 @@ def test_row_to_proto_document_timestamps_match_row_values():
     assert proto.updated_at.seconds == 1706745600  # 2024-02-01T00:00:00Z
 
 
-# NOTE: no test for the tags branch — `row_to_proto_document` calls
-# `document_api.Tag()` but Tag actually lives in common_pb2. The branch is
-# dead in production today (the row's "tags" key is always empty until the
-# junction table is wired up — see TODO in the function body), so a test
-# would only assert the latent bug
+@pytest.mark.unit
+def test_row_to_proto_document_systems_populated():
+    row = _make_row(systems=["D&D 5e", "Pathfinder 2e"])
+
+    proto = row_to_proto_document(row)
+
+    assert list(proto.systems) == ["D&D 5e", "Pathfinder 2e"]
+
+
+@pytest.mark.unit
+def test_row_to_proto_document_systems_absent_yields_empty():
+    proto = row_to_proto_document(_make_row())
+
+    assert list(proto.systems) == []
+
+
+@pytest.mark.unit
+def test_row_to_proto_document_tags_populated():
+    row = _make_row(tags=[
+        {"name": "edition", "values": ["5e", "2024"]},
+        {"name": "genre", "values": ["fantasy"]},
+    ])
+
+    proto = row_to_proto_document(row)
+
+    assert len(proto.tags) == 2
+    assert isinstance(proto.tags[0], common_api.Tag)
+    assert proto.tags[0].name == "edition"
+    assert list(proto.tags[0].values) == ["5e", "2024"]
+    assert proto.tags[1].name == "genre"
+    assert list(proto.tags[1].values) == ["fantasy"]
+
+
+@pytest.mark.unit
+def test_row_to_proto_document_tags_absent_yields_empty():
+    proto = row_to_proto_document(_make_row())
+
+    assert list(proto.tags) == []
+
+
+@pytest.mark.unit
+def test_row_to_proto_document_tag_with_no_values():
+    row = _make_row(tags=[{"name": "solo", "values": []}])
+
+    proto = row_to_proto_document(row)
+
+    assert len(proto.tags) == 1
+    assert proto.tags[0].name == "solo"
+    assert list(proto.tags[0].values) == []

@@ -39,8 +39,11 @@ CREATE TABLE IF NOT EXISTS documents (
   character_count INT NOT NULL,
   created_at TIMESTAMP DEFAULT now() NOT NULL,
   updated_at TIMESTAMP DEFAULT now() NOT NULL,
+  embeddings_current BOOLEAN DEFAULT TRUE NOT NULL,
   PRIMARY KEY (document_id)
 );
+
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS embeddings_current BOOLEAN DEFAULT TRUE NOT NULL;
 
 CREATE TABLE IF NOT EXISTS tags (
     tag_id UUID DEFAULT uuidv7(),
