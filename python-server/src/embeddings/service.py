@@ -14,10 +14,10 @@ from dataclasses import dataclass
 from typing import Any
 
 import bibliophage.v1alpha3.embedding_pb2 as api
-import chunking_strategies
+import embeddings.chunking as chunking_strategies
 from config import get_settings
-from embeddings import embed_texts
-from postgres_db import get_postgres_db
+from embeddings.model import embed_texts
+from db.postgres_db import get_postgres_db
 
 logger = logging.getLogger(__name__)
 

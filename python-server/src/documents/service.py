@@ -2,7 +2,7 @@ import logging
 
 import bibliophage.v1alpha3.document_pb2 as document_api
 import bibliophage.v1alpha3.embedding_pb2 as embedding_api
-from postgres_db import get_postgres_db
+from db.postgres_db import get_postgres_db
 from proto_converters import (
     datetime_to_proto_ts,
     metadata_proto_to_dict,

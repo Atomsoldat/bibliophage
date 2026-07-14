@@ -2,7 +2,7 @@
 
 import pytest
 
-from batch_size_calculator import calculate_batch_size
+from ingestion.batch_size_calculator import calculate_batch_size
 
 
 @pytest.mark.unit

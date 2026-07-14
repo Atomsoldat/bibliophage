@@ -11,7 +11,7 @@ import uuid
 import psycopg
 import pytest
 
-from postgres_db import BibliophageDatabase, close_database, get_postgres_db
+from db.postgres_db import BibliophageDatabase, close_database, get_postgres_db
 
 logger = logging.getLogger(__name__)
 

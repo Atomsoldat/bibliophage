@@ -16,8 +16,8 @@ from docling.datamodel.base_models import ConversionStatus, InputFormat
 from docling.datamodel.pipeline_options import ThreadedPdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
-from batch_size_calculator import calculate_batch_size
-from pdf_outline_inspector import (
+from ingestion.batch_size_calculator import calculate_batch_size
+from ingestion.pdf_outline_inspector import (
     analyze_outline_for_batching,
     get_pdf_page_count,
     inspect_pdf_outline,

@@ -7,8 +7,8 @@ so the test does not depend on the host's actual hardware.
 
 import pytest
 
-import embeddings as embeddings_module
-from embeddings import _resolve_embedding_device, embed_texts
+import embeddings.model as embeddings_module
+from embeddings.model import _resolve_embedding_device, embed_texts
 
 
 @pytest.mark.unit

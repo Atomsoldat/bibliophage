@@ -114,7 +114,7 @@ class BibliophageDatabase:
         """Create all tables if they don't exist."""
         # graph_edges references documents(document_id), so documents.sql must come first.
         for ddl_file in ("documents.sql", "vectors.sql", "graph.sql"):
-            ddl_path = importlib.resources.files("db_schema").joinpath(ddl_file)
+            ddl_path = importlib.resources.files("db.schema").joinpath(ddl_file)
             ddl = ddl_path.read_text(encoding="utf-8")
             await self.execute_script(ddl)
             logger.info("Schema initialisation executed (%s)", ddl_file)

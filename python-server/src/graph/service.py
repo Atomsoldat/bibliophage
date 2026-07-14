@@ -19,7 +19,7 @@ import psycopg
 
 import bibliophage.v1alpha3.document_pb2 as document_api
 import bibliophage.v1alpha3.graph_pb2 as graph_api
-from postgres_db import get_postgres_db
+from db.postgres_db import get_postgres_db
 from proto_converters import row_to_proto_document
 
 logger = logging.getLogger(__name__)

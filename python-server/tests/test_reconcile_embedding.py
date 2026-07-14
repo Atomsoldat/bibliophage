@@ -11,7 +11,7 @@ Unit tests verify the _diff_boundaries set logic in isolation.
 import pytest
 
 import bibliophage.v1alpha3.embedding_pb2 as emb_api
-from embedding_service_implementation import EmbeddingServiceImplementation
+from embeddings.service import EmbeddingServiceImplementation
 
 
 @pytest.mark.integration

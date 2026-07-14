@@ -5,17 +5,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-import postgres_db
+import db.postgres_db as postgres_db
 from bibliophage.v1alpha3.chat_connect import ChatServiceASGIApplication
 from bibliophage.v1alpha3.document_connect import DocumentServiceASGIApplication
 from bibliophage.v1alpha3.embedding_connect import EmbeddingServiceASGIApplication
 from bibliophage.v1alpha3.graph_connect import GraphServiceASGIApplication
 from bibliophage.v1alpha3.pdf_connect import PdfServiceASGIApplication
-from chat_service_implementation import ChatServiceImplementation
-from document_service_implementation import DocumentServiceImplementation
-from embedding_service_implementation import EmbeddingServiceImplementation
-from graph_service_implementation import GraphServiceImplementation
-from loading_service_implementation import LoadingServiceImplementation
+from chat.service import ChatServiceImplementation
+from documents.service import DocumentServiceImplementation
+from embeddings.service import EmbeddingServiceImplementation
+from graph.service import GraphServiceImplementation
+from ingestion.service import LoadingServiceImplementation
 
 
 def configure_logging():

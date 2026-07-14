@@ -10,7 +10,7 @@ Architecture:
 - Strategy registry provides factory pattern for strategy selection
 
 Usage:
-    from chunking_strategies import get_strategy
+    from embeddings.chunking import get_strategy
     from bibliophage.v1alpha3.embedding_pb2 import ChunkingStrategy, ChunkingConfig
 
     config = ChunkingConfig(
