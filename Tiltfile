@@ -30,12 +30,11 @@ local_resource(
     #    'python-server/bibliophage/',
     #],
     labels=['app'],
-    resource_deps=['postgres-pgvector', 'postgres-documentdb', 'ferretdb'],
+    resource_deps=['postgres-pgvector'],
     serve_env={
         'PYTHONUNBUFFERED': '1',  # Ensure logs appear immediately
         # Database connections (12-factor: config from environment)
         'VECTOR_DB_URL': 'postgresql://pgvector:pgvector_dev@localhost:5432/pgvector',
-        'DOC_DB_URL': 'mongodb://postgres:ferretdb_dev@localhost:27017/',
         # Ollama configuration
         'OLLAMA_URL': 'http://localhost:11435',
         'OLLAMA_DEFAULT_MODEL': 'mistral',
