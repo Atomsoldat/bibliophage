@@ -61,6 +61,12 @@ ignore = [
     # the formatter enforces an identical rule, making this one redundant
     # devs say leaving it in may cause trouble
     "COM812",
+    # copyright, lmao
+    "CPY001",
+    # we will think about this once we have multiple authors
+    "TD002",
+    # mandatory issues for todos
+    "TD003",
 ]
 
 [lint.per-file-ignores]
