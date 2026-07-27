@@ -3,6 +3,7 @@ syntax = "proto3";
 package bibliophage.v1alpha3;
 
 import "bibliophage/v1alpha3/common.proto";
+import "google/protobuf/timestamp.proto";
 
 service CanonService {
   rpc StoreCanon(StoreCanonRequest) returns (StoreCanonResponse);
