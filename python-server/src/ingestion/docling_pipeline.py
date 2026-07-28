@@ -62,7 +62,7 @@ class DoclingPipeline:
         table_batch_size: int = 4,
         do_ocr: bool = False,
     ):
-        """Initialize the Docling pipeline.
+        """Initialise the Docling pipeline.
 
         Args:
             ocr_batch_size: Batch size for OCR processing
@@ -210,7 +210,7 @@ class DoclingPipeline:
         """
         num_batches = len(batches)
 
-        # Initialize docling converter with pipeline options
+        # Initialise docling converter with pipeline options
         doc_converter = DocumentConverter(
             format_options={
                 InputFormat.PDF: PdfFormatOption(
@@ -219,9 +219,10 @@ class DoclingPipeline:
             },
         )
 
-        # Initialize pipeline once (reused across batches)
+        # Initialise pipeline once (reused across batches)
+        # AE spelling inherited from upstream
         doc_converter.initialize_pipeline(InputFormat.PDF)
-        logger.info("Pipeline initialized")
+        logger.info("Pipeline initialised")
 
         # Process batches and collect results
         processed_batches: list[BatchInfo] = []

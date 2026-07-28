@@ -36,7 +36,7 @@ class EmbeddingServiceImplementation:
     def __init__(self):
         self.db = get_postgres_db()
         self.settings = get_settings()
-        logger.info("Embedding service initialized")
+        logger.info("Embedding service initialised")
 
     async def propose_chunks(
         self,

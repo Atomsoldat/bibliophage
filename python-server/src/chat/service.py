@@ -36,10 +36,10 @@ class ChatServiceImplementation:
     """Implementation of ChatService with streaming support."""
 
     def __init__(self) -> None:
-        """Initialize the chat service with database and LLM client."""
+        """Initialise the chat service with database and LLM client."""
         self.db = get_postgres_db()
         self.llm = get_llm_client()
-        logger.info("Chat service initialized")
+        logger.info("Chat service initialised")
 
     async def stream_chat(
         self,

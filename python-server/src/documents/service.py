@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 
 class DocumentServiceImplementation:
     def __init__(self):
-        """Initialize the document service with database repository."""
+        """Initialise the document service with database repository."""
         self.db = get_postgres_db()
-        logger.info("Document service initialized with database repository")
+        logger.info("Document service initialised with database repository")
 
     # TODO: figure out where the type of ctx is defined, we  don't use it in the loading service either
     async def store_document(
