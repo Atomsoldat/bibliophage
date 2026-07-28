@@ -11,6 +11,7 @@ Environment variables:
 - OLLAMA_TIMEOUT: Request timeout in seconds (optional, default: 120)
 """
 
+# TODO: This throws stacktraces, when values are not set; those should be caught...
 
 # we use pydantic to handle the mapping between env vars and the configuration
 # parameters in our application
