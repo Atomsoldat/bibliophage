@@ -43,36 +43,53 @@ CREATE TABLE IF NOT EXISTS documents (
   PRIMARY KEY (document_id)
 );
 
-ALTER TABLE documents ADD COLUMN IF NOT EXISTS embeddings_current BOOLEAN DEFAULT TRUE NOT NULL;
+-- TODO: make sure, that users do not enter multiple permutations of the same canon / tag
+-- e.g. SciFi vs scifi vs Sci-Fi
+-- perhaps we can perform a trigram search before entry, and if there is a match
+-- return that and ask whether this preexisting one is acceptable
+
+-- TODO: suggest existing keys / values as the user types
 
 CREATE TABLE IF NOT EXISTS tags (
     tag_id UUID DEFAULT uuidv7(),
-    title TEXT NOT NULL,
-    info TEXT,
+    title TEXT UNIQUE NOT NULL,
     PRIMARY KEY (tag_id)
+);
+
+CREATE TABLE IF NOT EXISTS tag_values (
+    tag_value_id UUID DEFAULT uuidv7(),
+    -- i supposed we can have tags without values, where there is no need to differentiate
+    -- otherwise, we could constrain this to NOT NULL
+    tag_value TEXT,
+    tag_id UUID REFERENCES tags(tag_id) ON DELETE CASCADE,
+    PRIMARY KEY (tag_value_id)
+    UNIQUE (tag_id, tag_value_id, tag_value)
 );
 
 CREATE TABLE IF NOT EXISTS canons (
     canon_id UUID DEFAULT uuidv7(),
-    title TEXT NOT NULL,
-    info TEXT,
+    title TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP DEFAULT now() NOT NULL,
     PRIMARY KEY (canon_id)
 );
 
--- TODO: we could have a column that describes how canonical/applicable
--- a document is for a canon (core / extended / third party / ...)
 CREATE TABLE IF NOT EXISTS map_documents_to_canons (
     document_id UUID REFERENCES documents(document_id) ON DELETE CASCADE,
     canon_id UUID REFERENCES canons(canon_id) ON DELETE CASCADE,
-    info TEXT,
     PRIMARY KEY (document_id, canon_id)
 );
 
-
+-- what values a tag contains for a given document (e.g. genre: scifi, fantasy, ...)
+-- each tuple of document_id, tag_id, tag_value is unique, so we can have multiple values for a tag such as
+-- genre: fantasy
+-- genre: comedy
+-- on a single document
 CREATE TABLE IF NOT EXISTS map_documents_to_tags (
     document_id UUID REFERENCES documents(document_id) ON DELETE CASCADE,
     tag_id UUID REFERENCES tags(tag_id) ON DELETE CASCADE,
-    PRIMARY KEY (document_id, tag_id)
+    tag_value_id UUID REFERENCES tag_values(tag_value_id) ON DELETE CASCADE,
+    PRIMARY KEY (document_id, tag_id, tag_value_id)
 );
 
 
