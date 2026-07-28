@@ -33,7 +33,7 @@ from config import get_settings
 
 logger = logging.getLogger(__name__)
 
-# ── singletons ──────────────────────────────────────────────────────────
+#### singletons ##########################
 
 _db: BibliophageDatabase | None = None
 
@@ -59,7 +59,7 @@ async def close_database():
         logger.info("BibliophageDatabase connection pool closed")
 
 
-# ── database ────────────────────────────────────────────────────────────
+#### database ##########################
 
 
 class BibliophageDatabase:
@@ -81,7 +81,7 @@ class BibliophageDatabase:
         self._max_size = max_size
         self._pool: AsyncConnectionPool | None = None
 
-    # ── pool lifecycle ──────────────────────────────────────────────────
+    #### pool lifecycle ##########################
 
     async def ensure_initialised(self) -> None:
         """Open the connection pool. Call once during server startup."""
@@ -120,7 +120,7 @@ class BibliophageDatabase:
             await self.execute_script(ddl)
             logger.info("Schema initialisation executed (%s)", ddl_file)
 
-    # ── SQL primitives ──────────────────────────────────────────────────
+    #### SQL primitives ##########################
 
     async def fetchone(
         self, query: str | sql.Composable, params: Any = None,
@@ -165,7 +165,7 @@ class BibliophageDatabase:
         async with self._pool.connection() as conn, conn.transaction():
             yield conn
 
-    # ── document CRUD ───────────────────────────────────────────────────
+    #### document CRUD ##########################
 
     async def store_document(
         self,
@@ -539,7 +539,11 @@ class BibliophageDatabase:
 
         return documents, total
 
-    # ── vector / chunk operations ───────────────────────────────────────
+
+    #### canon CRUD ##########################
+    # TODO (:
+
+    #### vector / chunk operations ##########################
 
     async def store_chunks(
         self,
@@ -683,7 +687,7 @@ class BibliophageDatabase:
         row = await self.fetchone(count_sql, params)
         return row["count"] if row else 0
 
-    # ── graph operations ────────────────────────────────────────────────
+    #### graph operations ##########################
 
     async def create_edge(
         self,
