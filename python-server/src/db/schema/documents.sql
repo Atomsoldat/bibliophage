@@ -20,7 +20,7 @@
 -- TODO: How do we best document the meaning of our fields then?
 
 
--- systems are mapped to documents via a mapping table
+-- canons are mapped to documents via a mapping table
 -- tags are mapped to documents via a mapping table
 CREATE TABLE IF NOT EXISTS documents (
   document_id UUID DEFAULT uuidv7(),
@@ -52,20 +52,20 @@ CREATE TABLE IF NOT EXISTS tags (
     PRIMARY KEY (tag_id)
 );
 
-CREATE TABLE IF NOT EXISTS systems (
-    system_id UUID DEFAULT uuidv7(),
+CREATE TABLE IF NOT EXISTS canons (
+    canon_id UUID DEFAULT uuidv7(),
     title TEXT NOT NULL,
     info TEXT,
-    PRIMARY KEY (system_id)
+    PRIMARY KEY (canon_id)
 );
 
 -- TODO: we could have a column that describes how canonical/applicable
--- a document is for a system (core / extended / third party / ...)
-CREATE TABLE IF NOT EXISTS map_documents_to_systems (
+-- a document is for a canon (core / extended / third party / ...)
+CREATE TABLE IF NOT EXISTS map_documents_to_canons (
     document_id UUID REFERENCES documents(document_id) ON DELETE CASCADE,
-    system_id UUID REFERENCES systems(system_id) ON DELETE CASCADE,
+    canon_id UUID REFERENCES canons(canon_id) ON DELETE CASCADE,
     info TEXT,
-    PRIMARY KEY (document_id, system_id)
+    PRIMARY KEY (document_id, canon_id)
 );
 
 
