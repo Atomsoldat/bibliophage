@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { DocumentBasicFilterValue } from '../components/DocumentBasicFilter.vue'
 
-import type { DocumentListItem, DocumentType } from '../utils/protoHelpers.ts'
+import type { DocumentListItem } from '../utils/protoHelpers.ts'
 import { Icon } from '@iconify/vue'
 import { storeToRefs } from 'pinia'
 import { onBeforeMount, ref } from 'vue'
@@ -11,14 +11,13 @@ import DocumentDeleteButton from '../components/DocumentDeleteButton.vue'
 import DocumentEditMetadataButton from '../components/DocumentEditMetadataButton.vue'
 import DocumentNewEntryButton from '../components/DocumentNewEntryButton.vue'
 import DocumentTable from '../components/DocumentTable.vue'
-import DocumentTypeFilter from '../components/DocumentTypeFilter.vue'
 import { useBulkDelete } from '../composables/useBulkDelete.ts'
 import { useBulkMetadataEdit } from '../composables/useBulkMetadataEdit.ts'
 import { useDocumentApi } from '../composables/useDocumentApi.ts'
 import { useLogger } from '../composables/useLogger.ts'
 import { useDocumentStore } from '../stores/documents'
 import { useEditorWindowStore } from '../stores/editorWindows'
-import { getAllDocumentTypes, SortOrder } from '../utils/protoHelpers.ts'
+import { SortOrder } from '../utils/protoHelpers.ts'
 
 const logger = useLogger()
 const { openWindow } = useEditorWindowStore()
@@ -41,9 +40,6 @@ const basicFilters = ref<DocumentBasicFilterValue>({
 const pageSize = ref(20)
 const pageNumber = ref(0)
 
-// Document type filter - initialise with all types enabled
-const enabledDocumentTypes = ref<DocumentType[]>(getAllDocumentTypes())
-
 onBeforeMount(async () => {
   handleSearchSubmit()
 })
@@ -51,7 +47,6 @@ onBeforeMount(async () => {
 async function handleSearchSubmit() {
   await documentStore.search({
     nameQuery: basicFilters.value.nameQuery,
-    typeFilters: enabledDocumentTypes.value,
     pageSize: pageSize.value,
     pageNumber: pageNumber.value,
     sortOrder: SortOrder.NAME_ASC,
@@ -105,12 +100,6 @@ function closeEmbedModal() {
       Library
     </h1>
   </div>
-
-  <!-- Document Type Filter -->
-  <DocumentTypeFilter
-    v-model="enabledDocumentTypes"
-    class="mb-6"
-  />
 
   <!-- Basic Filters (Name, Systems) -->
   <DocumentBasicFilter

@@ -5,7 +5,6 @@ import type { TableColumn } from './DataTable.vue'
 import { Icon } from '@iconify/vue'
 import { computed } from 'vue'
 
-import { DocumentType } from '../bibliophage/v1alpha3/document_pb.ts'
 import DataTable from './DataTable.vue'
 
 interface Props {
@@ -30,14 +29,6 @@ const emit = defineEmits<{
  * v-model for selected document IDs
  */
 const selectedIds = defineModel<Set<string | number>>({ default: () => new Set() })
-
-/**
- * Format DocumentType enum to display string using TypeScript reverse mapping.
- * Returns the technical enum name (e.g., "LORE_FRAGMENT").
- */
-function formatDocumentType(type: DocumentType): string {
-  return DocumentType[type] ?? 'UNKNOWN'
-}
 
 /**
  * Format timestamp for display
@@ -79,11 +70,6 @@ const columns = computed<TableColumn<DocumentListItem>[]>(() => [
     key: 'id',
     label: 'ID',
     cellClass: 'text-xs font-mono',
-  },
-  {
-    key: 'type',
-    label: 'Type',
-    formatter: value => formatDocumentType(value),
   },
   {
     key: 'createdAt',

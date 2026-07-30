@@ -44,15 +44,14 @@ async function handleSave(windowId: string) {
   try {
     if (window.isNew) {
       // Import necessary types for creating new documents
-      const { DocumentType, SourceType } = await import('../bibliophage/v1alpha3/document_pb.ts')
+      const { SourceType } = await import('../bibliophage/v1alpha3/document_pb.ts')
 
       const response = await api.storeDocument({
         name: window.title,
         content: window.content,
         // Provide required fields with sensible defaults
-        type: DocumentType.NOTE, // Default to NOTE for journal entries
         sourceType: SourceType.GM_NOTES, // Default source type
-        tags: [], // Empty tags array
+        tags: [], // No document_type tag by default — the user sets one if they want it
       })
       if (response?.success && response.document) {
         editorWindows.updateDocument(windowId, {

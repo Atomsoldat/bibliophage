@@ -114,7 +114,6 @@ async def test_list_edges_filters_to_subset(graph_client, document_client):
         request = doc_api.StoreDocumentRequest()
         request.document.name = f"Graph List Test {idx} (auto-cleanup)"
         request.document.systems.append("Test System")
-        request.document.type = doc_api.NOTE
         request.document.source_type = doc_api.GM_NOTES
         request.document.content = f"Graph list test document {idx}."
         response = await document_client.store_document(request)

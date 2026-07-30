@@ -20,9 +20,6 @@ async def test_store_document_integration(document_client):
     request = doc_api.StoreDocumentRequest()
     request.document.name = "Test Bestiary Note"
     request.document.systems.append("Fantasy RPG")
-    # technically this is not a note, but we will go with it for now
-    # since bestiaries would normally not show up in the journal
-    request.document.type = doc_api.NOTE
     request.document.source_type = doc_api.GM_NOTES
     request.document.content = markdown_content
 

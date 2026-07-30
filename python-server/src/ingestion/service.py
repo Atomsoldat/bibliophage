@@ -86,23 +86,19 @@ class LoadingServiceImplementation:
             for tag in request.pdf.tags:
                 tags.append({"name": tag.name, "values": list(tag.values)})
 
-            # Determine DocumentType based on PDF type
-            # Map PDF type strings to DocumentType enums
+            # Determine source_type (authority weighting) based on PDF type.
+            # document_type is not inferred here — it's only ever set if the
+            # caller included a document_type tag among the upload's tags.
             pdf_type_upper = request.pdf.type.upper()
             if "RULEBOOK" in pdf_type_upper or "CORE" in pdf_type_upper:
-                doc_type = "RULEBOOK"
                 source_type = "CORE"
             elif "SUPPLEMENT" in pdf_type_upper or "EXPANSION" in pdf_type_upper:
-                doc_type = "EXPANSION"
                 source_type = "SUPPLEMENT"
             elif "ADVENTURE" in pdf_type_upper:
-                doc_type = "ADVENTURE"
                 source_type = "SUPPLEMENT"
             elif "BESTIARY" in pdf_type_upper or "MONSTER" in pdf_type_upper:
-                doc_type = "BESTIARY"
                 source_type = "SUPPLEMENT"
             else:
-                doc_type = "RULEBOOK"
                 source_type = "CORE"
 
             # TODO: Track vector_chunk_count when vector embedding is implemented
@@ -124,7 +120,6 @@ class LoadingServiceImplementation:
                 systems=list(request.pdf.systems),
                 source_type=source_type,
                 content=processing_result["content"],
-                doc_type=doc_type,
                 tags=tags,
                 metadata=metadata,
             )

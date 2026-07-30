@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { DocumentListItem, DocumentType } from '../utils/protoHelpers'
+import type { DocumentListItem } from '../utils/protoHelpers'
 import type { DocumentBasicFilterValue } from './DocumentBasicFilter.vue'
 import { Icon } from '@iconify/vue'
 import { onBeforeMount, ref } from 'vue'
@@ -7,12 +7,9 @@ import { useDocumentApi } from '../composables/useDocumentApi'
 import { useLogger } from '../composables/useLogger'
 import {
   buildSearchDocumentsRequest,
-
-  getAllDocumentTypes,
   SortOrder,
 } from '../utils/protoHelpers'
 import DocumentBasicFilter from './DocumentBasicFilter.vue'
-import DocumentTypeFilter from './DocumentTypeFilter.vue'
 
 /**
  * Side panel for finding a document to pin onto the graph canvas.
@@ -31,7 +28,6 @@ const logger = useLogger()
 const basicFilters = ref<DocumentBasicFilterValue>({
   nameQuery: '',
 })
-const enabledDocumentTypes = ref<DocumentType[]>(getAllDocumentTypes())
 
 const results = ref<DocumentListItem[]>([])
 const loading = ref(false)
@@ -50,7 +46,6 @@ async function handleSearch(): Promise<void> {
   try {
     const request = buildSearchDocumentsRequest({
       nameQuery: basicFilters.value.nameQuery,
-      typeFilters: enabledDocumentTypes.value,
       pageSize: 20,
       pageNumber: 0,
       sortOrder: SortOrder.NAME_ASC,
@@ -75,7 +70,6 @@ async function handleSearch(): Promise<void> {
     </h2>
 
     <DocumentBasicFilter v-model="basicFilters" />
-    <DocumentTypeFilter v-model="enabledDocumentTypes" />
 
     <button
       type="button"

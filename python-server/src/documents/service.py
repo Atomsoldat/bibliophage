@@ -33,9 +33,6 @@ class DocumentServiceImplementation:
         for tag in request.document.tags:
             tags.append({"name": tag.name, "values": list(tag.values)})
 
-        # Convert enum to string name for database storage
-        doc_type = document_api.DocumentType.Name(request.document.type)
-
         # Convert source_type enum to string
         source_type = document_api.SourceType.Name(request.document.source_type)
 
@@ -49,7 +46,6 @@ class DocumentServiceImplementation:
                 name=request.document.name,
                 source_type=source_type,
                 content=request.document.content,
-                doc_type=doc_type,
                 tags=tags,
                 metadata=metadata,
             )
@@ -122,7 +118,6 @@ class DocumentServiceImplementation:
         ]
 
         # Convert enum to string name for database storage
-        doc_type = document_api.DocumentType.Name(request.document.type)
         source_type = document_api.SourceType.Name(request.document.source_type)
 
         # Convert metadata if provided
@@ -136,7 +131,6 @@ class DocumentServiceImplementation:
                 name=request.document.name,
                 source_type=source_type,
                 content=request.document.content,
-                doc_type=doc_type,
                 tags=tags,
                 metadata=metadata,
             )
@@ -172,7 +166,6 @@ class DocumentServiceImplementation:
         # Extract filter parameters if filter is provided
         name_query = None
         content_query = None
-        type_filters = None
         tag_filters = None
 
         if request.HasField("filter"):
@@ -187,14 +180,6 @@ class DocumentServiceImplementation:
                 if request.filter.HasField("content_query")
                 else None
             )
-
-            # Convert DocumentType enums to strings for database query
-            # Repeated fields don't have presence in proto3 - check if non-empty instead
-            if request.filter.type_filters:
-                type_filters = [
-                    document_api.DocumentType.Name(t)
-                    for t in request.filter.type_filters
-                ]
 
             # Extract tag filters (must match ALL)
             if request.filter.tag_filters:
@@ -215,7 +200,6 @@ class DocumentServiceImplementation:
         documents, total_count = await self.db.search_documents(
             name_query=name_query,
             content_query=content_query,
-            type_filters=type_filters,
             tag_filters=tag_filters,
             page_size=page_size,
             page_number=page_number,

@@ -34,7 +34,7 @@ message PdfData {
 }
 
 // Metadata for file-based content (PDFs, scanned books, etc.)
-// Populated when DocumentType indicates file-based content
+// Populated when a document originates from a file (e.g. a PDF upload)
 message Metadata {
   // File size in bytes
   int64 file_size = 1;
@@ -62,9 +62,6 @@ message Document {
 
   // Raw text content of the document (markdown formatted for PDFs, user notes should be treated as plain text)
   string content = 5;
-
-  // Type of document (categorization)
-  DocumentType type = 6;
 
   // When this document was created
   google.protobuf.Timestamp created_at = 8;
@@ -100,9 +97,6 @@ message DocumentListItem {
   // Use GetDocument RPC to retrieve full content
   string content_snippet = 5;
 
-  // Type of document
-  DocumentType type = 6;
-
   // When this document was created
   google.protobuf.Timestamp created_at = 8;
 
@@ -122,25 +116,6 @@ message DocumentListItem {
 }
 
 // Enums for strict classification of data
-// TODO: A single Document may contain multiple types of information
-// this should probably be an array of applicable types in the future
-// that raises the question whether we need different levels of "authoritativeness"
-// for the different facets of a document
-enum DocumentType {
-  DOCUMENT_TYPE_UNSPECIFIED = 0; // Default/unknown
-  NOTE = 1; // General notes, least specific
-  LORE_FRAGMENT = 2; // Authoritative lore/world information
-  CHARACTER = 3; // PCs, NPCs, historical figures
-  LOCATION = 4; // Places, regions, buildings
-  OBJECT = 5; // Possessions, items, artifacts
-  QUEST = 6; // Quests, missions, plot hooks
-  SESSION_LOG = 7; // Session summaries, game logs
-  RULEBOOK = 8; // Core rulebook (typically from PDF)
-  EXPANSION = 9; // Supplement/expansion (typically from PDF)
-  ADVENTURE = 10; // Adventure module (typically from PDF)
-  BESTIARY = 11; // Monster/creature compendium (typically from PDF)
-}
-
 // SourceType categorizes who created  a document or where a document came from
 // Used to weight authority when constructing LLM context
 enum SourceType {
@@ -220,9 +195,6 @@ message DocumentFilter {
 
   // Search by content (partial match, case-insensitive)
   optional string content_query = 2;
-
-  // Filter by type (matches as long as ANY type is matched)
-  repeated DocumentType type_filters = 3;
 
   // Filter by tags (documents must match ALL specified tag filters)
   // Example: [{"name": "genre", "value": "fantasy"}, {"name": "tone", "value": "dark"}]

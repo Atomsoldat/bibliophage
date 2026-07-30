@@ -12,21 +12,6 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
-class DocumentType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
-    DOCUMENT_TYPE_UNSPECIFIED: _ClassVar[DocumentType]
-    NOTE: _ClassVar[DocumentType]
-    LORE_FRAGMENT: _ClassVar[DocumentType]
-    CHARACTER: _ClassVar[DocumentType]
-    LOCATION: _ClassVar[DocumentType]
-    OBJECT: _ClassVar[DocumentType]
-    QUEST: _ClassVar[DocumentType]
-    SESSION_LOG: _ClassVar[DocumentType]
-    RULEBOOK: _ClassVar[DocumentType]
-    EXPANSION: _ClassVar[DocumentType]
-    ADVENTURE: _ClassVar[DocumentType]
-    BESTIARY: _ClassVar[DocumentType]
-
 class SourceType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
     SOURCE_TYPE_UNSPECIFIED: _ClassVar[SourceType]
@@ -37,18 +22,6 @@ class SourceType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     SESSION_LOG_RECORD: _ClassVar[SourceType]
     GENERATED: _ClassVar[SourceType]
     COMMUNITY: _ClassVar[SourceType]
-DOCUMENT_TYPE_UNSPECIFIED: DocumentType
-NOTE: DocumentType
-LORE_FRAGMENT: DocumentType
-CHARACTER: DocumentType
-LOCATION: DocumentType
-OBJECT: DocumentType
-QUEST: DocumentType
-SESSION_LOG: DocumentType
-RULEBOOK: DocumentType
-EXPANSION: DocumentType
-ADVENTURE: DocumentType
-BESTIARY: DocumentType
 SOURCE_TYPE_UNSPECIFIED: SourceType
 CORE: SourceType
 SUPPLEMENT: SourceType
@@ -79,13 +52,12 @@ class Metadata(_message.Message):
     def __init__(self, file_size: _Optional[int] = ..., publication_type: _Optional[str] = ..., pdf: _Optional[_Union[PdfData, _Mapping]] = ...) -> None: ...
 
 class Document(_message.Message):
-    __slots__ = ("id", "name", "source_type", "metadata", "content", "type", "created_at", "updated_at", "tags", "character_count")
+    __slots__ = ("id", "name", "source_type", "metadata", "content", "created_at", "updated_at", "tags", "character_count")
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     SOURCE_TYPE_FIELD_NUMBER: _ClassVar[int]
     METADATA_FIELD_NUMBER: _ClassVar[int]
     CONTENT_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
     CREATED_AT_FIELD_NUMBER: _ClassVar[int]
     UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
     TAGS_FIELD_NUMBER: _ClassVar[int]
@@ -95,21 +67,19 @@ class Document(_message.Message):
     source_type: SourceType
     metadata: Metadata
     content: str
-    type: DocumentType
     created_at: _timestamp_pb2.Timestamp
     updated_at: _timestamp_pb2.Timestamp
     tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
     character_count: int
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., source_type: _Optional[_Union[SourceType, str]] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ...) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., source_type: _Optional[_Union[SourceType, str]] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ...) -> None: ...
 
 class DocumentListItem(_message.Message):
-    __slots__ = ("id", "name", "source_type", "metadata", "content_snippet", "type", "created_at", "updated_at", "tags", "character_count", "embedding_status")
+    __slots__ = ("id", "name", "source_type", "metadata", "content_snippet", "created_at", "updated_at", "tags", "character_count", "embedding_status")
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     SOURCE_TYPE_FIELD_NUMBER: _ClassVar[int]
     METADATA_FIELD_NUMBER: _ClassVar[int]
     CONTENT_SNIPPET_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
     CREATED_AT_FIELD_NUMBER: _ClassVar[int]
     UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
     TAGS_FIELD_NUMBER: _ClassVar[int]
@@ -120,13 +90,12 @@ class DocumentListItem(_message.Message):
     source_type: SourceType
     metadata: Metadata
     content_snippet: str
-    type: DocumentType
     created_at: _timestamp_pb2.Timestamp
     updated_at: _timestamp_pb2.Timestamp
     tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
     character_count: int
     embedding_status: _embedding_pb2.EmbeddingStatus
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., source_type: _Optional[_Union[SourceType, str]] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content_snippet: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ..., embedding_status: _Optional[_Union[_embedding_pb2.EmbeddingStatus, _Mapping]] = ...) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., source_type: _Optional[_Union[SourceType, str]] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content_snippet: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ..., embedding_status: _Optional[_Union[_embedding_pb2.EmbeddingStatus, _Mapping]] = ...) -> None: ...
 
 class StoreDocumentRequest(_message.Message):
     __slots__ = ("document",)
@@ -177,16 +146,14 @@ class UpdateDocumentResponse(_message.Message):
     def __init__(self, success: bool = ..., message: _Optional[str] = ..., document: _Optional[_Union[Document, _Mapping]] = ...) -> None: ...
 
 class DocumentFilter(_message.Message):
-    __slots__ = ("name_query", "content_query", "type_filters", "tag_filters")
+    __slots__ = ("name_query", "content_query", "tag_filters")
     NAME_QUERY_FIELD_NUMBER: _ClassVar[int]
     CONTENT_QUERY_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FILTERS_FIELD_NUMBER: _ClassVar[int]
     TAG_FILTERS_FIELD_NUMBER: _ClassVar[int]
     name_query: str
     content_query: str
-    type_filters: _containers.RepeatedScalarFieldContainer[DocumentType]
     tag_filters: _containers.RepeatedCompositeFieldContainer[_common_pb2.TagFilter]
-    def __init__(self, name_query: _Optional[str] = ..., content_query: _Optional[str] = ..., type_filters: _Optional[_Iterable[_Union[DocumentType, str]]] = ..., tag_filters: _Optional[_Iterable[_Union[_common_pb2.TagFilter, _Mapping]]] = ...) -> None: ...
+    def __init__(self, name_query: _Optional[str] = ..., content_query: _Optional[str] = ..., tag_filters: _Optional[_Iterable[_Union[_common_pb2.TagFilter, _Mapping]]] = ...) -> None: ...
 
 class SearchDocumentsRequest(_message.Message):
     __slots__ = ("filter", "page_size", "page_number", "sort_order")

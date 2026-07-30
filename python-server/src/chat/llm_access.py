@@ -49,7 +49,6 @@ class DocumentContext:
 
     content: str
     source_type: str  # Maps to SourceType enum value
-    document_type: str  # Maps to DocumentType enum value
     name: str
     id: str
 

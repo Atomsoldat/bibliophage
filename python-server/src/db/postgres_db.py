@@ -17,7 +17,6 @@ References:
 from __future__ import annotations
 
 import importlib.resources
-import json
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -172,7 +171,6 @@ class BibliophageDatabase:
         name: str,
         source_type: str,
         content: str,
-        doc_type: str,
         tags: list[dict[str, Any]],
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
@@ -185,11 +183,10 @@ class BibliophageDatabase:
 
         insert_sql = sql.SQL("""
             INSERT INTO documents
-                (title, source_type, metadata, content,
-                 document_type, character_count)
+                (title, source_type, metadata, content, character_count)
             VALUES
                 (%(name)s, %(source_type)s, %(metadata)s, %(content)s,
-                 %(doc_type)s, %(character_count)s)
+                 %(character_count)s)
             RETURNING document_id, created_at, character_count
         """)
         doc_params = {
@@ -197,7 +194,6 @@ class BibliophageDatabase:
             "source_type": source_type,
             "metadata": Json(metadata or {}),
             "content": content,
-            "doc_type": doc_type,
             "character_count": character_count,
         }
 
@@ -208,32 +204,8 @@ class BibliophageDatabase:
             row = await cursor.fetchone()
             document_id = str(row["document_id"])
 
-            # Resolve tag names — fail fast if any are unknown (D-06)
             if tags:
-                tag_names = [t["name"] for t in tags]
-                tag_cursor = await conn.execute(
-                    "SELECT tag_id, title FROM tags WHERE title = ANY(%(names)s)",
-                    {"names": tag_names},
-                )
-                tag_cursor.row_factory = dict_row
-                found_tags = await tag_cursor.fetchall()
-                found_tag_map = {r["title"]: r["tag_id"] for r in found_tags}
-                unknown = [n for n in tag_names if n not in found_tag_map]
-                if unknown:
-                    errmsg = f"Unknown tag(s): {', '.join(unknown)}"
-                    raise ValueError(errmsg)
-                for tag in tags:
-                    tag_id = found_tag_map[tag["name"]]
-                    # Store tag values as JSON string in tags.info (D-07)
-                    await conn.execute(
-                        "UPDATE tags SET info = %(info)s WHERE tag_id = %(tag_id)s",
-                        {"info": json.dumps(tag.get("values", [])), "tag_id": tag_id},
-                    )
-                    await conn.execute(
-                        "INSERT INTO map_documents_to_tags (document_id, tag_id) "
-                        "VALUES (%(document_id)s, %(tag_id)s)",
-                        {"document_id": document_id, "tag_id": tag_id},
-                    )
+                await self._apply_document_tags(conn, document_id, tags)
 
         result = {
             "document_id": document_id,
@@ -242,6 +214,62 @@ class BibliophageDatabase:
         }
         logger.info(f"Document inserted: {result['document_id']}")
         return result
+
+    async def _apply_document_tags(
+        self,
+        conn: AsyncConnection,
+        document_id: str,
+        tags: list[dict[str, Any]],
+    ) -> None:
+        """Resolve tag names/values and wire junction tables for a document.
+
+        Raises ValueError if any tag name is unknown (D-06) — tags themselves
+        are not created on the fly, only their values are. A tag with no
+        values maps the document to the tag with a NULL tag_value_id, per
+        the map_documents_to_tags schema.
+        """
+        tag_names = [t["name"] for t in tags]
+        tag_cursor = await conn.execute(
+            "SELECT tag_id, title FROM tags WHERE title = ANY(%(names)s)",
+            {"names": tag_names},
+        )
+        tag_cursor.row_factory = dict_row
+        found_tags = await tag_cursor.fetchall()
+        found_tag_map = {r["title"]: r["tag_id"] for r in found_tags}
+        unknown = [n for n in tag_names if n not in found_tag_map]
+        if unknown:
+            errmsg = f"Unknown tag(s): {', '.join(unknown)}"
+            raise ValueError(errmsg)
+
+        for tag in tags:
+            tag_id = found_tag_map[tag["name"]]
+            values = tag.get("values", [])
+            if not values:
+                await conn.execute(
+                    "INSERT INTO map_documents_to_tags (document_id, tag_id, tag_value_id) "
+                    "VALUES (%(document_id)s, %(tag_id)s, NULL)",
+                    {"document_id": document_id, "tag_id": tag_id},
+                )
+                continue
+            for value in values:
+                value_cursor = await conn.execute(
+                    "INSERT INTO tag_values (tag_value, tag_id) "
+                    "VALUES (%(value)s, %(tag_id)s) "
+                    "ON CONFLICT (tag_id, tag_value) DO UPDATE SET tag_value = EXCLUDED.tag_value "
+                    "RETURNING tag_value_id",
+                    {"value": value, "tag_id": tag_id},
+                )
+                value_cursor.row_factory = dict_row
+                value_row = await value_cursor.fetchone()
+                await conn.execute(
+                    "INSERT INTO map_documents_to_tags (document_id, tag_id, tag_value_id) "
+                    "VALUES (%(document_id)s, %(tag_id)s, %(tag_value_id)s)",
+                    {
+                        "document_id": document_id,
+                        "tag_id": tag_id,
+                        "tag_value_id": value_row["tag_value_id"],
+                    },
+                )
 
     async def _enrich_documents_with_junction_data(
         self,
@@ -258,24 +286,27 @@ class BibliophageDatabase:
         doc_ids = [str(d["document_id"]) for d in documents]
 
         tags_rows = await self.fetchall(
-            "SELECT m.document_id, t.title, t.info "
+            "SELECT m.document_id, t.title, tv.tag_value "
             "FROM map_documents_to_tags m "
             "JOIN tags t ON m.tag_id = t.tag_id "
+            "LEFT JOIN tag_values tv ON m.tag_value_id = tv.tag_value_id "
             "WHERE m.document_id = ANY(%(ids)s)",
             {"ids": doc_ids},
         )
 
-        tags_by_doc: dict[str, list[dict[str, Any]]] = {}
+        tags_by_doc: dict[str, dict[str, list[str]]] = {}
         for r in tags_rows:
             key = str(r["document_id"])
-            tags_by_doc.setdefault(key, []).append({
-                "name": r["title"],
-                "values": json.loads(r["info"]) if r["info"] else [],
-            })
+            values = tags_by_doc.setdefault(key, {}).setdefault(r["title"], [])
+            if r["tag_value"] is not None:
+                values.append(r["tag_value"])
 
         for doc in documents:
             key = str(doc["document_id"])
-            doc["tags"] = tags_by_doc.get(key, [])
+            doc["tags"] = [
+                {"name": name, "values": values}
+                for name, values in tags_by_doc.get(key, {}).items()
+            ]
 
         return documents
 
@@ -294,7 +325,6 @@ class BibliophageDatabase:
         name: str,
         source_type: str,
         content: str,
-        doc_type: str,
         tags: list[dict[str, Any]],
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
@@ -328,7 +358,6 @@ class BibliophageDatabase:
                     source_type = %(source_type)s,
                     metadata = %(metadata)s,
                     content = %(content)s,
-                    document_type = %(doc_type)s,
                     character_count = %(character_count)s,
                     updated_at = now(),
                     embeddings_current = %(embeddings_current)s
@@ -339,50 +368,18 @@ class BibliophageDatabase:
                 "source_type": source_type,
                 "metadata": Jsonb(metadata or {}),
                 "content": content,
-                "doc_type": doc_type,
                 "character_count": character_count,
                 "embeddings_current": embeddings_current,
                 "document_id": document_id,
             })
 
-            # Resolve tag names — fail fast if any are unknown
+            # Delete-reinsert junction rows for tags (D-08)
+            await conn.execute(
+                "DELETE FROM map_documents_to_tags WHERE document_id = %(document_id)s",
+                {"document_id": document_id},
+            )
             if tags:
-                tag_names = [t["name"] for t in tags]
-                tag_cursor = await conn.execute(
-                    "SELECT tag_id, title FROM tags WHERE title = ANY(%(names)s)",
-                    {"names": tag_names},
-                )
-                tag_cursor.row_factory = dict_row
-                found_tags = await tag_cursor.fetchall()
-                found_tag_map = {r["title"]: r["tag_id"] for r in found_tags}
-                unknown = [n for n in tag_names if n not in found_tag_map]
-                if unknown:
-                    errmsg = f"Unknown tag(s): {', '.join(unknown)}"
-                    raise ValueError(errmsg)
-
-                # Delete-reinsert junction rows for tags (D-08)
-                await conn.execute(
-                    "DELETE FROM map_documents_to_tags WHERE document_id = %(document_id)s",
-                    {"document_id": document_id},
-                )
-                for tag in tags:
-                    tag_id = found_tag_map[tag["name"]]
-                    # Store tag values as JSON string in tags.info (D-07)
-                    await conn.execute(
-                        "UPDATE tags SET info = %(info)s WHERE tag_id = %(tag_id)s",
-                        {"info": json.dumps(tag.get("values", [])), "tag_id": tag_id},
-                    )
-                    await conn.execute(
-                        "INSERT INTO map_documents_to_tags (document_id, tag_id) "
-                        "VALUES (%(document_id)s, %(tag_id)s)",
-                        {"document_id": document_id, "tag_id": tag_id},
-                    )
-            else:
-                # No tags provided — clear any existing mappings
-                await conn.execute(
-                    "DELETE FROM map_documents_to_tags WHERE document_id = %(document_id)s",
-                    {"document_id": document_id},
-                )
+                await self._apply_document_tags(conn, document_id, tags)
 
         logger.info("Document updated: %s (embeddings_current=%s)", document_id, embeddings_current)
         return {"document_id": document_id}
@@ -397,7 +394,6 @@ class BibliophageDatabase:
         self,
         name_query: str | None = None,
         content_query: str | None = None,
-        type_filters: list[str] | None = None,
         tag_filters: list[dict[str, str]] | None = None,
         page_size: int = 50,
         page_number: int = 0,
@@ -415,9 +411,6 @@ class BibliophageDatabase:
             params["name_query"] = f"%{name_query}%"
         if content_query:
             raise NotImplementedError("Full-text content search not yet implemented")
-        if type_filters:
-            conditions.append(sql.SQL("document_type = ANY(%(type_filters)s)"))
-            params["type_filters"] = type_filters
         if tag_filters:
             # One EXISTS condition per tag filter — document must match ALL
             for idx, tag_f in enumerate(tag_filters):

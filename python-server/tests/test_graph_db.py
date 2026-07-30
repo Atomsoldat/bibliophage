@@ -33,7 +33,6 @@ async def _make_document(db: BibliophageDatabase, name: str) -> str:
         systems=["TestSystem"],
         source_type="GM_NOTES",
         content="placeholder",
-        doc_type="NOTE",
         tags=[],
         metadata=None,
     )

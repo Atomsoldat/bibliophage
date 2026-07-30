@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS documents (
   content_snippet TEXT GENERATED ALWAYS AS (
     CASE WHEN length(content) > 200 THEN left(content, 200) || '...' ELSE content END
   ) STORED,
-  document_type TEXT NOT NULL,
   -- TODO: we could calculate this in the database
   character_count INT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL,

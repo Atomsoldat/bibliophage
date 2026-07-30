@@ -25,7 +25,6 @@ def _make_row(**overrides):
         "title": "Test Doc",
         "character_count": 42,
         "content": "hello world",
-        "document_type": "RULEBOOK",
         "source_type": "CORE",
         "created_at": datetime(2024, 1, 2, 3, 4, 5, tzinfo=UTC),
         "updated_at": datetime(2024, 1, 2, 3, 4, 6, tzinfo=UTC),
@@ -218,7 +217,6 @@ def test_row_to_proto_document_default_class_is_document_with_full_content():
     assert proto.name == "Test Doc"
     assert proto.character_count == 42
     assert proto.content == "hello world"
-    assert proto.type == document_api.RULEBOOK
     assert proto.source_type == document_api.CORE
 
 
@@ -231,15 +229,6 @@ def test_row_to_proto_document_list_item_uses_content_snippet():
 
     assert isinstance(proto, document_api.DocumentListItem)
     assert proto.content_snippet == "hello..."
-
-
-@pytest.mark.unit
-def test_row_to_proto_document_unknown_enum_falls_back_to_unspecified():
-    row = _make_row(document_type="NOT_A_REAL_ENUM_VALUE")
-
-    proto = row_to_proto_document(row)
-
-    assert proto.type == document_api.DOCUMENT_TYPE_UNSPECIFIED
 
 
 @pytest.mark.unit
@@ -288,22 +277,6 @@ def test_row_to_proto_document_timestamps_match_row_values():
 
     assert proto.created_at.seconds == 1704067200  # 2024-01-01T00:00:00Z
     assert proto.updated_at.seconds == 1706745600  # 2024-02-01T00:00:00Z
-
-
-@pytest.mark.unit
-def test_row_to_proto_document_systems_populated():
-    row = _make_row(systems=["D&D 5e", "Pathfinder 2e"])
-
-    proto = row_to_proto_document(row)
-
-    assert list(proto.systems) == ["D&D 5e", "Pathfinder 2e"]
-
-
-@pytest.mark.unit
-def test_row_to_proto_document_systems_absent_yields_empty():
-    proto = row_to_proto_document(_make_row())
-
-    assert list(proto.systems) == []
 
 
 @pytest.mark.unit

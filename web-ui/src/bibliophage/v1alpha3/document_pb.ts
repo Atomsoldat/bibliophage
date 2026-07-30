@@ -10,115 +10,6 @@ import { EmbeddingStatus } from "./embedding_pb.js";
 
 /**
  * Enums for strict classification of data
- * TODO: A single Document may contain multiple types of information
- * this should probably be an array of applicable types in the future
- * that raises the question whether we need different levels of "authoritativeness"
- * for the different facets of a document
- *
- * @generated from enum bibliophage.v1alpha3.DocumentType
- */
-export enum DocumentType {
-  /**
-   * Default/unknown
-   *
-   * @generated from enum value: DOCUMENT_TYPE_UNSPECIFIED = 0;
-   */
-  DOCUMENT_TYPE_UNSPECIFIED = 0,
-
-  /**
-   * General notes, least specific
-   *
-   * @generated from enum value: NOTE = 1;
-   */
-  NOTE = 1,
-
-  /**
-   * Authoritative lore/world information
-   *
-   * @generated from enum value: LORE_FRAGMENT = 2;
-   */
-  LORE_FRAGMENT = 2,
-
-  /**
-   * PCs, NPCs, historical figures
-   *
-   * @generated from enum value: CHARACTER = 3;
-   */
-  CHARACTER = 3,
-
-  /**
-   * Places, regions, buildings
-   *
-   * @generated from enum value: LOCATION = 4;
-   */
-  LOCATION = 4,
-
-  /**
-   * Possessions, items, artifacts
-   *
-   * @generated from enum value: OBJECT = 5;
-   */
-  OBJECT = 5,
-
-  /**
-   * Quests, missions, plot hooks
-   *
-   * @generated from enum value: QUEST = 6;
-   */
-  QUEST = 6,
-
-  /**
-   * Session summaries, game logs
-   *
-   * @generated from enum value: SESSION_LOG = 7;
-   */
-  SESSION_LOG = 7,
-
-  /**
-   * Core rulebook (typically from PDF)
-   *
-   * @generated from enum value: RULEBOOK = 8;
-   */
-  RULEBOOK = 8,
-
-  /**
-   * Supplement/expansion (typically from PDF)
-   *
-   * @generated from enum value: EXPANSION = 9;
-   */
-  EXPANSION = 9,
-
-  /**
-   * Adventure module (typically from PDF)
-   *
-   * @generated from enum value: ADVENTURE = 10;
-   */
-  ADVENTURE = 10,
-
-  /**
-   * Monster/creature compendium (typically from PDF)
-   *
-   * @generated from enum value: BESTIARY = 11;
-   */
-  BESTIARY = 11,
-}
-// Retrieve enum metadata with: proto3.getEnumType(DocumentType)
-proto3.util.setEnumType(DocumentType, "bibliophage.v1alpha3.DocumentType", [
-  { no: 0, name: "DOCUMENT_TYPE_UNSPECIFIED" },
-  { no: 1, name: "NOTE" },
-  { no: 2, name: "LORE_FRAGMENT" },
-  { no: 3, name: "CHARACTER" },
-  { no: 4, name: "LOCATION" },
-  { no: 5, name: "OBJECT" },
-  { no: 6, name: "QUEST" },
-  { no: 7, name: "SESSION_LOG" },
-  { no: 8, name: "RULEBOOK" },
-  { no: 9, name: "EXPANSION" },
-  { no: 10, name: "ADVENTURE" },
-  { no: 11, name: "BESTIARY" },
-]);
-
-/**
  * SourceType categorizes who created  a document or where a document came from
  * Used to weight authority when constructing LLM context
  *
@@ -252,7 +143,7 @@ export class PdfData extends Message<PdfData> {
 
 /**
  * Metadata for file-based content (PDFs, scanned books, etc.)
- * Populated when DocumentType indicates file-based content
+ * Populated when a document originates from a file (e.g. a PDF upload)
  *
  * @generated from message bibliophage.v1alpha3.Metadata
  */
@@ -350,13 +241,6 @@ export class Document extends Message<Document> {
   content = "";
 
   /**
-   * Type of document (categorization)
-   *
-   * @generated from field: bibliophage.v1alpha3.DocumentType type = 6;
-   */
-  type = DocumentType.DOCUMENT_TYPE_UNSPECIFIED;
-
-  /**
    * When this document was created
    *
    * @generated from field: google.protobuf.Timestamp created_at = 8;
@@ -397,7 +281,6 @@ export class Document extends Message<Document> {
     { no: 3, name: "source_type", kind: "enum", T: proto3.getEnumType(SourceType) },
     { no: 4, name: "metadata", kind: "message", T: Metadata, opt: true },
     { no: 5, name: "content", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 6, name: "type", kind: "enum", T: proto3.getEnumType(DocumentType) },
     { no: 8, name: "created_at", kind: "message", T: Timestamp },
     { no: 9, name: "updated_at", kind: "message", T: Timestamp },
     { no: 10, name: "tags", kind: "message", T: Tag, repeated: true },
@@ -467,13 +350,6 @@ export class DocumentListItem extends Message<DocumentListItem> {
   contentSnippet = "";
 
   /**
-   * Type of document
-   *
-   * @generated from field: bibliophage.v1alpha3.DocumentType type = 6;
-   */
-  type = DocumentType.DOCUMENT_TYPE_UNSPECIFIED;
-
-  /**
    * When this document was created
    *
    * @generated from field: google.protobuf.Timestamp created_at = 8;
@@ -523,7 +399,6 @@ export class DocumentListItem extends Message<DocumentListItem> {
     { no: 3, name: "source_type", kind: "enum", T: proto3.getEnumType(SourceType) },
     { no: 4, name: "metadata", kind: "message", T: Metadata, opt: true },
     { no: 5, name: "content_snippet", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 6, name: "type", kind: "enum", T: proto3.getEnumType(DocumentType) },
     { no: 8, name: "created_at", kind: "message", T: Timestamp },
     { no: 9, name: "updated_at", kind: "message", T: Timestamp },
     { no: 10, name: "tags", kind: "message", T: Tag, repeated: true },
@@ -864,13 +739,6 @@ export class DocumentFilter extends Message<DocumentFilter> {
   contentQuery?: string;
 
   /**
-   * Filter by type (matches as long as ANY type is matched)
-   *
-   * @generated from field: repeated bibliophage.v1alpha3.DocumentType type_filters = 3;
-   */
-  typeFilters: DocumentType[] = [];
-
-  /**
    * Filter by tags (documents must match ALL specified tag filters)
    * Example: [{"name": "genre", "value": "fantasy"}, {"name": "tone", "value": "dark"}]
    * would match documents that have both genre=fantasy AND tone=dark
@@ -889,7 +757,6 @@ export class DocumentFilter extends Message<DocumentFilter> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "name_query", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 2, name: "content_query", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 3, name: "type_filters", kind: "enum", T: proto3.getEnumType(DocumentType), repeated: true },
     { no: 4, name: "tag_filters", kind: "message", T: TagFilter, repeated: true },
   ]);
 

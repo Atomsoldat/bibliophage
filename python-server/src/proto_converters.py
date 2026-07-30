@@ -32,7 +32,7 @@ def row_to_proto_document(
 ) -> document_api.Document | document_api.DocumentListItem:
     """Convert a DB row from the documents table to a proto Document or DocumentListItem.
 
-    Handles column renames (document_id→id, title→name, document_type→type),
+    Handles column renames (document_id→id, title→name),
     enum string→proto lookups, metadata JSONB→proto, and timestamp conversion.
     """
     proto = proto_class()
@@ -47,15 +47,10 @@ def row_to_proto_document(
         proto.content_snippet = row.get("content_snippet", "")
 
     # Enum fields — stored as their proto name strings in DB
-    proto.type = getattr(
-        document_api, row["document_type"], document_api.DOCUMENT_TYPE_UNSPECIFIED,
-    )
     source_type_str = row.get("source_type", "SOURCE_TYPE_UNSPECIFIED")
     proto.source_type = getattr(
         document_api, source_type_str, document_api.SOURCE_TYPE_UNSPECIFIED,
     )
-
-    proto.systems.extend(row.get("systems", []))
 
     # Metadata JSONB → proto
     metadata_dict = row.get("metadata") or {}
