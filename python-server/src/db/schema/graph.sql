@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS graph_edges (
     target_id    UUID NOT NULL REFERENCES documents(document_id) ON DELETE CASCADE,
     relationship TEXT NOT NULL DEFAULT 'RELATED',
     directed     BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at   TIMESTAMP DEFAULT now() NOT NULL,
+    created_at   TIMESTAMPTZ DEFAULT now() NOT NULL,
     PRIMARY KEY (edge_id),
 
     CONSTRAINT graph_edges_no_self CHECK (source_id <> target_id),

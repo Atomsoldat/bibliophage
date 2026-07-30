@@ -37,8 +37,8 @@ CREATE TABLE IF NOT EXISTS documents (
   ) STORED,
   document_type TEXT NOT NULL,
   character_count INT NOT NULL,
-  created_at TIMESTAMP DEFAULT now() NOT NULL,
-  updated_at TIMESTAMP DEFAULT now() NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
   embeddings_current BOOLEAN DEFAULT TRUE NOT NULL,
   PRIMARY KEY (document_id)
 );
