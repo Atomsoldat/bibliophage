@@ -50,7 +50,6 @@ async function handleSave(windowId: string) {
         name: window.title,
         content: window.content,
         // Provide required fields with sensible defaults
-        systems: ['General'], // Default system - user can change via bulk edit later
         type: DocumentType.NOTE, // Default to NOTE for journal entries
         sourceType: SourceType.GM_NOTES, // Default source type
         tags: [], // Empty tags array

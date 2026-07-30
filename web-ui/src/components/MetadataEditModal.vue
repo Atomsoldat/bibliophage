@@ -5,7 +5,6 @@ import { Icon } from '@iconify/vue'
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 
 export interface MetadataEditFormData {
-  systems: string[] | null
   type: string | null
   tags: { name: string, values: string[] }[] | null
 }
@@ -24,20 +23,17 @@ const emit = defineEmits<{
 }>()
 
 // Form state
-const systemsInput = ref('')
 const typeInput = ref('')
 const tagsInput = ref('')
 
 // Pre-populate form when a single document is provided
 watch(() => props.initialDocument, (doc) => {
   if (doc) {
-    systemsInput.value = doc.systems.join(', ')
     typeInput.value = doc.metadata?.publicationType || ''
     tagsInput.value = doc.tags.map(tag => `${tag.name}:${tag.values.join('|')}`).join(', ')
   }
   else {
     // Clear fields for multiple selection
-    systemsInput.value = ''
     typeInput.value = ''
     tagsInput.value = ''
   }
@@ -47,18 +43,12 @@ watch(() => props.initialDocument, (doc) => {
 watch(() => props.show, (isVisible) => {
   if (!isVisible) {
     // Reset on close
-    systemsInput.value = ''
     typeInput.value = ''
     tagsInput.value = ''
   }
 })
 
 function parseFormData(): MetadataEditFormData {
-  // Parse systems: comma-separated string to array, null if empty
-  const systemsTrimmed = systemsInput.value.trim()
-  const systems = systemsTrimmed
-    ? systemsTrimmed.split(',').map(s => s.trim()).filter(s => s.length > 0)
-    : null
 
   // Parse type: trimmed string, null if empty
   const type = typeInput.value.trim() || null
@@ -81,7 +71,7 @@ function parseFormData(): MetadataEditFormData {
       }).filter((tag): tag is { name: string, values: string[] } => tag !== null)
     : null
 
-  return { systems, type, tags }
+  return { type, tags }
 }
 
 function handleSubmit() {
@@ -142,21 +132,6 @@ function handleBackdropClick(event: MouseEvent) {
           </div>
 
           <form id="bulk-edit-form" class="space-y-4" @submit.prevent="handleSubmit">
-            <!-- Systems Input -->
-            <div class="form-control">
-              <label class="label" for="bulk-systems">
-                <span class="label-text">Systems (comma-separated)</span>
-                <span class="label-text-alt text-base-content/50">e.g., Pathfinder 1e, Call of Cthulhu</span>
-              </label>
-              <input
-                id="bulk-systems"
-                v-model="systemsInput"
-                type="text"
-                placeholder="Leave empty to keep existing values"
-                class="input input-bordered w-full"
-                v-bind:disabled="loading"
-              >
-            </div>
 
             <!-- Type Input -->
             <div class="form-control">

@@ -32,8 +32,6 @@ const client = ref<Client<typeof PdfService> | null>(null)
 // pointer here, and no other", technically, var could work too, but then someone could reassign the ref
 // and not just the ref's .value property
 const pdfName = ref('')
-// TODO: Allow selecting multiple systems in the UI (multi-select dropdown or checkboxes)
-const rpgSystem = ref('PATHFINDER_1E') // Selected system
 const publicationType = ref('BESTIARY')
 // a ref to either a File or null, which we initialise to null
 const pdfFile = ref<File | null>(null)
@@ -72,7 +70,6 @@ function buildPdfLoadRequest(fileData: Uint8Array<ArrayBuffer>): LoadPdfRequest 
   // Create the PDF metadata object
   const pdf = new Pdf({
     name: pdfName.value,
-    systems: [rpgSystem.value], // v1alpha3 uses systems array
     type: publicationType.value,
     tags: [], // Empty tags for now - could be extended in the future
   })

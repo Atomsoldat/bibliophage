@@ -309,7 +309,7 @@ export class Metadata extends Message<Metadata> {
 }
 
 /**
- * Document represents any content in the system (user-created or loaded from files)
+ * Document represents any content longer than a few words in the application (user-created or loaded from files)
  *
  * @generated from message bibliophage.v1alpha3.Document
  */
@@ -357,15 +357,6 @@ export class Document extends Message<Document> {
   type = DocumentType.DOCUMENT_TYPE_UNSPECIFIED;
 
   /**
-   * Which RPG system(s) this document belongs to
-   * Examples: ["Call of Cthulhu"], ["D&D 3.5e", "Pathfinder 1e"], ["Generic"]
-   * Must contain at least one value
-   *
-   * @generated from field: repeated string systems = 7;
-   */
-  systems: string[] = [];
-
-  /**
    * When this document was created
    *
    * @generated from field: google.protobuf.Timestamp created_at = 8;
@@ -407,7 +398,6 @@ export class Document extends Message<Document> {
     { no: 4, name: "metadata", kind: "message", T: Metadata, opt: true },
     { no: 5, name: "content", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "type", kind: "enum", T: proto3.getEnumType(DocumentType) },
-    { no: 7, name: "systems", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 8, name: "created_at", kind: "message", T: Timestamp },
     { no: 9, name: "updated_at", kind: "message", T: Timestamp },
     { no: 10, name: "tags", kind: "message", T: Tag, repeated: true },
@@ -484,13 +474,6 @@ export class DocumentListItem extends Message<DocumentListItem> {
   type = DocumentType.DOCUMENT_TYPE_UNSPECIFIED;
 
   /**
-   * Which RPG system(s) this document belongs to
-   *
-   * @generated from field: repeated string systems = 7;
-   */
-  systems: string[] = [];
-
-  /**
    * When this document was created
    *
    * @generated from field: google.protobuf.Timestamp created_at = 8;
@@ -541,7 +524,6 @@ export class DocumentListItem extends Message<DocumentListItem> {
     { no: 4, name: "metadata", kind: "message", T: Metadata, opt: true },
     { no: 5, name: "content_snippet", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "type", kind: "enum", T: proto3.getEnumType(DocumentType) },
-    { no: 7, name: "systems", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 8, name: "created_at", kind: "message", T: Timestamp },
     { no: 9, name: "updated_at", kind: "message", T: Timestamp },
     { no: 10, name: "tags", kind: "message", T: Tag, repeated: true },
@@ -897,14 +879,6 @@ export class DocumentFilter extends Message<DocumentFilter> {
    */
   tagFilters: TagFilter[] = [];
 
-  /**
-   * Filter by systems (returns documents where systems contains ANY of these values)
-   * Example: ["Call of Cthulhu", "Pathfinder 1e", "Generic"] returns CoC + Pathfinder + generic docs
-   *
-   * @generated from field: repeated string system_filters = 5;
-   */
-  systemFilters: string[] = [];
-
   constructor(data?: PartialMessage<DocumentFilter>) {
     super();
     proto3.util.initPartial(data, this);
@@ -917,7 +891,6 @@ export class DocumentFilter extends Message<DocumentFilter> {
     { no: 2, name: "content_query", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 3, name: "type_filters", kind: "enum", T: proto3.getEnumType(DocumentType), repeated: true },
     { no: 4, name: "tag_filters", kind: "message", T: TagFilter, repeated: true },
-    { no: 5, name: "system_filters", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DocumentFilter {

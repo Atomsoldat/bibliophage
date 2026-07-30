@@ -65,9 +65,6 @@ export function useBulkMetadataEdit() {
         }
         const updatedDocument = response.document
 
-        if (formData.systems) {
-          updatedDocument.systems = formData.systems
-        }
         if (formData.tags) {
           const tags: Tag[] = []
           for (const tagData of formData.tags) {

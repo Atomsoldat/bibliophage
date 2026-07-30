@@ -15,6 +15,8 @@ service DocumentService {
   rpc DeleteDocument(DeleteDocumentRequest) returns (DeleteDocumentResponse);
 }
 
+// TODO:  tidy up field ordering, some fields were deleted
+
 // ============================================================================
 // Data Objects - Reusable entities that represent core domain models
 // ============================================================================
@@ -44,7 +46,7 @@ message Metadata {
   optional PdfData pdf = 3;
 }
 
-// Document represents any content in the system (user-created or loaded from files)
+// Document represents any content longer than a few words in the application (user-created or loaded from files)
 message Document {
   // Unique identifier for this document (assigned by the database)
   string id = 1;
@@ -63,11 +65,6 @@ message Document {
 
   // Type of document (categorization)
   DocumentType type = 6;
-
-  // Which RPG system(s) this document belongs to
-  // Examples: ["Call of Cthulhu"], ["D&D 3.5e", "Pathfinder 1e"], ["Generic"]
-  // Must contain at least one value
-  repeated string systems = 7;
 
   // When this document was created
   google.protobuf.Timestamp created_at = 8;
@@ -105,9 +102,6 @@ message DocumentListItem {
 
   // Type of document
   DocumentType type = 6;
-
-  // Which RPG system(s) this document belongs to
-  repeated string systems = 7;
 
   // When this document was created
   google.protobuf.Timestamp created_at = 8;
@@ -234,11 +228,8 @@ message DocumentFilter {
   // Example: [{"name": "genre", "value": "fantasy"}, {"name": "tone", "value": "dark"}]
   // would match documents that have both genre=fantasy AND tone=dark
   repeated TagFilter tag_filters = 4;
-
-  // Filter by systems (returns documents where systems contains ANY of these values)
-  // Example: ["Call of Cthulhu", "Pathfinder 1e", "Generic"] returns CoC + Pathfinder + generic docs
-  repeated string system_filters = 5;
 }
+
 
 // SearchDocumentsRequest - Search for documents by various criteria
 message SearchDocumentsRequest {

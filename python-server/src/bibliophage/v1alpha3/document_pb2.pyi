@@ -79,14 +79,13 @@ class Metadata(_message.Message):
     def __init__(self, file_size: _Optional[int] = ..., publication_type: _Optional[str] = ..., pdf: _Optional[_Union[PdfData, _Mapping]] = ...) -> None: ...
 
 class Document(_message.Message):
-    __slots__ = ("id", "name", "source_type", "metadata", "content", "type", "systems", "created_at", "updated_at", "tags", "character_count")
+    __slots__ = ("id", "name", "source_type", "metadata", "content", "type", "created_at", "updated_at", "tags", "character_count")
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     SOURCE_TYPE_FIELD_NUMBER: _ClassVar[int]
     METADATA_FIELD_NUMBER: _ClassVar[int]
     CONTENT_FIELD_NUMBER: _ClassVar[int]
     TYPE_FIELD_NUMBER: _ClassVar[int]
-    SYSTEMS_FIELD_NUMBER: _ClassVar[int]
     CREATED_AT_FIELD_NUMBER: _ClassVar[int]
     UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
     TAGS_FIELD_NUMBER: _ClassVar[int]
@@ -97,22 +96,20 @@ class Document(_message.Message):
     metadata: Metadata
     content: str
     type: DocumentType
-    systems: _containers.RepeatedScalarFieldContainer[str]
     created_at: _timestamp_pb2.Timestamp
     updated_at: _timestamp_pb2.Timestamp
     tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
     character_count: int
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., source_type: _Optional[_Union[SourceType, str]] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., systems: _Optional[_Iterable[str]] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ...) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., source_type: _Optional[_Union[SourceType, str]] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ...) -> None: ...
 
 class DocumentListItem(_message.Message):
-    __slots__ = ("id", "name", "source_type", "metadata", "content_snippet", "type", "systems", "created_at", "updated_at", "tags", "character_count", "embedding_status")
+    __slots__ = ("id", "name", "source_type", "metadata", "content_snippet", "type", "created_at", "updated_at", "tags", "character_count", "embedding_status")
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     SOURCE_TYPE_FIELD_NUMBER: _ClassVar[int]
     METADATA_FIELD_NUMBER: _ClassVar[int]
     CONTENT_SNIPPET_FIELD_NUMBER: _ClassVar[int]
     TYPE_FIELD_NUMBER: _ClassVar[int]
-    SYSTEMS_FIELD_NUMBER: _ClassVar[int]
     CREATED_AT_FIELD_NUMBER: _ClassVar[int]
     UPDATED_AT_FIELD_NUMBER: _ClassVar[int]
     TAGS_FIELD_NUMBER: _ClassVar[int]
@@ -124,13 +121,12 @@ class DocumentListItem(_message.Message):
     metadata: Metadata
     content_snippet: str
     type: DocumentType
-    systems: _containers.RepeatedScalarFieldContainer[str]
     created_at: _timestamp_pb2.Timestamp
     updated_at: _timestamp_pb2.Timestamp
     tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
     character_count: int
     embedding_status: _embedding_pb2.EmbeddingStatus
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., source_type: _Optional[_Union[SourceType, str]] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content_snippet: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., systems: _Optional[_Iterable[str]] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ..., embedding_status: _Optional[_Union[_embedding_pb2.EmbeddingStatus, _Mapping]] = ...) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., source_type: _Optional[_Union[SourceType, str]] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content_snippet: _Optional[str] = ..., type: _Optional[_Union[DocumentType, str]] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ..., embedding_status: _Optional[_Union[_embedding_pb2.EmbeddingStatus, _Mapping]] = ...) -> None: ...
 
 class StoreDocumentRequest(_message.Message):
     __slots__ = ("document",)
@@ -181,18 +177,16 @@ class UpdateDocumentResponse(_message.Message):
     def __init__(self, success: bool = ..., message: _Optional[str] = ..., document: _Optional[_Union[Document, _Mapping]] = ...) -> None: ...
 
 class DocumentFilter(_message.Message):
-    __slots__ = ("name_query", "content_query", "type_filters", "tag_filters", "system_filters")
+    __slots__ = ("name_query", "content_query", "type_filters", "tag_filters")
     NAME_QUERY_FIELD_NUMBER: _ClassVar[int]
     CONTENT_QUERY_FIELD_NUMBER: _ClassVar[int]
     TYPE_FILTERS_FIELD_NUMBER: _ClassVar[int]
     TAG_FILTERS_FIELD_NUMBER: _ClassVar[int]
-    SYSTEM_FILTERS_FIELD_NUMBER: _ClassVar[int]
     name_query: str
     content_query: str
     type_filters: _containers.RepeatedScalarFieldContainer[DocumentType]
     tag_filters: _containers.RepeatedCompositeFieldContainer[_common_pb2.TagFilter]
-    system_filters: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, name_query: _Optional[str] = ..., content_query: _Optional[str] = ..., type_filters: _Optional[_Iterable[_Union[DocumentType, str]]] = ..., tag_filters: _Optional[_Iterable[_Union[_common_pb2.TagFilter, _Mapping]]] = ..., system_filters: _Optional[_Iterable[str]] = ...) -> None: ...
+    def __init__(self, name_query: _Optional[str] = ..., content_query: _Optional[str] = ..., type_filters: _Optional[_Iterable[_Union[DocumentType, str]]] = ..., tag_filters: _Optional[_Iterable[_Union[_common_pb2.TagFilter, _Mapping]]] = ...) -> None: ...
 
 class SearchDocumentsRequest(_message.Message):
     __slots__ = ("filter", "page_size", "page_number", "sort_order")

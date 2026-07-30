@@ -14,7 +14,6 @@ export function getAllDocumentTypes(): DocumentType[] {
 
 export interface SearchDocumentsParams {
   nameQuery: string
-  systemFilters: string[]
   typeFilters: DocumentType[]
   pageSize: number
   pageNumber: number
@@ -24,7 +23,6 @@ export interface SearchDocumentsParams {
 export function buildSearchDocumentsRequest(params: SearchDocumentsParams): SearchDocumentsRequest {
   const filter = new DocumentFilter({
     nameQuery: params.nameQuery,
-    systemFilters: params.systemFilters,
     tagFilters: [], // TODO: Tag filtering not implemented yet
     typeFilters: params.typeFilters,
   })

@@ -30,7 +30,6 @@ const logger = useLogger()
 
 const basicFilters = ref<DocumentBasicFilterValue>({
   nameQuery: '',
-  systemFilters: [],
 })
 const enabledDocumentTypes = ref<DocumentType[]>(getAllDocumentTypes())
 
@@ -51,7 +50,6 @@ async function handleSearch(): Promise<void> {
   try {
     const request = buildSearchDocumentsRequest({
       nameQuery: basicFilters.value.nameQuery,
-      systemFilters: basicFilters.value.systemFilters,
       typeFilters: enabledDocumentTypes.value,
       pageSize: 20,
       pageNumber: 0,

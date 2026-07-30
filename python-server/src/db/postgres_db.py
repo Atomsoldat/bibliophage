@@ -170,7 +170,6 @@ class BibliophageDatabase:
     async def store_document(
         self,
         name: str,
-        systems: list[str],
         source_type: str,
         content: str,
         doc_type: str,
@@ -180,7 +179,7 @@ class BibliophageDatabase:
         """Insert a document and wire junction tables within a transaction.
 
         Returns dict with document_id, created_at, character_count.
-        Raises ValueError if any system or tag name is unknown.
+        Raises ValueError if any tag name is unknown.
         """
         character_count = len(content)
 
@@ -208,26 +207,6 @@ class BibliophageDatabase:
             cursor.row_factory = dict_row
             row = await cursor.fetchone()
             document_id = str(row["document_id"])
-
-            # Resolve system names — fail fast if any are unknown (D-05)
-            if systems:
-                sys_cursor = await conn.execute(
-                    "SELECT system_id, title FROM systems WHERE title = ANY(%(names)s)",
-                    {"names": systems},
-                )
-                sys_cursor.row_factory = dict_row
-                found_systems = await sys_cursor.fetchall()
-                found_titles = {r["title"] for r in found_systems}
-                unknown = [s for s in systems if s not in found_titles]
-                if unknown:
-                    errmsg = f"Unknown system(s): {', '.join(unknown)}"
-                    raise ValueError(errmsg)
-                for sys_row in found_systems:
-                    await conn.execute(
-                        "INSERT INTO map_documents_to_systems (document_id, system_id) "
-                        "VALUES (%(document_id)s, %(system_id)s)",
-                        {"document_id": document_id, "system_id": sys_row["system_id"]},
-                    )
 
             # Resolve tag names — fail fast if any are unknown (D-06)
             if tags:
@@ -268,7 +247,7 @@ class BibliophageDatabase:
         self,
         documents: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        """Add systems and tags from junction tables to each document row.
+        """Add tags from junction table to each document row.
 
         Batches the junction table queries across all document IDs to avoid N+1.
         Mutates each row dict in-place and returns the list.
@@ -278,13 +257,6 @@ class BibliophageDatabase:
 
         doc_ids = [str(d["document_id"]) for d in documents]
 
-        systems_rows = await self.fetchall(
-            "SELECT m.document_id, s.title "
-            "FROM map_documents_to_systems m "
-            "JOIN systems s ON m.system_id = s.system_id "
-            "WHERE m.document_id = ANY(%(ids)s)",
-            {"ids": doc_ids},
-        )
         tags_rows = await self.fetchall(
             "SELECT m.document_id, t.title, t.info "
             "FROM map_documents_to_tags m "
@@ -292,12 +264,6 @@ class BibliophageDatabase:
             "WHERE m.document_id = ANY(%(ids)s)",
             {"ids": doc_ids},
         )
-
-        # Index by document_id for O(1) lookup
-        systems_by_doc: dict[str, list[str]] = {}
-        for r in systems_rows:
-            key = str(r["document_id"])
-            systems_by_doc.setdefault(key, []).append(r["title"])
 
         tags_by_doc: dict[str, list[dict[str, Any]]] = {}
         for r in tags_rows:
@@ -309,13 +275,12 @@ class BibliophageDatabase:
 
         for doc in documents:
             key = str(doc["document_id"])
-            doc["systems"] = systems_by_doc.get(key, [])
             doc["tags"] = tags_by_doc.get(key, [])
 
         return documents
 
     async def get_document_by_id(self, document_id: str) -> dict[str, Any] | None:
-        """Retrieve a document by ID, enriched with systems and tags."""
+        """Retrieve a document by ID, enriched with tags."""
         fetch_sql = sql.SQL("SELECT * FROM documents WHERE document_id = %(document_id)s")
         row = await self.fetchone(fetch_sql, {"document_id": document_id})
         if row is None:
@@ -327,19 +292,18 @@ class BibliophageDatabase:
         self,
         document_id: str,
         name: str,
-        systems: list[str],
         source_type: str,
         content: str,
         doc_type: str,
         tags: list[dict[str, Any]],
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
-        """Update a document by ID using full replace semantics (D-01).
+        """Update a document by ID using full replace semantics
 
-        All fields are overwritten. If content changed, sets embeddings_current=false (D-02).
-        Junction tables are delete-reinserted within the transaction (D-08).
-        Returns {"document_id": document_id} on success, or None if not found (D-04).
-        Raises ValueError for unknown system or tag names (D-05, D-06).
+        All fields are overwritten. If content changed, sets embeddings_current=false
+        Junction tables are delete-reinserted within the transaction
+        Returns {"document_id": document_id} on success, or None if not found
+        Raises ValueError for unknown tag names
         """
         character_count = len(content)
 
@@ -381,39 +345,7 @@ class BibliophageDatabase:
                 "document_id": document_id,
             })
 
-            # Resolve system names — fail fast if any are unknown (D-05)
-            if systems:
-                sys_cursor = await conn.execute(
-                    "SELECT system_id, title FROM systems WHERE title = ANY(%(names)s)",
-                    {"names": systems},
-                )
-                sys_cursor.row_factory = dict_row
-                found_systems = await sys_cursor.fetchall()
-                found_titles = {r["title"] for r in found_systems}
-                unknown = [s for s in systems if s not in found_titles]
-                if unknown:
-                    errmsg = f"Unknown system(s): {', '.join(unknown)}"
-                    raise ValueError(errmsg)
-
-                # Delete-reinsert junction rows for systems (D-08)
-                await conn.execute(
-                    "DELETE FROM map_documents_to_systems WHERE document_id = %(document_id)s",
-                    {"document_id": document_id},
-                )
-                for sys_row in found_systems:
-                    await conn.execute(
-                        "INSERT INTO map_documents_to_systems (document_id, system_id) "
-                        "VALUES (%(document_id)s, %(system_id)s)",
-                        {"document_id": document_id, "system_id": sys_row["system_id"]},
-                    )
-            else:
-                # No systems provided — clear any existing mappings
-                await conn.execute(
-                    "DELETE FROM map_documents_to_systems WHERE document_id = %(document_id)s",
-                    {"document_id": document_id},
-                )
-
-            # Resolve tag names — fail fast if any are unknown (D-06)
+            # Resolve tag names — fail fast if any are unknown
             if tags:
                 tag_names = [t["name"] for t in tags]
                 tag_cursor = await conn.execute(
@@ -466,16 +398,14 @@ class BibliophageDatabase:
         name_query: str | None = None,
         content_query: str | None = None,
         type_filters: list[str] | None = None,
-        system_filters: list[str] | None = None,
         tag_filters: list[dict[str, str]] | None = None,
         page_size: int = 50,
         page_number: int = 0,
     ) -> tuple[list[dict[str, Any]], int]:
         """Search documents with optional filters. Returns (rows, total_count).
 
-        system_filters matches documents associated with ANY of the given system names.
         tag_filters matches documents associated with ALL of the given tag names.
-        Each result row is enriched with systems and tags from junction tables.
+        Each result row is enriched with tags from junction tables.
         """
         conditions: list[sql.Composable] = []
         params: dict[str, Any] = {}
@@ -488,17 +418,6 @@ class BibliophageDatabase:
         if type_filters:
             conditions.append(sql.SQL("document_type = ANY(%(type_filters)s)"))
             params["type_filters"] = type_filters
-        if system_filters:
-            # EXISTS subquery replaces the broken "document_system = ANY(...)" ref
-            conditions.append(sql.SQL(
-                "EXISTS ("
-                "  SELECT 1 FROM map_documents_to_systems m"
-                "  JOIN systems s ON m.system_id = s.system_id"
-                "  WHERE m.document_id = documents.document_id"
-                "  AND s.title = ANY(%(system_filters)s)"
-                ")"
-            ))
-            params["system_filters"] = system_filters
         if tag_filters:
             # One EXISTS condition per tag filter — document must match ALL
             for idx, tag_f in enumerate(tag_filters):
@@ -539,9 +458,6 @@ class BibliophageDatabase:
 
         return documents, total
 
-
-    #### canon CRUD ##########################
-    # TODO (:
 
     #### vector / chunk operations ##########################
 

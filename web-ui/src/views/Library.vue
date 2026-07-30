@@ -37,7 +37,6 @@ const embedDocumentId = ref<string | null>(null)
 // Search filter parameters
 const basicFilters = ref<DocumentBasicFilterValue>({
   nameQuery: '',
-  systemFilters: [],
 })
 const pageSize = ref(20)
 const pageNumber = ref(0)
@@ -52,7 +51,6 @@ onBeforeMount(async () => {
 async function handleSearchSubmit() {
   await documentStore.search({
     nameQuery: basicFilters.value.nameQuery,
-    systemFilters: basicFilters.value.systemFilters,
     typeFilters: enabledDocumentTypes.value,
     pageSize: pageSize.value,
     pageNumber: pageNumber.value,

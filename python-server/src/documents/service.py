@@ -28,13 +28,6 @@ class DocumentServiceImplementation:
             f"Received StoreDocumentRequest for document: {request.document.name}",
         )
 
-        # Validate systems array (must have at least one value)
-        if not request.document.systems:
-            return document_api.StoreDocumentResponse(
-                success=False,
-                message="Document must belong to at least one system",
-            )
-
         # Convert protobuf tags to dict format for database storage
         tags = []
         for tag in request.document.tags:
@@ -54,7 +47,6 @@ class DocumentServiceImplementation:
         try:
             response = await self.db.store_document(
                 name=request.document.name,
-                systems=list(request.document.systems),
                 source_type=source_type,
                 content=request.document.content,
                 doc_type=doc_type,
@@ -142,7 +134,6 @@ class DocumentServiceImplementation:
             result = await self.db.update_document(
                 document_id=request.document.id,
                 name=request.document.name,
-                systems=list(request.document.systems),
                 source_type=source_type,
                 content=request.document.content,
                 doc_type=doc_type,
@@ -182,7 +173,6 @@ class DocumentServiceImplementation:
         name_query = None
         content_query = None
         type_filters = None
-        system_filters = None
         tag_filters = None
 
         if request.HasField("filter"):
@@ -206,10 +196,6 @@ class DocumentServiceImplementation:
                     for t in request.filter.type_filters
                 ]
 
-            # Extract system filters (matches ANY)
-            if request.filter.system_filters:
-                system_filters = list(request.filter.system_filters)
-
             # Extract tag filters (must match ALL)
             if request.filter.tag_filters:
                 tag_filters = []
@@ -230,7 +216,6 @@ class DocumentServiceImplementation:
             name_query=name_query,
             content_query=content_query,
             type_filters=type_filters,
-            system_filters=system_filters,
             tag_filters=tag_filters,
             page_size=page_size,
             page_number=page_number,

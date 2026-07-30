@@ -81,10 +81,6 @@ const columns = computed<TableColumn<DocumentListItem>[]>(() => [
     cellClass: 'text-xs font-mono',
   },
   {
-    key: 'systems',
-    label: 'Systems',
-  },
-  {
     key: 'type',
     label: 'Type',
     formatter: value => formatDocumentType(value),
@@ -143,17 +139,6 @@ function handleEmbed(row: DocumentListItem) {
     empty-icon="heroicons:document"
     @row-click="handleRowClick"
   >
-    <!-- Custom rendering for Systems column with badges -->
-    <template #cell-systems="{ row }">
-      <div class="flex gap-1 flex-wrap">
-        <span v-for="system in row.systems" v-bind:key="system" class="badge badge-sm badge-primary">
-          {{ system }}
-        </span>
-        <span v-if="row.systems.length === 0" class="text-sm text-base-content/50">
-          -
-        </span>
-      </div>
-    </template>
 
     <!-- Custom rendering for Embedding Status column with badges -->
     <template #cell-embeddingStatus="{ row }">
