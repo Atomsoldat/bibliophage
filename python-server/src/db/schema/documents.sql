@@ -50,6 +50,8 @@ CREATE TABLE IF NOT EXISTS documents (
 
 -- TODO: suggest existing keys / values as the user types
 
+-- aside from the usual metadata like genres or theme,
+-- we also implement document canons / systems via tags
 CREATE TABLE IF NOT EXISTS tags (
     tag_id UUID DEFAULT uuidv7(),
     title TEXT UNIQUE NOT NULL,
@@ -64,20 +66,6 @@ CREATE TABLE IF NOT EXISTS tag_values (
     tag_id UUID REFERENCES tags(tag_id) ON DELETE CASCADE,
     PRIMARY KEY (tag_value_id)
     UNIQUE (tag_id, tag_value_id, tag_value)
-);
-
-CREATE TABLE IF NOT EXISTS canons (
-    canon_id UUID DEFAULT uuidv7(),
-    title TEXT UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT now() NOT NULL,
-    updated_at TIMESTAMP DEFAULT now() NOT NULL,
-    PRIMARY KEY (canon_id)
-);
-
-CREATE TABLE IF NOT EXISTS map_documents_to_canons (
-    document_id UUID REFERENCES documents(document_id) ON DELETE CASCADE,
-    canon_id UUID REFERENCES canons(canon_id) ON DELETE CASCADE,
-    PRIMARY KEY (document_id, canon_id)
 );
 
 -- what values a tag contains for a given document (e.g. genre: scifi, fantasy, ...)
