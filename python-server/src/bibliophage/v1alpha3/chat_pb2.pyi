@@ -70,14 +70,12 @@ class ChunkMetadata(_message.Message):
     def __init__(self, model: _Optional[str] = ..., context_documents: _Optional[_Iterable[_Union[ContextDocumentInfo, _Mapping]]] = ..., retrieved_chunks: _Optional[_Iterable[_Union[RetrievedChunk, _Mapping]]] = ...) -> None: ...
 
 class ContextDocumentInfo(_message.Message):
-    __slots__ = ("id", "name", "authority")
+    __slots__ = ("id", "name")
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
-    AUTHORITY_FIELD_NUMBER: _ClassVar[int]
     id: str
     name: str
-    authority: float
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., authority: _Optional[float] = ...) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ...) -> None: ...
 
 class RetrievedChunk(_message.Message):
     __slots__ = ("chunk_id", "document_id", "document_name", "content", "similarity")

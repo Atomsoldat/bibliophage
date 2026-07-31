@@ -169,7 +169,6 @@ class BibliophageDatabase:
     async def store_document(
         self,
         name: str,
-        source_type: str,
         content: str,
         tags: list[dict[str, Any]],
         metadata: dict[str, Any] | None = None,
@@ -183,15 +182,13 @@ class BibliophageDatabase:
 
         insert_sql = sql.SQL("""
             INSERT INTO documents
-                (title, source_type, metadata, content, character_count)
+                (title, metadata, content, character_count)
             VALUES
-                (%(name)s, %(source_type)s, %(metadata)s, %(content)s,
-                 %(character_count)s)
+                (%(name)s, %(metadata)s, %(content)s, %(character_count)s)
             RETURNING document_id, created_at, character_count
         """)
         doc_params = {
             "name": name,
-            "source_type": source_type,
             "metadata": Json(metadata or {}),
             "content": content,
             "character_count": character_count,
@@ -323,7 +320,6 @@ class BibliophageDatabase:
         self,
         document_id: str,
         name: str,
-        source_type: str,
         content: str,
         tags: list[dict[str, Any]],
         metadata: dict[str, Any] | None = None,
@@ -355,7 +351,6 @@ class BibliophageDatabase:
             update_sql = sql.SQL("""
                 UPDATE documents
                 SET title = %(name)s,
-                    source_type = %(source_type)s,
                     metadata = %(metadata)s,
                     content = %(content)s,
                     character_count = %(character_count)s,
@@ -365,7 +360,6 @@ class BibliophageDatabase:
             """)
             await conn.execute(update_sql, {
                 "name": name,
-                "source_type": source_type,
                 "metadata": Jsonb(metadata or {}),
                 "content": content,
                 "character_count": character_count,

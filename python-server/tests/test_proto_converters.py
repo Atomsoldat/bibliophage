@@ -25,7 +25,6 @@ def _make_row(**overrides):
         "title": "Test Doc",
         "character_count": 42,
         "content": "hello world",
-        "source_type": "CORE",
         "created_at": datetime(2024, 1, 2, 3, 4, 5, tzinfo=UTC),
         "updated_at": datetime(2024, 1, 2, 3, 4, 6, tzinfo=UTC),
     }
@@ -217,7 +216,6 @@ def test_row_to_proto_document_default_class_is_document_with_full_content():
     assert proto.name == "Test Doc"
     assert proto.character_count == 42
     assert proto.content == "hello world"
-    assert proto.source_type == document_api.CORE
 
 
 @pytest.mark.unit
@@ -229,16 +227,6 @@ def test_row_to_proto_document_list_item_uses_content_snippet():
 
     assert isinstance(proto, document_api.DocumentListItem)
     assert proto.content_snippet == "hello..."
-
-
-@pytest.mark.unit
-def test_row_to_proto_document_missing_source_type_defaults_to_unspecified():
-    row = _make_row()
-    del row["source_type"]
-
-    proto = row_to_proto_document(row)
-
-    assert proto.source_type == document_api.SOURCE_TYPE_UNSPECIFIED
 
 
 @pytest.mark.unit

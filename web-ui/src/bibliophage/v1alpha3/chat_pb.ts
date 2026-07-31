@@ -263,7 +263,7 @@ export class ChunkMetadata extends Message<ChunkMetadata> {
   model = "";
 
   /**
-   * Documents used as context (with authority info)
+   * Documents used as context
    *
    * @generated from field: repeated bibliophage.v1alpha3.ContextDocumentInfo context_documents = 2;
    */
@@ -326,13 +326,6 @@ export class ContextDocumentInfo extends Message<ContextDocumentInfo> {
    */
   name = "";
 
-  /**
-   * Authority weight
-   *
-   * @generated from field: float authority = 3;
-   */
-  authority = 0;
-
   constructor(data?: PartialMessage<ContextDocumentInfo>) {
     super();
     proto3.util.initPartial(data, this);
@@ -343,7 +336,6 @@ export class ContextDocumentInfo extends Message<ContextDocumentInfo> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "authority", kind: "scalar", T: 2 /* ScalarType.FLOAT */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ContextDocumentInfo {

@@ -33,9 +33,6 @@ class DocumentServiceImplementation:
         for tag in request.document.tags:
             tags.append({"name": tag.name, "values": list(tag.values)})
 
-        # Convert source_type enum to string
-        source_type = document_api.SourceType.Name(request.document.source_type)
-
         # Convert metadata if provided
         metadata = None
         if request.document.HasField("metadata"):
@@ -44,7 +41,6 @@ class DocumentServiceImplementation:
         try:
             response = await self.db.store_document(
                 name=request.document.name,
-                source_type=source_type,
                 content=request.document.content,
                 tags=tags,
                 metadata=metadata,
@@ -117,9 +113,6 @@ class DocumentServiceImplementation:
             for tag in request.document.tags
         ]
 
-        # Convert enum to string name for database storage
-        source_type = document_api.SourceType.Name(request.document.source_type)
-
         # Convert metadata if provided
         metadata = None
         if request.document.HasField("metadata"):
@@ -129,7 +122,6 @@ class DocumentServiceImplementation:
             result = await self.db.update_document(
                 document_id=request.document.id,
                 name=request.document.name,
-                source_type=source_type,
                 content=request.document.content,
                 tags=tags,
                 metadata=metadata,

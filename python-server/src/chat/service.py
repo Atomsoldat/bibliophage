@@ -145,7 +145,6 @@ class ChatServiceImplementation:
                     id=str(doc_data["document_id"]),
                     name=doc_data["title"],
                     content=doc_data["content"],
-                    source_type=doc_data.get("source_type", "SOURCE_TYPE_UNSPECIFIED"),
                 ),
             )
 
@@ -204,7 +203,6 @@ class ChatServiceImplementation:
                 api.ContextDocumentInfo(
                     id=doc.id,
                     name=doc.name,
-                    authority=doc.authority_weight,
                 )
                 for doc in context_documents
             ],

@@ -20,7 +20,6 @@ async def test_store_document_integration(document_client):
     request = doc_api.StoreDocumentRequest()
     request.document.name = "Test Bestiary Note"
     request.document.systems.append("Fantasy RPG")
-    request.document.source_type = doc_api.GM_NOTES
     request.document.content = markdown_content
 
     # Call service

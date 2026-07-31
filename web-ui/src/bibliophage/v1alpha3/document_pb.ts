@@ -9,82 +9,6 @@ import { SortOrder, Tag, TagFilter } from "./common_pb.js";
 import { EmbeddingStatus } from "./embedding_pb.js";
 
 /**
- * Enums for strict classification of data
- * SourceType categorizes who created  a document or where a document came from
- * Used to weight authority when constructing LLM context
- *
- * @generated from enum bibliophage.v1alpha3.SourceType
- */
-export enum SourceType {
-  /**
-   * Default/unknown
-   *
-   * @generated from enum value: SOURCE_TYPE_UNSPECIFIED = 0;
-   */
-  SOURCE_TYPE_UNSPECIFIED = 0,
-
-  /**
-   * Official published rules (highest authority)
-   *
-   * @generated from enum value: CORE = 1;
-   */
-  CORE = 1,
-
-  /**
-   * Official expansions/supplements
-   *
-   * @generated from enum value: SUPPLEMENT = 2;
-   */
-  SUPPLEMENT = 2,
-
-  /**
-   * Game master's notes and preparations
-   *
-   * @generated from enum value: GM_NOTES = 3;
-   */
-  GM_NOTES = 3,
-
-  /**
-   * Player character journals/notes
-   *
-   * @generated from enum value: PLAYER_NOTES = 4;
-   */
-  PLAYER_NOTES = 4,
-
-  /**
-   * Actual play session records
-   *
-   * @generated from enum value: SESSION_LOG_RECORD = 5;
-   */
-  SESSION_LOG_RECORD = 5,
-
-  /**
-   * LLM-generated content
-   *
-   * @generated from enum value: GENERATED = 6;
-   */
-  GENERATED = 6,
-
-  /**
-   * Community/fan-created content
-   *
-   * @generated from enum value: COMMUNITY = 7;
-   */
-  COMMUNITY = 7,
-}
-// Retrieve enum metadata with: proto3.getEnumType(SourceType)
-proto3.util.setEnumType(SourceType, "bibliophage.v1alpha3.SourceType", [
-  { no: 0, name: "SOURCE_TYPE_UNSPECIFIED" },
-  { no: 1, name: "CORE" },
-  { no: 2, name: "SUPPLEMENT" },
-  { no: 3, name: "GM_NOTES" },
-  { no: 4, name: "PLAYER_NOTES" },
-  { no: 5, name: "SESSION_LOG_RECORD" },
-  { no: 6, name: "GENERATED" },
-  { no: 7, name: "COMMUNITY" },
-]);
-
-/**
  * PDF-specific metadata for documents sourced from PDFs
  *
  * @generated from message bibliophage.v1alpha3.PdfData
@@ -220,13 +144,6 @@ export class Document extends Message<Document> {
   name = "";
 
   /**
-   * Source type for LLM context weighting
-   *
-   * @generated from field: bibliophage.v1alpha3.SourceType source_type = 3;
-   */
-  sourceType = SourceType.SOURCE_TYPE_UNSPECIFIED;
-
-  /**
    * Metadata for file-based content (populated when type indicates file-based content)
    *
    * @generated from field: optional bibliophage.v1alpha3.Metadata metadata = 4;
@@ -278,7 +195,6 @@ export class Document extends Message<Document> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "source_type", kind: "enum", T: proto3.getEnumType(SourceType) },
     { no: 4, name: "metadata", kind: "message", T: Metadata, opt: true },
     { no: 5, name: "content", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 8, name: "created_at", kind: "message", T: Timestamp },
@@ -325,13 +241,6 @@ export class DocumentListItem extends Message<DocumentListItem> {
    * @generated from field: string name = 2;
    */
   name = "";
-
-  /**
-   * Source authority for LLM context weighting
-   *
-   * @generated from field: bibliophage.v1alpha3.SourceType source_type = 3;
-   */
-  sourceType = SourceType.SOURCE_TYPE_UNSPECIFIED;
 
   /**
    * Metadata for file-based content
@@ -396,7 +305,6 @@ export class DocumentListItem extends Message<DocumentListItem> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "source_type", kind: "enum", T: proto3.getEnumType(SourceType) },
     { no: 4, name: "metadata", kind: "message", T: Metadata, opt: true },
     { no: 5, name: "content_snippet", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 8, name: "created_at", kind: "message", T: Timestamp },

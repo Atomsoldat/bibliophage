@@ -1,9 +1,11 @@
-"""Unit tests for the PDF-type classification logic in ingestion/service.py.
+"""Unit tests for ingestion/service.py's document_type-tag pass-through behavior.
 
 The docling pipeline, settings, and database are all faked so these run
-without a real model, database connection, or environment configuration —
-only the source_type inference and document_type-tag pass-through behavior
-are under test.
+without a real model, database connection, or environment configuration.
+Ingestion no longer classifies PDFs at all (neither document_type nor
+source_type is inferred from the PDF's declared type string) — these tests
+confirm store_document is called with no source_type argument and that
+document_type only ever comes from the caller's own tags.
 """
 
 from dataclasses import dataclass, field
@@ -63,20 +65,20 @@ def _make_request(pdf_type: str) -> pdf_api.LoadPdfRequest:
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    ("pdf_type", "expected_source_type"),
+    "pdf_type",
     [
-        ("Core Rulebook", "CORE"),
-        ("Rulebook", "CORE"),
-        ("Supplement", "SUPPLEMENT"),
-        ("Expansion", "SUPPLEMENT"),
-        ("Adventure", "SUPPLEMENT"),
-        ("Bestiary", "SUPPLEMENT"),
-        ("Monster Manual", "SUPPLEMENT"),
-        ("Something Else Entirely", "CORE"),  # unrecognised falls back to CORE
+        "Core Rulebook",
+        "Rulebook",
+        "Supplement",
+        "Expansion",
+        "Adventure",
+        "Bestiary",
+        "Monster Manual",
+        "Something Else Entirely",
     ],
 )
-async def test_load_pdf_derives_source_type_from_pdf_type(
-    ingestion_service, pdf_type, expected_source_type,
+async def test_load_pdf_sets_no_source_type_regardless_of_pdf_type(
+    ingestion_service, pdf_type,
 ):
     service, fake_db = ingestion_service
 
@@ -84,7 +86,7 @@ async def test_load_pdf_derives_source_type_from_pdf_type(
 
     assert response.success
     assert len(fake_db.calls) == 1
-    assert fake_db.calls[0]["source_type"] == expected_source_type
+    assert "source_type" not in fake_db.calls[0]
 
 
 @pytest.mark.unit

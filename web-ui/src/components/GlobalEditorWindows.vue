@@ -43,14 +43,9 @@ async function handleSave(windowId: string) {
 
   try {
     if (window.isNew) {
-      // Import necessary types for creating new documents
-      const { SourceType } = await import('../bibliophage/v1alpha3/document_pb.ts')
-
       const response = await api.storeDocument({
         name: window.title,
         content: window.content,
-        // Provide required fields with sensible defaults
-        sourceType: SourceType.GM_NOTES, // Default source type
         tags: [], // No document_type tag by default — the user sets one if they want it
       })
       if (response?.success && response.document) {

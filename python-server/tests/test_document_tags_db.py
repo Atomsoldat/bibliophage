@@ -39,7 +39,6 @@ async def test_store_document_with_document_type_tag_round_trips(tag_db):
 
     result = await tag_db.store_document(
         name="tag-round-trip",
-        source_type="GM_NOTES",
         content="placeholder",
         tags=[{"name": "document_type", "values": ["rulebook"]}],
         metadata=None,
@@ -57,7 +56,6 @@ async def test_store_document_with_document_type_tag_round_trips(tag_db):
 async def test_store_document_without_document_type_tag_has_no_tags(tag_db):
     result = await tag_db.store_document(
         name="no-tags",
-        source_type="GM_NOTES",
         content="placeholder",
         tags=[],
         metadata=None,
@@ -77,7 +75,6 @@ async def test_store_document_with_multi_value_tag(tag_db):
 
     result = await tag_db.store_document(
         name="multi-value-tag",
-        source_type="GM_NOTES",
         content="placeholder",
         tags=[{"name": "genre", "values": ["fantasy", "comedy"]}],
         metadata=None,
@@ -97,7 +94,6 @@ async def test_store_document_with_valueless_tag(tag_db):
 
     result = await tag_db.store_document(
         name="valueless-tag",
-        source_type="GM_NOTES",
         content="placeholder",
         tags=[{"name": "reviewed", "values": []}],
         metadata=None,
@@ -116,7 +112,6 @@ async def test_store_document_unknown_tag_raises(tag_db):
     with pytest.raises(ValueError, match="Unknown tag"):
         await tag_db.store_document(
             name="unknown-tag-doc",
-            source_type="GM_NOTES",
             content="placeholder",
             tags=[{"name": "not_a_real_tag", "values": ["x"]}],
             metadata=None,
@@ -130,7 +125,6 @@ async def test_update_document_replaces_tags(tag_db):
 
     result = await tag_db.store_document(
         name="update-tags",
-        source_type="GM_NOTES",
         content="placeholder",
         tags=[{"name": "document_type", "values": ["note"]}],
         metadata=None,
@@ -141,7 +135,6 @@ async def test_update_document_replaces_tags(tag_db):
         await tag_db.update_document(
             document_id=document_id,
             name="update-tags",
-            source_type="GM_NOTES",
             content="placeholder",
             tags=[{"name": "genre", "values": ["fantasy"]}],
             metadata=None,
@@ -162,14 +155,12 @@ async def test_reusing_a_tag_value_across_documents(tag_db):
 
     first = await tag_db.store_document(
         name="shared-tag-value-1",
-        source_type="GM_NOTES",
         content="placeholder",
         tags=[{"name": "genre", "values": ["fantasy"]}],
         metadata=None,
     )
     second = await tag_db.store_document(
         name="shared-tag-value-2",
-        source_type="GM_NOTES",
         content="placeholder",
         tags=[{"name": "genre", "values": ["fantasy"]}],
         metadata=None,

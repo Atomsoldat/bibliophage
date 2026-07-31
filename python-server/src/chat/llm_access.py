@@ -1,6 +1,6 @@
 """LLM access module for Bibliophage.
 
-Provides LLM operations with document source authority awareness.
+Provides LLM operations over context documents.
 Uses LangChain for provider abstraction (currently Ollama).
 """
 
@@ -18,44 +18,14 @@ logger = logging.getLogger(__name__)
 # Singleton instance
 _llm_client: "LLMClient | None" = None
 
-# Authority weights determine how prominently documents appear in context
-# Higher values = more authoritative sources
-AUTHORITY_WEIGHTS: dict[str, float] = {
-    "GM_NOTES": 1.2,
-    "RULEBOOK": 1.0,
-    "SUPPLEMENT": 0.9,
-    "SESSION_LOG_RECORD": 0.6,
-    "PLAYER_NOTES": 0.5,
-    "GENERATED": 0.3,
-    "COMMUNITY": 0.4,
-    "SOURCE_TYPE_UNSPECIFIED": 0.5,
-}
-
-# Human-readable labels for source types
-AUTHORITY_LABELS: dict[str, str] = {
-    "RULEBOOK": "Official Rules",
-    "SUPPLEMENT": "Official Supplement",
-    "GM_NOTES": "GM Notes",
-    "PLAYER_NOTES": "Player Notes",
-    "SESSION_LOG_RECORD": "Session Log",
-    "GENERATED": "LLM-Generated",
-    "COMMUNITY": "Community Content",
-}
-
 
 @dataclass
 class DocumentContext:
     """Represents a document with its content and metadata for LLM context."""
 
     content: str
-    source_type: str  # Maps to SourceType enum value
     name: str
     id: str
-
-    @property
-    def authority_weight(self) -> float:
-        """Calculate authority weight based on source type."""
-        return AUTHORITY_WEIGHTS.get(self.source_type, 0.5)
 
 
 class LLMClient:
@@ -82,38 +52,24 @@ class LLMClient:
     def _build_context_prompt(
         self,
         documents: list[DocumentContext],
-        sort_by_authority: bool = True,
     ) -> str:
         """Build a formatted context string from documents.
 
         Args:
-            documents: List of document contexts
-            sort_by_authority: If True, sort by authority weight (highest first)
+            documents: List of document contexts, presented in the order given
 
         Returns:
             Formatted context string with source attribution
 
         """
-        if sort_by_authority:
-            documents = sorted(
-                documents,
-                key=lambda d: d.authority_weight,
-                reverse=True,
-            )
-
         context_parts = []
         for doc in documents:
             # Format each document with clear source attribution
-            authority_label = self._get_authority_label(doc.source_type)
             context_parts.append(
-                f"--- Source: {doc.name} ({authority_label}) ---\n{doc.content}\n",
+                f"--- Source: {doc.name} ---\n{doc.content}\n",
             )
 
         return "\n".join(context_parts)
-
-    def _get_authority_label(self, source_type: str) -> str:
-        """Get human-readable authority label for source type."""
-        return AUTHORITY_LABELS.get(source_type, "Unknown Source")
 
     async def generate_content(
         self,
@@ -136,12 +92,11 @@ class LLMClient:
             # Build context from documents
             context = self._build_context_prompt(context_documents)
 
-            # Default system prompt emphasises source authority
+            # Default system prompt
             if system_prompt is None:
                 system_prompt = (
                     "You are a creative assistant for tabletop RPG content generation. "
                     "Use the provided context documents to generate new content. "
-                    "Prioritise information from Official Rules sources over other sources. "
                     "Be consistent with established lore and rules."
                 )
 
@@ -271,7 +226,6 @@ class LLMClient:
                         {
                             "id": doc.id,
                             "name": doc.name,
-                            "authority": doc.authority_weight,
                         }
                         for doc in context_documents
                     ],

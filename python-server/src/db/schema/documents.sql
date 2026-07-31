@@ -24,7 +24,6 @@
 CREATE TABLE IF NOT EXISTS documents (
   document_id UUID DEFAULT uuidv7(),
   title TEXT NOT NULL,
-  source_type TEXT NOT NULL,
   metadata JSONB DEFAULT '{}'::jsonb NOT NULL,
   content TEXT NOT NULL,
   -- GENERATED means the value is derived from something else 

@@ -31,7 +31,6 @@ async def _make_document(db: BibliophageDatabase, name: str) -> str:
     result = await db.store_document(
         name=name,
         systems=["TestSystem"],
-        source_type="GM_NOTES",
         content="placeholder",
         tags=[],
         metadata=None,
