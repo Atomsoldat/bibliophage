@@ -59,13 +59,6 @@ class LoadingServiceImplementation:
         try:
             logger.info(f"Received LoadPdf request for file: {request.pdf.name}")
 
-            # Validate systems array (must have at least one value)
-            if not request.pdf.systems:
-                return pdf_api.LoadPdfResponse(
-                    success=False,
-                    message="PDF must belong to at least one system",
-                )
-
             pdf_bytes = request.file_data
 
             # Process PDF using Docling pipeline
@@ -102,7 +95,6 @@ class LoadingServiceImplementation:
 
             result = await self.db.store_document(
                 name=request.pdf.name,
-                systems=list(request.pdf.systems),
                 content=processing_result["content"],
                 tags=tags,
                 metadata=metadata,
