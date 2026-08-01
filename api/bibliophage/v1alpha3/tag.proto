@@ -1,0 +1,181 @@
+syntax = "proto3";
+
+package bibliophage.v1alpha3;
+
+import "bibliophage/v1alpha3/common.proto";
+
+// Service definitions - the API endpoints
+service TagService {
+  rpc StoreTag(StoreTagRequest) returns (StoreTagResponse);
+  rpc DeleteTag(DeleteTagRequest) returns (DeleteTagResponse);
+  rpc RenameTag(RenameTagRequest) returns (RenameTagResponse);
+  rpc UpdateTagColour(UpdateTagColourRequest) returns (UpdateTagColourResponse);
+  rpc StoreTagValue(StoreTagValueRequest) returns (StoreTagValueResponse);
+  rpc DeleteTagValue(DeleteTagValueRequest) returns (DeleteTagValueResponse);
+  rpc RenameTagValue(RenameTagValueRequest) returns (RenameTagValueResponse);
+  rpc ListAllTags(GetTagRequest) returns (GetTagResponse);
+  rpc ListAllTagValues(GetTagRequest) returns (GetTagResponse);
+}
+
+// Tag represents a named category with multiple values
+// Example: {"name": "genre", "values": ["adventure", "fantasy", "noire"]}
+message Tag {
+  // Name of the tag (e.g., "genre", "world", "category", "tone")
+  string name = 1;
+  // UUID for this specific tag
+  string id =2;
+  // hex coded colour
+  // TODO: should and can we validate this in the fronted / API too?
+  optional string colour 3;
+  // Values associated with this tag
+  repeated TagValue values = 4;
+  // number of documents this tag applies to
+  optional int32 document_count 5;
+}
+
+message TagValue {
+  // Value for a given tag (e.g., "fantasy", "arrakis", "rulebook", "mysterious")
+  string value = 1;
+  // number of documents this tag value applies to
+  optional int32 document_count 2;
+}
+
+// TagFilter represents a filter for tag-based searches
+// Matches items where tag.name == name AND any value in tag.values matches value
+message TagFilter {
+  // Name of the tag to filter on (e.g., "genre", "campaign")
+  string name = 1;
+  // Value to match against (e.g., "fantasy", "core-rules")
+  string value = 2;
+}
+
+// Create a new tag
+message StoreTagRequest {
+  // The tag to store (ID will be assigned by server)
+  Tag tag = 1;
+}
+message StoreTagResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+  // Human-readable status/error message
+  string message = 2;
+  // The stored tag with assigned ID
+  Tag tag = 3;
+}
+
+// retrieve a tag by id
+message GetTagRequest {
+  string id = 1;
+  // whether or not to return the tag with the document_count attribute
+  // defaults to false
+  optional bool count_docs = 2;
+}
+message GetTagResponse {
+  // Whether the operation succeeded
+  bool success = 1;
+  // Human-readable status/error message
+  string message = 2;
+  // The requested tag (null if not found)
+  optional Tag tag = 3;
+}
+
+// retrieve all tags matching a filter
+// if no filter, return all tags
+message GetTagsRequest {
+  // simple lowercase string match for now
+  optional string name_filter = 1;
+  // whether or not to return the tags with their document_count attribute
+  // defaults to false
+  optional bool count_docs = 1;
+}
+message GetTagsResponse {
+  bool success = 1;
+  // Human-readable status/error message
+  string message = 2;
+  // the tags matching the filter 
+  repeated Tag tags;
+}
+
+// Delete a tag by ID
+message DeleteTagRequest {
+  // The unique ID of the tag to delete
+  string id = 1;
+}
+// DeleteTagResponse - Result of deleting a tag
+message DeleteTagResponse {
+  bool success = 1;
+  // Human-readable status/error message
+  string message = 2;
+}
+
+// Rename an existing tag
+message RenameTagRequest {
+  // The tag id to update
+  string tag_id = 1;
+  // new name
+  string name = 2;
+}
+message RenameTagResponse {
+  bool success = 1;
+  // Human-readable status/error message
+  string message = 2;
+  // The updated tag
+  Tag tag = 3;
+}
+
+// Change tag colour
+message UpdateTagColourRequest {
+  // The tag id to update
+  string tag_id = 1;
+  // new colour
+  string colour = 2;
+}
+message UpdateTagColourResponse {
+  bool success = 1;
+  // Human-readable status/error message
+  string message = 2;
+  // The updated tag
+  Tag tag = 3;
+}
+
+
+// Store a new tag value
+message StoreTagValueRequest {
+  // ID of the tag this value is meant for
+  string tag_id = 1;
+  // The tag value to store
+  TagValue tag_value = 2;
+}
+message StoreTagValueResponse {
+  bool success = 1;
+  // Human-readable status/error message
+  string message = 2;
+  // The stored tag value
+  TagValue tag_value = 3;
+}
+
+// Delete a tag value by ID
+message DeleteTagValueRequest {
+  // The unique ID of the tag value to delete
+  string id = 1;
+}
+message DeleteTagValueResponse {
+  bool success = 1;
+  // Human-readable status/error message
+  string message = 2;
+}
+
+// Rename an existing tag value
+message RenameTagValueRequest {
+  // The tag value id to update
+  string tag_value_id = 1;
+  // new name
+  string name = 2;
+}
+message RenameTagValueResponse {
+  bool success = 1;
+  // Human-readable status/error message
+  string message = 2;
+  // The updated tag
+  Tag tag = 3;
+}
