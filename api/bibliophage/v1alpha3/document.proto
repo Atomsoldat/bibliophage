@@ -39,9 +39,6 @@ message Metadata {
   // File size in bytes
   int64 file_size = 1;
 
-  // Publication type (e.g., "Core Rulebook", "Adventure", "Supplement")
-  optional string publication_type = 2;
-
   // PDF-specific data (only populated for PDF-sourced documents)
   optional PdfData pdf = 3;
 }
