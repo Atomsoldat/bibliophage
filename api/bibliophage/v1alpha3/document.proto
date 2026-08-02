@@ -24,155 +24,55 @@ service DocumentService {
 
 // PDF-specific metadata for documents sourced from PDFs
 message PdfData {
-  // Number of batches processed by Docling
-  int32 loading_batch_count = 1;
-
-  // Number of text chunks created for vector embeddings
-  int32 vector_chunk_count = 2;
-
-  // Number of pages in the source material
-  int32 page_count = 3;
+  int32 loading_batch_count = 1;    // Number of batches processed by Docling
+  int32 vector_chunk_count = 2;     // Number of text chunks created for vector embeddings
+  int32 page_count = 3;             // Number of pages in the source material
 }
 
 // Metadata for file-based content (PDFs, scanned books, etc.)
 // Populated when a document originates from a file (e.g. a PDF upload)
 message Metadata {
-  // File size in bytes
-  int64 file_size = 1;
-
-  // PDF-specific data (only populated for PDF-sourced documents)
-  optional PdfData pdf = 3;
+  int64 file_size = 1;  // File size in bytes
+  optional PdfData pdf = 3;  // PDF-specific data (only populated for PDF-sourced documents)
 }
 
 // Document represents any content longer than a few words in the application (user-created or loaded from files)
 message Document {
-  // Unique identifier for this document (assigned by the database)
-  string id = 1;
-
-  // Human-readable name (e.g., "My Campaign Notes", "Player's Handbook")
-  string name = 2;
-
-  // Metadata for file-based content (populated when type indicates file-based content)
-  optional Metadata metadata = 4;
-
-  // Raw text content of the document (markdown formatted for PDFs, user notes should be treated as plain text)
-  string content = 5;
-
-  // When this document was created
-  google.protobuf.Timestamp created_at = 8;
-
-  // When this document was last updated
-  google.protobuf.Timestamp updated_at = 9;
-
-  // Structured tags for organization (name + multiple values)
-  repeated Tag tags = 10;
-
-  // Character count
-  int32 character_count = 11;
+  string id = 1;  // Unique identifier for this document (assigned by the database)
+  string name = 2;  // Human-readable name (e.g., "My Campaign Notes", "Player's Handbook")
+  optional Metadata metadata = 4;  // Metadata for file-based content (populated when type indicates file-based content)
+  string content = 5;  // Raw text content of the document (markdown formatted for PDFs, user notes should be treated as plain text)
+  google.protobuf.Timestamp created_at = 8;  // When this document was created
+  google.protobuf.Timestamp updated_at = 9;  // When this document was last updated
+  repeated Tag tags = 10;  // Structured tags for organization (name + multiple values)
+  int32 character_count = 11;  // Character count
 }
 
 // DocumentListItem represents a document in list/search results
 // Contains metadata and a content snippet, but not the full content
 // This enforces bandwidth efficiency - clients cannot request full content in searches
 message DocumentListItem {
-  // Unique identifier for this document
-  string id = 1;
-
-  // Human-readable name
-  string name = 2;
-
-  // Metadata for file-based content
-  optional Metadata metadata = 4;
-
+  string id = 1;  // Unique identifier for this document
+  string name = 2;  // Human-readable name
+  optional Metadata metadata = 4;  // Metadata for file-based content
   // Short excerpt from the content (max ~200 characters)
   // May be empty if the document has no content
   // Use GetDocument RPC to retrieve full content
   string content_snippet = 5;
-
-  // When this document was created
-  google.protobuf.Timestamp created_at = 8;
-
-  // When this document was last updated
-  google.protobuf.Timestamp updated_at = 9;
-
-  // Structured tags for organization
-  repeated Tag tags = 10;
-
-  // Character count of full document (not the snippet)
-  int32 character_count = 11;
-
-  // Embedding status (optional, populated if chunk boundaries exist)
+  google.protobuf.Timestamp created_at = 8;  // When this document was created
+  google.protobuf.Timestamp updated_at = 9;  // When this document was last updated
+  repeated Tag tags = 10;  // Structured tags for organization
+  int32 character_count = 11;  // Character count of full document (not the snippet)
   // TODO: we  should think about whether we want to calculcate this at each search
   // I think it's better to have a field in the database representing this information
-  optional EmbeddingStatus embedding_status = 12;
+  optional EmbeddingStatus embedding_status = 12;  // Embedding status (optional, populated if chunk boundaries exist)
 }
 
-// ============================================================================
-// Request/Response Messages - Operation-specific wrappers
-// ============================================================================
-
-// StoreDocumentRequest - Create a new document
-message StoreDocumentRequest {
-  // The document to store (ID will be assigned by server)
-  Document document = 1;
-}
-
-// StoreDocumentResponse - Result of storing a document
-message StoreDocumentResponse {
-  // Whether the operation succeeded
-  bool success = 1;
-
-  // Human-readable status/error message
-  string message = 2;
-
-  // The stored document with assigned ID
-  Document document = 3;
-}
-
-// GetDocumentRequest - Retrieve a specific document by ID
-message GetDocumentRequest {
-  // The unique ID of the document to retrieve
-  string id = 1;
-}
-
-// GetDocumentResponse - Result of getting a document
-message GetDocumentResponse {
-  // Whether the operation succeeded
-  bool success = 1;
-
-  // Human-readable status/error message
-  string message = 2;
-
-  // The requested document (null if not found)
-  optional Document document = 3;
-}
-
-// UpdateDocumentRequest - Update an existing document
-message UpdateDocumentRequest {
-  // The document to update (must include ID)
-  Document document = 1;
-}
-
-// UpdateDocumentResponse - Result of updating a document
-message UpdateDocumentResponse {
-  // Whether the operation succeeded
-  bool success = 1;
-
-  // Human-readable status/error message
-  string message = 2;
-
-  // The updated document
-  Document document = 3;
-}
-
-// DocumentFilter - Reusable filter criteria for document searches
+// Reusable filter criteria for document searches
 // This can be used across different search endpoints and services
 message DocumentFilter {
-  // Search by name (partial match, case-insensitive)
-  optional string name_query = 1;
-
-  // Search by content (partial match, case-insensitive)
-  optional string content_query = 2;
+  optional string name_query = 1;  // Search by name (partial match, case-insensitive)
+  optional string content_query = 2;  // Search by content (partial match, case-insensitive)
 
   // Filter by tags (documents must match ALL specified tag filters)
   // Example: [{"name": "genre", "value": "fantasy"}, {"name": "tone", "value": "dark"}]
@@ -180,53 +80,66 @@ message DocumentFilter {
   repeated TagFilter tag_filters = 4;
 }
 
+// ============================================================================
+// Request/Response Messages - Operation-specific wrappers
+// ============================================================================
 
-// SearchDocumentsRequest - Search for documents by various criteria
+// Create a new document
+message StoreDocumentRequest {
+  Document document = 1;  // The document to store (ID will be assigned by server)
+}
+message StoreDocumentResponse {
+  bool success = 1;
+  string message = 2; // human readable message
+  Document document = 3;  // The stored document with assigned ID
+}
+
+// Retrieve a specific document by ID
+message GetDocumentRequest {
+  string id = 1;  // The unique ID of the document to retrieve
+}
+message GetDocumentResponse {
+  bool success = 1;
+  string message = 2; // human readable message
+  optional Document document = 3;  // The requested document (null if not found)
+}
+
+// Update an existing document
+message UpdateDocumentRequest {
+  // The document to update (must include ID)
+  Document document = 1;
+}
+message UpdateDocumentResponse {
+  bool success = 1;
+  string message = 2;  // human readable message
+  Document document = 3;  // The updated document
+}
+
+//Search for documents by various criteria
 message SearchDocumentsRequest {
-  // Filter criteria (all fields are optional)
-  optional DocumentFilter filter = 1;
-
+  optional DocumentFilter filter = 1;  // Filter criteria (all fields are optional)
   // Pagination (optional, server applies defaults if not specified)
   optional int32 page_size = 2; // Max results to return (default: 50)
   optional int32 page_number = 3; // Which page of results (0-indexed, default: 0)
-
-  // Sorting
   optional SortOrder sort_order = 4;
 }
-
-// SearchDocumentsResponse - Results of document search
 message SearchDocumentsResponse {
-  // Whether the operation succeeded
   bool success = 1;
-
-  // Human-readable status/error message
-  string message = 2;
-
+  string message = 2;      // human readable message
   // Array of matching document summaries (with snippets, not full content)
   // To retrieve full content, use GetDocument RPC with the document ID
   repeated DocumentListItem matches = 3;
-
   // TODO: i think i want to get rid of these two
-  // Total number of results (for pagination)
-  int32 total_count = 4;
-  // Current page number
-  int32 page_number = 5;
-
-  // Whether there are more pages
-  bool has_more = 6;
+  int32 total_count = 4;   // Total number of results (for pagination)
+  int32 page_number = 5;   // Current page number
+  bool has_more = 6;       // Whether there are more pages
 }
 
-// DeleteDocumentRequest - Delete a document by ID
+Delete a document by ID
 message DeleteDocumentRequest {
-  // The unique ID of the document to delete
-  string id = 1;
+  string id = 1;           // The unique ID of the document to delete
 }
-
-// DeleteDocumentResponse - Result of deleting a document
 message DeleteDocumentResponse {
-  // Whether the operation succeeded
   bool success = 1;
-
-  // Human-readable status/error message
-  string message = 2;
+  string message = 2;      // human readable message
 }
