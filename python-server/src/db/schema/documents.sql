@@ -53,13 +53,13 @@ CREATE TABLE IF NOT EXISTS documents (
 CREATE TABLE IF NOT EXISTS tags (
     tag_id UUID DEFAULT uuidv7(),
     title TEXT UNIQUE NOT NULL,
-    colour VARCHAR(7) 
+    colour VARCHAR(7),
 
     PRIMARY KEY (tag_id),
     -- only allow lower case
     CHECK (title = lower(title)),
     -- require hex colour codes
-    CHECK (colour is null or color ~* '^#[a-f0-9]{6}$')
+    CHECK (colour is null or colour ~* '^#[a-f0-9]{6}$')
 );
 
 CREATE TABLE IF NOT EXISTS tag_values (
