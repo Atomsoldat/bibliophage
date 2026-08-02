@@ -1,7 +1,9 @@
 import type { Client } from '@connectrpc/connect'
 
 import type {
+  AssignTagValuesResponse,
   DeleteDocumentResponse,
+  DeleteTagValuesResponse,
   GetDocumentResponse,
   SearchDocumentsResponse,
   StoreDocumentResponse,
@@ -13,13 +15,16 @@ import { createConnectTransport } from '@connectrpc/connect-web'
 import { ref } from 'vue'
 import { DocumentService } from '../bibliophage/v1alpha3/document_connect'
 import {
+  AssignTagValuesRequest,
   DeleteDocumentRequest,
+  DeleteTagValuesRequest,
   Document,
   GetDocumentRequest,
   SearchDocumentsRequest,
   StoreDocumentRequest,
   UpdateDocumentRequest,
 } from '../bibliophage/v1alpha3/document_pb'
+import { TagValue } from '../bibliophage/v1alpha3/tag_pb'
 import { useConfig } from './useConfig'
 
 // Shared client instance (singleton pattern)
@@ -128,6 +133,38 @@ export function useDocumentApi() {
     return await client.value!.deleteDocument(request)
   }
 
+  /**
+   * Assign one or more tag values to one or more documents at once, atomically.
+   * Unknown values under the given tag are auto-created; an unknown tag id is rejected.
+   */
+  async function assignTagValue(documentIds: string[], tagId: string, values: string[]): Promise<AssignTagValuesResponse> {
+    checkInitialisation()
+
+    const request = new AssignTagValuesRequest({
+      documentIds,
+      tagId,
+      tagValues: values.map(value => new TagValue({ value })),
+    })
+
+    return await client.value!.assignTagValues(request)
+  }
+
+  /**
+   * Remove tag values from one or more documents at once, atomically.
+   * Omitting values removes the whole tag from those documents.
+   */
+  async function removeTagValue(documentIds: string[], tagId: string, values: string[] = []): Promise<DeleteTagValuesResponse> {
+    checkInitialisation()
+
+    const request = new DeleteTagValuesRequest({
+      documentIds,
+      tagId,
+      tagValues: values.map(value => new TagValue({ value })),
+    })
+
+    return await client.value!.deleteTagValues(request)
+  }
+
   // return client object with all the needed methods
   return {
     initialise,
@@ -136,6 +173,8 @@ export function useDocumentApi() {
     getDocument,
     searchDocuments,
     deleteDocument,
+    assignTagValue,
+    removeTagValue,
     isInitialised,
   }
 }

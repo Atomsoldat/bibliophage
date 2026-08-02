@@ -12,7 +12,7 @@ const props = defineProps<{
 <template>
   <button type="button" class="btn btn-sm btn-primary gap-1" @click="props.bulkEdit.openModal">
     <Icon icon="heroicons:pencil" />
-    Edit Metadata
+    Edit Tags
   </button>
 
   <!-- Bulk Edit Modal -->
@@ -20,7 +20,6 @@ const props = defineProps<{
     v-bind:show="props.bulkEdit.showModal.value"
     v-bind:loading="props.bulkEdit.loading.value"
     v-bind:selected-count="props.bulkEdit.selectedCount.value"
-    v-bind:initial-document="props.bulkEdit.initialDocument.value"
     @close="props.bulkEdit.closeModal"
     @submit="props.bulkEdit.handleUpdate"
   />

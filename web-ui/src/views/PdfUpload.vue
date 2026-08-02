@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Client } from '@connectrpc/connect'
+import type { Tag } from '../bibliophage/v1alpha3/tag_pb.ts'
 
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
@@ -9,12 +10,12 @@ import { Icon } from '@iconify/vue'
 import { onMounted, ref } from 'vue'
 
 import { PdfService } from '../bibliophage/v1alpha3/pdf_connect.ts'
-import { LoadPdfRequest, Pdf } from '../bibliophage/v1alpha3/pdf_pb.ts'
 import BaseCard from '../components/BaseCard.vue'
 import FormField from '../components/forms/FormField.vue'
-import FormSelect from '../components/forms/FormSelect.vue'
+import TagInput from '../components/TagInput.vue'
 import { useConfig } from '../composables/useConfig'
 import { useLogger } from '../composables/useLogger'
+import { buildLoadPdfRequest } from '../utils/protoHelpers.ts'
 
 const { config, loadConfig } = useConfig()
 const logger = useLogger()
@@ -32,7 +33,7 @@ const client = ref<Client<typeof PdfService> | null>(null)
 // pointer here, and no other", technically, var could work too, but then someone could reassign the ref
 // and not just the ref's .value property
 const pdfName = ref('')
-const publicationType = ref('BESTIARY')
+const tags = ref<Tag[]>([])
 // a ref to either a File or null, which we initialise to null
 const pdfFile = ref<File | null>(null)
 // if we are loading, we display a cute little animation
@@ -66,23 +67,6 @@ function handleFileSelect(event: Event) {
   }
 }
 
-function buildPdfLoadRequest(fileData: Uint8Array<ArrayBuffer>): LoadPdfRequest {
-  // Create the PDF metadata object
-  const pdf = new Pdf({
-    name: pdfName.value,
-    type: publicationType.value,
-    tags: [], // Empty tags for now - could be extended in the future
-  })
-
-  // Create the request
-  const req = new LoadPdfRequest({
-    pdf,
-    fileData,
-  })
-
-  return req
-}
-
 // async functions return a promise which other stuff
 // can await, or use then(), finally() and other funny  Promise related functions on
 // we don't do that though
@@ -106,12 +90,10 @@ async function handleFormSubmit() {
   logger.info(`Connecting to server at ${config.value.backendHost}...`)
   logger.info(`File: ${pdfFile.value.name}`)
   logger.info(`PDF Name: ${pdfName.value}`)
-  logger.info(`Systems: ${[rpgSystem.value].join(', ')}`)
-  logger.info(`Type: ${publicationType.value}`)
 
   try {
     const fileData = new Uint8Array(await pdfFile.value.arrayBuffer())
-    const request = buildPdfLoadRequest(fileData)
+    const request = buildLoadPdfRequest({ name: pdfName.value, tags: tags.value, fileData })
     logger.info('Loading PDF...')
 
     // Make the Connect-RPC call (async)
@@ -193,35 +175,10 @@ async function handleFormSubmit() {
 
         <!-- Metadata -->
         <BaseCard title="Metadata" icon="heroicons:tag">
-          <FormSelect v-model="rpgSystem" label="RPG System">
-            <option value="DND_35">
-              D&D 3.5
-            </option>
-            <option value="PATHFINDER_1E">
-              Pathfinder 1e
-            </option>
-            <option value="PATHFINDER_2E">
-              Pathfinder 2e
-            </option>
-          </FormSelect>
-
-          <FormSelect v-model="publicationType" label="Publication Type">
-            <option value="CORE_RULEBOOK">
-              Core Rulebook
-            </option>
-            <option value="BESTIARY">
-              Bestiary
-            </option>
-            <option value="SUPPLEMENT">
-              Supplement
-            </option>
-            <option value="ADVENTURE">
-              Adventure
-            </option>
-            <option value="SETTING">
-              Setting
-            </option>
-          </FormSelect>
+          <label class="label">
+            <span class="label-text font-semibold">Tags</span>
+          </label>
+          <TagInput v-model="tags" mode="collect" />
         </BaseCard>
       </div>
 

@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import type { Tag } from '../bibliophage/v1alpha3/tag_pb'
 import { ref } from 'vue'
 import BaseCard from './BaseCard.vue'
+import TagInput from './TagInput.vue'
 import TextEditor from './TextEditor.vue'
 
 // Props for card configuration
@@ -29,6 +31,12 @@ const documentId = defineModel('documentId', {
   default: '',
 })
 
+// Tags can only be assigned once the document exists (assign mode calls the
+// API per chip immediately, which needs a real document id)
+const tags = defineModel<Tag[]>('tags', {
+  default: () => [],
+})
+
 // Template ref to access the TextEditor component instance
 const textEditorRef = ref<InstanceType<typeof TextEditor> | null>(null)
 
@@ -54,5 +62,11 @@ defineExpose({
     <input v-model="title" type="text" v-bind:min="100" v-bind:max="2000" class="input input-bordered">
     <!-- Editor with two-way binding to parent's content -->
     <TextEditor ref="textEditorRef" v-model:default-content="editorContent" />
+    <TagInput
+      v-if="documentId"
+      v-model="tags"
+      mode="assign"
+      v-bind:document-id="documentId"
+    />
   </BaseCard>
 </template>

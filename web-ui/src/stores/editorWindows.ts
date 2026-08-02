@@ -1,3 +1,4 @@
+import type { Tag } from '../bibliophage/v1alpha3/tag_pb'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
@@ -7,6 +8,7 @@ export interface EditorWindowConfig {
   title: string
   content: string
   isNew: boolean
+  tags: Tag[]
   x: number
   y: number
   zIndex: number
@@ -31,6 +33,7 @@ export const useEditorWindowStore = defineStore('editorWindows', () => {
     title?: string
     content?: string
     isNew?: boolean
+    tags?: Tag[]
     x?: number
     y?: number
   }): string {
@@ -45,6 +48,7 @@ export const useEditorWindowStore = defineStore('editorWindows', () => {
       title: config.title || 'New Document',
       content: config.content || '',
       isNew: config.isNew ?? true,
+      tags: config.tags ?? [],
       x: position.x,
       y: position.y,
       zIndex: nextZIndex++,
@@ -87,6 +91,7 @@ export const useEditorWindowStore = defineStore('editorWindows', () => {
     title?: string
     content?: string
     isNew?: boolean
+    tags?: Tag[]
   }): void {
     const win = windows.value.find(w => w.id === windowId)
     if (!win)
@@ -99,6 +104,8 @@ export const useEditorWindowStore = defineStore('editorWindows', () => {
       win.content = updates.content
     if (updates.isNew !== undefined)
       win.isNew = updates.isNew
+    if (updates.tags !== undefined)
+      win.tags = updates.tags
   }
 
   function getWindow(windowId: string): EditorWindowConfig | undefined {

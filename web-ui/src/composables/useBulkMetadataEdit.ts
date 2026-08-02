@@ -1,14 +1,19 @@
-import type { MetadataEditFormData } from '../components/MetadataEditModal.vue'
+import type { Tag } from '../bibliophage/v1alpha3/tag_pb.ts'
 import { computed, ref } from 'vue'
 
-import { Tag } from '../bibliophage/v1alpha3/common_pb.ts'
 import { useDocumentStore } from '../stores/documents'
 import { useDocumentApi } from './useDocumentApi.ts'
 import { useLogger } from './useLogger.ts'
 
+export interface MetadataEditFormData {
+  tagsToAdd: Tag[]
+  tagsToRemove: Tag[]
+}
+
 /**
  * Composable for bulk metadata editing of documents.
- * Reads selected IDs and document list from DocumentStore.
+ * Reads selected IDs from DocumentStore, applies each added/removed tag to
+ * every selected document in a single AssignTagValues/DeleteTagValues call.
  */
 export function useBulkMetadataEdit() {
   const logger = useLogger()
@@ -17,14 +22,6 @@ export function useBulkMetadataEdit() {
 
   const showModal = ref(false)
   const loading = ref(false)
-
-  const initialDocument = computed(() => {
-    if (documentStore.selectedIds.size !== 1) {
-      return null
-    }
-    const selectedId = Array.from(documentStore.selectedIds)[0]
-    return documentStore.documents.find(doc => doc.id === selectedId) || null
-  })
 
   const selectedCount = computed(() => documentStore.selectedIds.size)
 
@@ -40,62 +37,54 @@ export function useBulkMetadataEdit() {
     showModal.value = false
   }
 
-  // TODO: There should also be a way to append e.g. tags
-  // rather than overwriting all tags
-  // TODO: I think we are fetching the entire document here
-  // This can probably be done more efficiently
-  // perhaps we can filter out the document content on the server side
   async function handleUpdate(formData: MetadataEditFormData): Promise<void> {
-    loading.value = true
+    if (formData.tagsToAdd.length === 0 && formData.tagsToRemove.length === 0) {
+      logger.warn('No tag changes to apply')
+      return
+    }
 
+    loading.value = true
+    const documentIds = Array.from(documentStore.selectedIds)
     let successCount = 0
     let failureCount = 0
     const errors: string[] = []
 
     try {
       await api.initialise()
-      for (const id of documentStore.selectedIds) {
-        const response = await api.getDocument(id)
-        if (!response.success || !response.document) {
-          logger.error(`Failed to fetch document ${id}: ${response.message}`)
-          errors.push(`${id}: ${response.message}`)
-          failureCount++
-          continue
-        }
-        const updatedDocument = response.document
 
-        if (formData.tags) {
-          const tags: Tag[] = []
-          for (const tagData of formData.tags) {
-            const tag = new Tag()
-            tag.name = tagData.name
-            tag.values = tagData.values
-            tags.push(tag)
-          }
-          updatedDocument.tags = tags
-        }
-
-        const updateResponse = await api.updateDocument(updatedDocument)
-        if (updateResponse.success) {
+      for (const tag of formData.tagsToAdd) {
+        const response = await api.assignTagValue(documentIds, tag.id, tag.values.map(v => v.value))
+        if (response.success) {
           successCount++
         }
         else {
-          errors.push(`${updatedDocument.name}: ${updateResponse.message}`)
           failureCount++
+          errors.push(`${tag.name}: ${response.message}`)
+        }
+      }
+
+      for (const tag of formData.tagsToRemove) {
+        const response = await api.removeTagValue(documentIds, tag.id, tag.values.map(v => v.value))
+        if (response.success) {
+          successCount++
+        }
+        else {
+          failureCount++
+          errors.push(`${tag.name}: ${response.message}`)
         }
       }
 
       if (successCount > 0) {
-        logger.success(`Successfully updated ${successCount} document${successCount > 1 ? 's' : ''}`)
+        logger.success(`Updated tags on ${documentIds.length} document${documentIds.length > 1 ? 's' : ''}`)
       }
       if (failureCount > 0) {
-        logger.error(`Failed to update ${failureCount} document${failureCount > 1 ? 's' : ''}`)
+        logger.error(`Failed to apply ${failureCount} tag change${failureCount > 1 ? 's' : ''}`)
         for (const err of errors) {
           logger.error(err)
         }
       }
 
-      if (successCount > 0) {
+      if (successCount > 0 && failureCount === 0) {
         showModal.value = false
         documentStore.selectedIds.clear()
         await documentStore.reload()
@@ -109,7 +98,6 @@ export function useBulkMetadataEdit() {
   return {
     showModal,
     loading,
-    initialDocument,
     selectedCount,
     openModal,
     closeModal,

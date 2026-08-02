@@ -94,16 +94,23 @@ export class Tag extends Message<Tag> {
  */
 export class TagValue extends Message<TagValue> {
   /**
+   * ID for this tag value
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
    * Value for a given tag (e.g., "fantasy", "arrakis", "rulebook", "mysterious")
    *
-   * @generated from field: string value = 1;
+   * @generated from field: string value = 2;
    */
   value = "";
 
   /**
    * number of documents this tag value applies to
    *
-   * @generated from field: optional int32 document_count = 2;
+   * @generated from field: optional int32 document_count = 3;
    */
   documentCount?: number;
 
@@ -115,8 +122,9 @@ export class TagValue extends Message<TagValue> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "bibliophage.v1alpha3.TagValue";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "document_count", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "document_count", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TagValue {

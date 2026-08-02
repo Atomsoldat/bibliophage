@@ -71,6 +71,7 @@ async function handleEditDocument(target: DocumentListItem) {
       content: response.document.content || '',
       documentId: response.document.id,
       isNew: false,
+      tags: response.document.tags,
     })
 
     logger.success(`Opened editor for: ${response.document.name} (${response.document.content?.length || 0} characters)`)

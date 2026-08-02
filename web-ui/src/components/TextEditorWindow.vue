@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Tag } from '../bibliophage/v1alpha3/tag_pb'
 import type { EditorWindowConfig } from '../stores/editorWindows'
 import { useDraggable } from '@vueuse/core'
 import { computed, ref, useTemplateRef, watch } from 'vue'
@@ -12,7 +13,7 @@ const emit = defineEmits<{
   close: [windowId: string]
   minimize: [windowId: string]
   positionChange: [windowId: string, x: number, y: number]
-  documentUpdate: [windowId: string, updates: { documentId?: string, title?: string, content?: string, isNew?: boolean }]
+  documentUpdate: [windowId: string, updates: { documentId?: string, title?: string, content?: string, isNew?: boolean, tags?: Tag[] }]
   bringToFront: [windowId: string]
   save: [windowId: string]
   discard: [windowId: string]
@@ -50,7 +51,9 @@ function handleBringToFront() {
   emit('bringToFront', props.window.id)
 }
 
-function handleDocumentUpdate(field: 'title' | 'content' | 'documentId' | 'isNew', value: string | boolean) {
+function handleDocumentUpdate(field: 'title' | 'content' | 'documentId' | 'isNew', value: string | boolean): void
+function handleDocumentUpdate(field: 'tags', value: Tag[]): void
+function handleDocumentUpdate(field: 'title' | 'content' | 'documentId' | 'isNew' | 'tags', value: string | boolean | Tag[]) {
   emit('documentUpdate', props.window.id, { [field]: value })
 }
 
@@ -114,11 +117,13 @@ defineExpose({
         v-bind:title="window.title"
         v-bind:is-new="window.isNew"
         v-bind:document-id="window.documentId"
+        v-bind:tags="window.tags"
         icon="heroicons:document-text"
         @update:content="(val) => handleDocumentUpdate('content', val)"
         @update:title="(val) => handleDocumentUpdate('title', val)"
         @update:is-new="(val) => handleDocumentUpdate('isNew', val)"
         @update:document-id="(val) => handleDocumentUpdate('documentId', val)"
+        @update:tags="(val) => handleDocumentUpdate('tags', val)"
       />
 
       <!-- Action Buttons -->
