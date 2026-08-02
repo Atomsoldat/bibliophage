@@ -2,6 +2,7 @@ import datetime
 
 from bibliophage.v1alpha3 import common_pb2 as _common_pb2
 from bibliophage.v1alpha3 import embedding_pb2 as _embedding_pb2
+from bibliophage.v1alpha3 import tag_pb2 as _tag_pb2
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
@@ -22,14 +23,12 @@ class PdfData(_message.Message):
     def __init__(self, loading_batch_count: _Optional[int] = ..., vector_chunk_count: _Optional[int] = ..., page_count: _Optional[int] = ...) -> None: ...
 
 class Metadata(_message.Message):
-    __slots__ = ("file_size", "publication_type", "pdf")
+    __slots__ = ("file_size", "pdf")
     FILE_SIZE_FIELD_NUMBER: _ClassVar[int]
-    PUBLICATION_TYPE_FIELD_NUMBER: _ClassVar[int]
     PDF_FIELD_NUMBER: _ClassVar[int]
     file_size: int
-    publication_type: str
     pdf: PdfData
-    def __init__(self, file_size: _Optional[int] = ..., publication_type: _Optional[str] = ..., pdf: _Optional[_Union[PdfData, _Mapping]] = ...) -> None: ...
+    def __init__(self, file_size: _Optional[int] = ..., pdf: _Optional[_Union[PdfData, _Mapping]] = ...) -> None: ...
 
 class Document(_message.Message):
     __slots__ = ("id", "name", "metadata", "content", "created_at", "updated_at", "tags", "character_count")
@@ -47,9 +46,9 @@ class Document(_message.Message):
     content: str
     created_at: _timestamp_pb2.Timestamp
     updated_at: _timestamp_pb2.Timestamp
-    tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
+    tags: _containers.RepeatedCompositeFieldContainer[_tag_pb2.Tag]
     character_count: int
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ...) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_tag_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ...) -> None: ...
 
 class DocumentListItem(_message.Message):
     __slots__ = ("id", "name", "metadata", "content_snippet", "created_at", "updated_at", "tags", "character_count", "embedding_status")
@@ -68,10 +67,20 @@ class DocumentListItem(_message.Message):
     content_snippet: str
     created_at: _timestamp_pb2.Timestamp
     updated_at: _timestamp_pb2.Timestamp
-    tags: _containers.RepeatedCompositeFieldContainer[_common_pb2.Tag]
+    tags: _containers.RepeatedCompositeFieldContainer[_tag_pb2.Tag]
     character_count: int
     embedding_status: _embedding_pb2.EmbeddingStatus
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content_snippet: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_common_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ..., embedding_status: _Optional[_Union[_embedding_pb2.EmbeddingStatus, _Mapping]] = ...) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., metadata: _Optional[_Union[Metadata, _Mapping]] = ..., content_snippet: _Optional[str] = ..., created_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updated_at: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., tags: _Optional[_Iterable[_Union[_tag_pb2.Tag, _Mapping]]] = ..., character_count: _Optional[int] = ..., embedding_status: _Optional[_Union[_embedding_pb2.EmbeddingStatus, _Mapping]] = ...) -> None: ...
+
+class DocumentFilter(_message.Message):
+    __slots__ = ("name_query", "content_query", "tag_filters")
+    NAME_QUERY_FIELD_NUMBER: _ClassVar[int]
+    CONTENT_QUERY_FIELD_NUMBER: _ClassVar[int]
+    TAG_FILTERS_FIELD_NUMBER: _ClassVar[int]
+    name_query: str
+    content_query: str
+    tag_filters: _containers.RepeatedCompositeFieldContainer[_tag_pb2.TagFilter]
+    def __init__(self, name_query: _Optional[str] = ..., content_query: _Optional[str] = ..., tag_filters: _Optional[_Iterable[_Union[_tag_pb2.TagFilter, _Mapping]]] = ...) -> None: ...
 
 class StoreDocumentRequest(_message.Message):
     __slots__ = ("document",)
@@ -121,16 +130,6 @@ class UpdateDocumentResponse(_message.Message):
     document: Document
     def __init__(self, success: bool = ..., message: _Optional[str] = ..., document: _Optional[_Union[Document, _Mapping]] = ...) -> None: ...
 
-class DocumentFilter(_message.Message):
-    __slots__ = ("name_query", "content_query", "tag_filters")
-    NAME_QUERY_FIELD_NUMBER: _ClassVar[int]
-    CONTENT_QUERY_FIELD_NUMBER: _ClassVar[int]
-    TAG_FILTERS_FIELD_NUMBER: _ClassVar[int]
-    name_query: str
-    content_query: str
-    tag_filters: _containers.RepeatedCompositeFieldContainer[_common_pb2.TagFilter]
-    def __init__(self, name_query: _Optional[str] = ..., content_query: _Optional[str] = ..., tag_filters: _Optional[_Iterable[_Union[_common_pb2.TagFilter, _Mapping]]] = ...) -> None: ...
-
 class SearchDocumentsRequest(_message.Message):
     __slots__ = ("filter", "page_size", "page_number", "sort_order")
     FILTER_FIELD_NUMBER: _ClassVar[int]
@@ -166,6 +165,42 @@ class DeleteDocumentRequest(_message.Message):
     def __init__(self, id: _Optional[str] = ...) -> None: ...
 
 class DeleteDocumentResponse(_message.Message):
+    __slots__ = ("success", "message")
+    SUCCESS_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    success: bool
+    message: str
+    def __init__(self, success: bool = ..., message: _Optional[str] = ...) -> None: ...
+
+class AssignTagValuesRequest(_message.Message):
+    __slots__ = ("document_ids", "tag_id", "tag_values")
+    DOCUMENT_IDS_FIELD_NUMBER: _ClassVar[int]
+    TAG_ID_FIELD_NUMBER: _ClassVar[int]
+    TAG_VALUES_FIELD_NUMBER: _ClassVar[int]
+    document_ids: _containers.RepeatedScalarFieldContainer[str]
+    tag_id: str
+    tag_values: _containers.RepeatedCompositeFieldContainer[_tag_pb2.TagValue]
+    def __init__(self, document_ids: _Optional[_Iterable[str]] = ..., tag_id: _Optional[str] = ..., tag_values: _Optional[_Iterable[_Union[_tag_pb2.TagValue, _Mapping]]] = ...) -> None: ...
+
+class AssignTagValuesResponse(_message.Message):
+    __slots__ = ("success", "message")
+    SUCCESS_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    success: bool
+    message: str
+    def __init__(self, success: bool = ..., message: _Optional[str] = ...) -> None: ...
+
+class DeleteTagValuesRequest(_message.Message):
+    __slots__ = ("document_ids", "tag_id", "tag_values")
+    DOCUMENT_IDS_FIELD_NUMBER: _ClassVar[int]
+    TAG_ID_FIELD_NUMBER: _ClassVar[int]
+    TAG_VALUES_FIELD_NUMBER: _ClassVar[int]
+    document_ids: _containers.RepeatedScalarFieldContainer[str]
+    tag_id: str
+    tag_values: _containers.RepeatedCompositeFieldContainer[_tag_pb2.TagValue]
+    def __init__(self, document_ids: _Optional[_Iterable[str]] = ..., tag_id: _Optional[str] = ..., tag_values: _Optional[_Iterable[_Union[_tag_pb2.TagValue, _Mapping]]] = ...) -> None: ...
+
+class DeleteTagValuesResponse(_message.Message):
     __slots__ = ("success", "message")
     SUCCESS_FIELD_NUMBER: _ClassVar[int]
     MESSAGE_FIELD_NUMBER: _ClassVar[int]

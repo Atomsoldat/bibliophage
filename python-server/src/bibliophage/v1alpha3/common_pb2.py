@@ -24,17 +24,13 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n!bibliophage/v1alpha3/common.proto\x12\x14\x62ibliophage.v1alpha3\"#\n\x03Tag\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06values\x18\x02 \x03(\t\"(\n\tTagFilter\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t*m\n\tSortOrder\x12\x1a\n\x16SORT_ORDER_UNSPECIFIED\x10\x00\x12\x0c\n\x08NAME_ASC\x10\x01\x12\r\n\tNAME_DESC\x10\x02\x12\x12\n\x0e\x43REATED_AT_ASC\x10\x03\x12\x13\n\x0f\x43REATED_AT_DESC\x10\x04\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n!bibliophage/v1alpha3/common.proto\x12\x14\x62ibliophage.v1alpha3*m\n\tSortOrder\x12\x1a\n\x16SORT_ORDER_UNSPECIFIED\x10\x00\x12\x0c\n\x08NAME_ASC\x10\x01\x12\r\n\tNAME_DESC\x10\x02\x12\x12\n\x0e\x43REATED_AT_ASC\x10\x03\x12\x13\n\x0f\x43REATED_AT_DESC\x10\x04\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'bibliophage.v1alpha3.common_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_SORTORDER']._serialized_start=138
-  _globals['_SORTORDER']._serialized_end=247
-  _globals['_TAG']._serialized_start=59
-  _globals['_TAG']._serialized_end=94
-  _globals['_TAGFILTER']._serialized_start=96
-  _globals['_TAGFILTER']._serialized_end=136
+  _globals['_SORTORDER']._serialized_start=59
+  _globals['_SORTORDER']._serialized_end=168
 # @@protoc_insertion_point(module_scope)

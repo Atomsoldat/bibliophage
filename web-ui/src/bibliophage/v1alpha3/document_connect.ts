@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { DeleteDocumentRequest, DeleteDocumentResponse, GetDocumentRequest, GetDocumentResponse, SearchDocumentsRequest, SearchDocumentsResponse, StoreDocumentRequest, StoreDocumentResponse, UpdateDocumentRequest, UpdateDocumentResponse } from "./document_pb.js";
+import { AssignTagValuesRequest, AssignTagValuesResponse, DeleteDocumentRequest, DeleteDocumentResponse, DeleteTagValuesRequest, DeleteTagValuesResponse, GetDocumentRequest, GetDocumentResponse, SearchDocumentsRequest, SearchDocumentsResponse, StoreDocumentRequest, StoreDocumentResponse, UpdateDocumentRequest, UpdateDocumentResponse } from "./document_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -57,6 +57,24 @@ export const DocumentService = {
       name: "DeleteDocument",
       I: DeleteDocumentRequest,
       O: DeleteDocumentResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc bibliophage.v1alpha3.DocumentService.AssignTagValues
+     */
+    assignTagValues: {
+      name: "AssignTagValues",
+      I: AssignTagValuesRequest,
+      O: AssignTagValuesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc bibliophage.v1alpha3.DocumentService.DeleteTagValues
+     */
+    deleteTagValues: {
+      name: "DeleteTagValues",
+      I: DeleteTagValuesRequest,
+      O: DeleteTagValuesResponse,
       kind: MethodKind.Unary,
     },
   }

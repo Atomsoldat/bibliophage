@@ -5,8 +5,9 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3, protoInt64, Timestamp } from "@bufbuild/protobuf";
-import { SortOrder, Tag, TagFilter } from "./common_pb.js";
+import { Tag, TagFilter, TagValue } from "./tag_pb.js";
 import { EmbeddingStatus } from "./embedding_pb.js";
+import { SortOrder } from "./common_pb.js";
 
 /**
  * PDF-specific metadata for documents sourced from PDFs
@@ -80,13 +81,6 @@ export class Metadata extends Message<Metadata> {
   fileSize = protoInt64.zero;
 
   /**
-   * Publication type (e.g., "Core Rulebook", "Adventure", "Supplement")
-   *
-   * @generated from field: optional string publication_type = 2;
-   */
-  publicationType?: string;
-
-  /**
    * PDF-specific data (only populated for PDF-sourced documents)
    *
    * @generated from field: optional bibliophage.v1alpha3.PdfData pdf = 3;
@@ -102,7 +96,6 @@ export class Metadata extends Message<Metadata> {
   static readonly typeName = "bibliophage.v1alpha3.Metadata";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "file_size", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
-    { no: 2, name: "publication_type", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 3, name: "pdf", kind: "message", T: PdfData, opt: true },
   ]);
 
@@ -287,9 +280,10 @@ export class DocumentListItem extends Message<DocumentListItem> {
   characterCount = 0;
 
   /**
-   * Embedding status (optional, populated if chunk boundaries exist)
    * TODO: we  should think about whether we want to calculcate this at each search
    * I think it's better to have a field in the database representing this information
+   *
+   * Embedding status (optional, populated if chunk boundaries exist)
    *
    * @generated from field: optional bibliophage.v1alpha3.EmbeddingStatus embedding_status = 12;
    */
@@ -332,301 +326,7 @@ export class DocumentListItem extends Message<DocumentListItem> {
 }
 
 /**
- * StoreDocumentRequest - Create a new document
- *
- * @generated from message bibliophage.v1alpha3.StoreDocumentRequest
- */
-export class StoreDocumentRequest extends Message<StoreDocumentRequest> {
-  /**
-   * The document to store (ID will be assigned by server)
-   *
-   * @generated from field: bibliophage.v1alpha3.Document document = 1;
-   */
-  document?: Document;
-
-  constructor(data?: PartialMessage<StoreDocumentRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "bibliophage.v1alpha3.StoreDocumentRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "document", kind: "message", T: Document },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StoreDocumentRequest {
-    return new StoreDocumentRequest().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StoreDocumentRequest {
-    return new StoreDocumentRequest().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StoreDocumentRequest {
-    return new StoreDocumentRequest().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: StoreDocumentRequest | PlainMessage<StoreDocumentRequest> | undefined, b: StoreDocumentRequest | PlainMessage<StoreDocumentRequest> | undefined): boolean {
-    return proto3.util.equals(StoreDocumentRequest, a, b);
-  }
-}
-
-/**
- * StoreDocumentResponse - Result of storing a document
- *
- * @generated from message bibliophage.v1alpha3.StoreDocumentResponse
- */
-export class StoreDocumentResponse extends Message<StoreDocumentResponse> {
-  /**
-   * Whether the operation succeeded
-   *
-   * @generated from field: bool success = 1;
-   */
-  success = false;
-
-  /**
-   * Human-readable status/error message
-   *
-   * @generated from field: string message = 2;
-   */
-  message = "";
-
-  /**
-   * The stored document with assigned ID
-   *
-   * @generated from field: bibliophage.v1alpha3.Document document = 3;
-   */
-  document?: Document;
-
-  constructor(data?: PartialMessage<StoreDocumentResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "bibliophage.v1alpha3.StoreDocumentResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "document", kind: "message", T: Document },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StoreDocumentResponse {
-    return new StoreDocumentResponse().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StoreDocumentResponse {
-    return new StoreDocumentResponse().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StoreDocumentResponse {
-    return new StoreDocumentResponse().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: StoreDocumentResponse | PlainMessage<StoreDocumentResponse> | undefined, b: StoreDocumentResponse | PlainMessage<StoreDocumentResponse> | undefined): boolean {
-    return proto3.util.equals(StoreDocumentResponse, a, b);
-  }
-}
-
-/**
- * GetDocumentRequest - Retrieve a specific document by ID
- *
- * @generated from message bibliophage.v1alpha3.GetDocumentRequest
- */
-export class GetDocumentRequest extends Message<GetDocumentRequest> {
-  /**
-   * The unique ID of the document to retrieve
-   *
-   * @generated from field: string id = 1;
-   */
-  id = "";
-
-  constructor(data?: PartialMessage<GetDocumentRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "bibliophage.v1alpha3.GetDocumentRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDocumentRequest {
-    return new GetDocumentRequest().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetDocumentRequest {
-    return new GetDocumentRequest().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetDocumentRequest {
-    return new GetDocumentRequest().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: GetDocumentRequest | PlainMessage<GetDocumentRequest> | undefined, b: GetDocumentRequest | PlainMessage<GetDocumentRequest> | undefined): boolean {
-    return proto3.util.equals(GetDocumentRequest, a, b);
-  }
-}
-
-/**
- * GetDocumentResponse - Result of getting a document
- *
- * @generated from message bibliophage.v1alpha3.GetDocumentResponse
- */
-export class GetDocumentResponse extends Message<GetDocumentResponse> {
-  /**
-   * Whether the operation succeeded
-   *
-   * @generated from field: bool success = 1;
-   */
-  success = false;
-
-  /**
-   * Human-readable status/error message
-   *
-   * @generated from field: string message = 2;
-   */
-  message = "";
-
-  /**
-   * The requested document (null if not found)
-   *
-   * @generated from field: optional bibliophage.v1alpha3.Document document = 3;
-   */
-  document?: Document;
-
-  constructor(data?: PartialMessage<GetDocumentResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "bibliophage.v1alpha3.GetDocumentResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "document", kind: "message", T: Document, opt: true },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDocumentResponse {
-    return new GetDocumentResponse().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetDocumentResponse {
-    return new GetDocumentResponse().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetDocumentResponse {
-    return new GetDocumentResponse().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: GetDocumentResponse | PlainMessage<GetDocumentResponse> | undefined, b: GetDocumentResponse | PlainMessage<GetDocumentResponse> | undefined): boolean {
-    return proto3.util.equals(GetDocumentResponse, a, b);
-  }
-}
-
-/**
- * UpdateDocumentRequest - Update an existing document
- *
- * @generated from message bibliophage.v1alpha3.UpdateDocumentRequest
- */
-export class UpdateDocumentRequest extends Message<UpdateDocumentRequest> {
-  /**
-   * The document to update (must include ID)
-   *
-   * @generated from field: bibliophage.v1alpha3.Document document = 1;
-   */
-  document?: Document;
-
-  constructor(data?: PartialMessage<UpdateDocumentRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "bibliophage.v1alpha3.UpdateDocumentRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "document", kind: "message", T: Document },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateDocumentRequest {
-    return new UpdateDocumentRequest().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateDocumentRequest {
-    return new UpdateDocumentRequest().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateDocumentRequest {
-    return new UpdateDocumentRequest().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: UpdateDocumentRequest | PlainMessage<UpdateDocumentRequest> | undefined, b: UpdateDocumentRequest | PlainMessage<UpdateDocumentRequest> | undefined): boolean {
-    return proto3.util.equals(UpdateDocumentRequest, a, b);
-  }
-}
-
-/**
- * UpdateDocumentResponse - Result of updating a document
- *
- * @generated from message bibliophage.v1alpha3.UpdateDocumentResponse
- */
-export class UpdateDocumentResponse extends Message<UpdateDocumentResponse> {
-  /**
-   * Whether the operation succeeded
-   *
-   * @generated from field: bool success = 1;
-   */
-  success = false;
-
-  /**
-   * Human-readable status/error message
-   *
-   * @generated from field: string message = 2;
-   */
-  message = "";
-
-  /**
-   * The updated document
-   *
-   * @generated from field: bibliophage.v1alpha3.Document document = 3;
-   */
-  document?: Document;
-
-  constructor(data?: PartialMessage<UpdateDocumentResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "bibliophage.v1alpha3.UpdateDocumentResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "document", kind: "message", T: Document },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateDocumentResponse {
-    return new UpdateDocumentResponse().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateDocumentResponse {
-    return new UpdateDocumentResponse().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateDocumentResponse {
-    return new UpdateDocumentResponse().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: UpdateDocumentResponse | PlainMessage<UpdateDocumentResponse> | undefined, b: UpdateDocumentResponse | PlainMessage<UpdateDocumentResponse> | undefined): boolean {
-    return proto3.util.equals(UpdateDocumentResponse, a, b);
-  }
-}
-
-/**
- * DocumentFilter - Reusable filter criteria for document searches
+ * Reusable filter criteria for document searches
  * This can be used across different search endpoints and services
  *
  * @generated from message bibliophage.v1alpha3.DocumentFilter
@@ -686,7 +386,289 @@ export class DocumentFilter extends Message<DocumentFilter> {
 }
 
 /**
- * SearchDocumentsRequest - Search for documents by various criteria
+ * Create a new document
+ *
+ * @generated from message bibliophage.v1alpha3.StoreDocumentRequest
+ */
+export class StoreDocumentRequest extends Message<StoreDocumentRequest> {
+  /**
+   * The document to store (ID will be assigned by server)
+   *
+   * @generated from field: bibliophage.v1alpha3.Document document = 1;
+   */
+  document?: Document;
+
+  constructor(data?: PartialMessage<StoreDocumentRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.StoreDocumentRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "document", kind: "message", T: Document },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StoreDocumentRequest {
+    return new StoreDocumentRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StoreDocumentRequest {
+    return new StoreDocumentRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StoreDocumentRequest {
+    return new StoreDocumentRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: StoreDocumentRequest | PlainMessage<StoreDocumentRequest> | undefined, b: StoreDocumentRequest | PlainMessage<StoreDocumentRequest> | undefined): boolean {
+    return proto3.util.equals(StoreDocumentRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message bibliophage.v1alpha3.StoreDocumentResponse
+ */
+export class StoreDocumentResponse extends Message<StoreDocumentResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * human readable message
+   *
+   * @generated from field: string message = 2;
+   */
+  message = "";
+
+  /**
+   * The stored document with assigned ID
+   *
+   * @generated from field: bibliophage.v1alpha3.Document document = 3;
+   */
+  document?: Document;
+
+  constructor(data?: PartialMessage<StoreDocumentResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.StoreDocumentResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "document", kind: "message", T: Document },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StoreDocumentResponse {
+    return new StoreDocumentResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StoreDocumentResponse {
+    return new StoreDocumentResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StoreDocumentResponse {
+    return new StoreDocumentResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: StoreDocumentResponse | PlainMessage<StoreDocumentResponse> | undefined, b: StoreDocumentResponse | PlainMessage<StoreDocumentResponse> | undefined): boolean {
+    return proto3.util.equals(StoreDocumentResponse, a, b);
+  }
+}
+
+/**
+ * Retrieve a specific document by ID
+ *
+ * @generated from message bibliophage.v1alpha3.GetDocumentRequest
+ */
+export class GetDocumentRequest extends Message<GetDocumentRequest> {
+  /**
+   * The unique ID of the document to retrieve
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  constructor(data?: PartialMessage<GetDocumentRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.GetDocumentRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDocumentRequest {
+    return new GetDocumentRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetDocumentRequest {
+    return new GetDocumentRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetDocumentRequest {
+    return new GetDocumentRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetDocumentRequest | PlainMessage<GetDocumentRequest> | undefined, b: GetDocumentRequest | PlainMessage<GetDocumentRequest> | undefined): boolean {
+    return proto3.util.equals(GetDocumentRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message bibliophage.v1alpha3.GetDocumentResponse
+ */
+export class GetDocumentResponse extends Message<GetDocumentResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * human readable message
+   *
+   * @generated from field: string message = 2;
+   */
+  message = "";
+
+  /**
+   * The requested document (null if not found)
+   *
+   * @generated from field: optional bibliophage.v1alpha3.Document document = 3;
+   */
+  document?: Document;
+
+  constructor(data?: PartialMessage<GetDocumentResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.GetDocumentResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "document", kind: "message", T: Document, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDocumentResponse {
+    return new GetDocumentResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetDocumentResponse {
+    return new GetDocumentResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetDocumentResponse {
+    return new GetDocumentResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetDocumentResponse | PlainMessage<GetDocumentResponse> | undefined, b: GetDocumentResponse | PlainMessage<GetDocumentResponse> | undefined): boolean {
+    return proto3.util.equals(GetDocumentResponse, a, b);
+  }
+}
+
+/**
+ * Update an existing document
+ *
+ * @generated from message bibliophage.v1alpha3.UpdateDocumentRequest
+ */
+export class UpdateDocumentRequest extends Message<UpdateDocumentRequest> {
+  /**
+   * The document to update (must include ID)
+   *
+   * @generated from field: bibliophage.v1alpha3.Document document = 1;
+   */
+  document?: Document;
+
+  constructor(data?: PartialMessage<UpdateDocumentRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.UpdateDocumentRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "document", kind: "message", T: Document },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateDocumentRequest {
+    return new UpdateDocumentRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateDocumentRequest {
+    return new UpdateDocumentRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateDocumentRequest {
+    return new UpdateDocumentRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateDocumentRequest | PlainMessage<UpdateDocumentRequest> | undefined, b: UpdateDocumentRequest | PlainMessage<UpdateDocumentRequest> | undefined): boolean {
+    return proto3.util.equals(UpdateDocumentRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message bibliophage.v1alpha3.UpdateDocumentResponse
+ */
+export class UpdateDocumentResponse extends Message<UpdateDocumentResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * human readable message
+   *
+   * @generated from field: string message = 2;
+   */
+  message = "";
+
+  /**
+   * The updated document
+   *
+   * @generated from field: bibliophage.v1alpha3.Document document = 3;
+   */
+  document?: Document;
+
+  constructor(data?: PartialMessage<UpdateDocumentResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.UpdateDocumentResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "document", kind: "message", T: Document },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateDocumentResponse {
+    return new UpdateDocumentResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateDocumentResponse {
+    return new UpdateDocumentResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateDocumentResponse {
+    return new UpdateDocumentResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateDocumentResponse | PlainMessage<UpdateDocumentResponse> | undefined, b: UpdateDocumentResponse | PlainMessage<UpdateDocumentResponse> | undefined): boolean {
+    return proto3.util.equals(UpdateDocumentResponse, a, b);
+  }
+}
+
+/**
+ * Search for documents by various criteria
  *
  * @generated from message bibliophage.v1alpha3.SearchDocumentsRequest
  */
@@ -715,8 +697,6 @@ export class SearchDocumentsRequest extends Message<SearchDocumentsRequest> {
   pageNumber?: number;
 
   /**
-   * Sorting
-   *
    * @generated from field: optional bibliophage.v1alpha3.SortOrder sort_order = 4;
    */
   sortOrder?: SortOrder;
@@ -753,20 +733,16 @@ export class SearchDocumentsRequest extends Message<SearchDocumentsRequest> {
 }
 
 /**
- * SearchDocumentsResponse - Results of document search
- *
  * @generated from message bibliophage.v1alpha3.SearchDocumentsResponse
  */
 export class SearchDocumentsResponse extends Message<SearchDocumentsResponse> {
   /**
-   * Whether the operation succeeded
-   *
    * @generated from field: bool success = 1;
    */
   success = false;
 
   /**
-   * Human-readable status/error message
+   * human readable message
    *
    * @generated from field: string message = 2;
    */
@@ -782,6 +758,7 @@ export class SearchDocumentsResponse extends Message<SearchDocumentsResponse> {
 
   /**
    * TODO: i think i want to get rid of these two
+   *
    * Total number of results (for pagination)
    *
    * @generated from field: int32 total_count = 4;
@@ -836,7 +813,7 @@ export class SearchDocumentsResponse extends Message<SearchDocumentsResponse> {
 }
 
 /**
- * DeleteDocumentRequest - Delete a document by ID
+ * Delete a document by ID
  *
  * @generated from message bibliophage.v1alpha3.DeleteDocumentRequest
  */
@@ -877,20 +854,16 @@ export class DeleteDocumentRequest extends Message<DeleteDocumentRequest> {
 }
 
 /**
- * DeleteDocumentResponse - Result of deleting a document
- *
  * @generated from message bibliophage.v1alpha3.DeleteDocumentResponse
  */
 export class DeleteDocumentResponse extends Message<DeleteDocumentResponse> {
   /**
-   * Whether the operation succeeded
-   *
    * @generated from field: bool success = 1;
    */
   success = false;
 
   /**
-   * Human-readable status/error message
+   * human readable message
    *
    * @generated from field: string message = 2;
    */
@@ -922,6 +895,210 @@ export class DeleteDocumentResponse extends Message<DeleteDocumentResponse> {
 
   static equals(a: DeleteDocumentResponse | PlainMessage<DeleteDocumentResponse> | undefined, b: DeleteDocumentResponse | PlainMessage<DeleteDocumentResponse> | undefined): boolean {
     return proto3.util.equals(DeleteDocumentResponse, a, b);
+  }
+}
+
+/**
+ * Assign a list of tag values to a list of documents for a given tag
+ *
+ * @generated from message bibliophage.v1alpha3.AssignTagValuesRequest
+ */
+export class AssignTagValuesRequest extends Message<AssignTagValuesRequest> {
+  /**
+   * The IDs of the document to assign the tag value to
+   *
+   * @generated from field: repeated string document_ids = 1;
+   */
+  documentIds: string[] = [];
+
+  /**
+   * The ID of the tag
+   *
+   * @generated from field: string tag_id = 2;
+   */
+  tagId = "";
+
+  /**
+   * the tag values to assign, if it does not exist, it will be created
+   *
+   * @generated from field: repeated bibliophage.v1alpha3.TagValue tag_values = 3;
+   */
+  tagValues: TagValue[] = [];
+
+  constructor(data?: PartialMessage<AssignTagValuesRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.AssignTagValuesRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "document_ids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 2, name: "tag_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "tag_values", kind: "message", T: TagValue, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AssignTagValuesRequest {
+    return new AssignTagValuesRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AssignTagValuesRequest {
+    return new AssignTagValuesRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AssignTagValuesRequest {
+    return new AssignTagValuesRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: AssignTagValuesRequest | PlainMessage<AssignTagValuesRequest> | undefined, b: AssignTagValuesRequest | PlainMessage<AssignTagValuesRequest> | undefined): boolean {
+    return proto3.util.equals(AssignTagValuesRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message bibliophage.v1alpha3.AssignTagValuesResponse
+ */
+export class AssignTagValuesResponse extends Message<AssignTagValuesResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * human readable message
+   *
+   * @generated from field: string message = 2;
+   */
+  message = "";
+
+  constructor(data?: PartialMessage<AssignTagValuesResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.AssignTagValuesResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AssignTagValuesResponse {
+    return new AssignTagValuesResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AssignTagValuesResponse {
+    return new AssignTagValuesResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AssignTagValuesResponse {
+    return new AssignTagValuesResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: AssignTagValuesResponse | PlainMessage<AssignTagValuesResponse> | undefined, b: AssignTagValuesResponse | PlainMessage<AssignTagValuesResponse> | undefined): boolean {
+    return proto3.util.equals(AssignTagValuesResponse, a, b);
+  }
+}
+
+/**
+ * Delete a list of tag values from a list of documents for a given tag
+ *
+ * @generated from message bibliophage.v1alpha3.DeleteTagValuesRequest
+ */
+export class DeleteTagValuesRequest extends Message<DeleteTagValuesRequest> {
+  /**
+   * The IDs of the document to remove the tag values from
+   *
+   * @generated from field: repeated string document_ids = 1;
+   */
+  documentIds: string[] = [];
+
+  /**
+   * The ID of the tag
+   *
+   * @generated from field: string tag_id = 2;
+   */
+  tagId = "";
+
+  /**
+   * the tag values to remove; if no tag values are provided, all tag values are removed for that tag, as is the tag
+   *
+   * @generated from field: repeated bibliophage.v1alpha3.TagValue tag_values = 3;
+   */
+  tagValues: TagValue[] = [];
+
+  constructor(data?: PartialMessage<DeleteTagValuesRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.DeleteTagValuesRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "document_ids", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 2, name: "tag_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "tag_values", kind: "message", T: TagValue, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteTagValuesRequest {
+    return new DeleteTagValuesRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteTagValuesRequest {
+    return new DeleteTagValuesRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteTagValuesRequest {
+    return new DeleteTagValuesRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteTagValuesRequest | PlainMessage<DeleteTagValuesRequest> | undefined, b: DeleteTagValuesRequest | PlainMessage<DeleteTagValuesRequest> | undefined): boolean {
+    return proto3.util.equals(DeleteTagValuesRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message bibliophage.v1alpha3.DeleteTagValuesResponse
+ */
+export class DeleteTagValuesResponse extends Message<DeleteTagValuesResponse> {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success = false;
+
+  /**
+   * human readable message
+   *
+   * @generated from field: string message = 2;
+   */
+  message = "";
+
+  constructor(data?: PartialMessage<DeleteTagValuesResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "bibliophage.v1alpha3.DeleteTagValuesResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "success", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteTagValuesResponse {
+    return new DeleteTagValuesResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteTagValuesResponse {
+    return new DeleteTagValuesResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteTagValuesResponse {
+    return new DeleteTagValuesResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteTagValuesResponse | PlainMessage<DeleteTagValuesResponse> | undefined, b: DeleteTagValuesResponse | PlainMessage<DeleteTagValuesResponse> | undefined): boolean {
+    return proto3.util.equals(DeleteTagValuesResponse, a, b);
   }
 }
 

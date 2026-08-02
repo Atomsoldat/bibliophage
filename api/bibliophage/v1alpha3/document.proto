@@ -14,6 +14,8 @@ service DocumentService {
   rpc UpdateDocument(UpdateDocumentRequest) returns (UpdateDocumentResponse);
   rpc SearchDocuments(SearchDocumentsRequest) returns (SearchDocumentsResponse);
   rpc DeleteDocument(DeleteDocumentRequest) returns (DeleteDocumentResponse);
+  rpc AssignTagValues(AssignTagValuesRequest) returns (AssignTagValuesResponse);
+  rpc DeleteTagValues(DeleteTagValuesRequest) returns (DeleteTagValuesResponse);
 }
 
 // TODO:  tidy up field ordering, some fields were deleted
@@ -140,6 +142,28 @@ message DeleteDocumentRequest {
   string id = 1;           // The unique ID of the document to delete
 }
 message DeleteDocumentResponse {
+  bool success = 1;
+  string message = 2;      // human readable message
+}
+
+// Assign a list of tag values to a list of documents for a given tag
+message AssignTagValuesRequest {
+  repeated string document_ids = 1;           // The IDs of the document to assign the tag value to
+  string tag_id = 2;                         // The ID of the tag
+  repeated TagValue tag_values = 3;           // the tag values to assign, if it does not exist, it will be created
+}
+message AssignTagValuesResponse {
+  bool success = 1;
+  string message = 2;      // human readable message
+}
+
+// Delete a list of tag values from a list of documents for a given tag
+message DeleteTagValuesRequest {
+  repeated string document_ids = 1;           // The IDs of the document to remove the tag values from
+  string tag_id = 2;                         // The ID of the tag
+  repeated TagValue tag_values = 3;           // the tag values to remove; if no tag values are provided, all tag values are removed for that tag, as is the tag
+}
+message DeleteTagValuesResponse {
   bool success = 1;
   string message = 2;      // human readable message
 }

@@ -5,7 +5,7 @@
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
 import { Message, proto3, protoInt64, Timestamp } from "@bufbuild/protobuf";
-import { Tag } from "./common_pb.js";
+import { Tag } from "./tag_pb.js";
 
 /**
  * Pdf represents a PDF document in the system
@@ -27,25 +27,6 @@ export class Pdf extends Message<Pdf> {
    * @generated from field: string name = 2;
    */
   name = "";
-
-  /**
-   * Which RPG system(s) this belongs to
-   * Examples:
-   *   Single system: ["Call of Cthulhu"]
-   *   Multi-system: ["D&D 3.5e", "Pathfinder 1e"]
-   *   System-agnostic: ["Generic"]
-   * Must contain at least one value
-   *
-   * @generated from field: repeated string systems = 3;
-   */
-  systems: string[] = [];
-
-  /**
-   * Type of publication (e.g., "Core Rulebook", "Adventure", "Supplement")
-   *
-   * @generated from field: string type = 4;
-   */
-  type = "";
 
   /**
    * Number of pages in the PDF
@@ -115,8 +96,6 @@ export class Pdf extends Message<Pdf> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "systems", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 4, name: "type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "page_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 6, name: "created_at", kind: "message", T: Timestamp },
     { no: 7, name: "updated_at", kind: "message", T: Timestamp },
@@ -166,20 +145,6 @@ export class PdfListItem extends Message<PdfListItem> {
    * @generated from field: string name = 2;
    */
   name = "";
-
-  /**
-   * Which RPG system(s) this belongs to (see Pdf message for examples)
-   *
-   * @generated from field: repeated string systems = 3;
-   */
-  systems: string[] = [];
-
-  /**
-   * Type of publication
-   *
-   * @generated from field: string type = 4;
-   */
-  type = "";
 
   /**
    * Number of pages in the PDF
@@ -240,8 +205,6 @@ export class PdfListItem extends Message<PdfListItem> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "systems", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 4, name: "type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "page_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 6, name: "created_at", kind: "message", T: Timestamp },
     { no: 7, name: "updated_at", kind: "message", T: Timestamp },

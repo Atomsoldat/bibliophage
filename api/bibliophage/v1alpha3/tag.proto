@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package bibliophage.v1alpha3;
 
-import "bibliophage/v1alpha3/common.proto";
-
 // Service definitions - the API endpoints
 service TagService {
   rpc StoreTag(StoreTagRequest) returns (StoreTagResponse);
@@ -13,8 +11,8 @@ service TagService {
   rpc StoreTagValue(StoreTagValueRequest) returns (StoreTagValueResponse);
   rpc DeleteTagValue(DeleteTagValueRequest) returns (DeleteTagValueResponse);
   rpc RenameTagValue(RenameTagValueRequest) returns (RenameTagValueResponse);
-  rpc ListAllTags(GetTagRequest) returns (GetTagResponse);
-  rpc ListAllTagValues(GetTagRequest) returns (GetTagResponse);
+  rpc GetTag(GetTagRequest) returns (GetTagResponse);
+  rpc GetTags(GetTagsRequest) returns (GetTagsResponse);
 }
 
 // Tag represents a named category with multiple values
@@ -23,21 +21,24 @@ message Tag {
   // Name of the tag (e.g., "genre", "world", "category", "tone")
   string name = 1;
   // UUID for this specific tag
-  string id =2;
+  string id = 2;
   // hex coded colour
   // TODO: should and can we validate this in the fronted / API too?
-  optional string colour 3;
+  optional string colour = 3;
   // Values associated with this tag
   repeated TagValue values = 4;
   // number of documents this tag applies to
-  optional int32 document_count 5;
+  optional int32 document_count = 5;
+  // number of distinct values this tag has
+  optional int32 value_count = 6;
 }
 
 message TagValue {
+  string id = 1; // ID for this tag value
   // Value for a given tag (e.g., "fantasy", "arrakis", "rulebook", "mysterious")
-  string value = 1;
+  string value = 2;
   // number of documents this tag value applies to
-  optional int32 document_count 2;
+  optional int32 document_count = 3;
 }
 
 // TagFilter represents a filter for tag-based searches
@@ -69,6 +70,9 @@ message GetTagRequest {
   // whether or not to return the tag with the document_count attribute
   // defaults to false
   optional bool count_docs = 2;
+  // whether or not to return the tag with the value_count attribute
+  // defaults to false
+  optional bool count_values = 3;
 }
 message GetTagResponse {
   // Whether the operation succeeded
@@ -86,14 +90,17 @@ message GetTagsRequest {
   optional string name_filter = 1;
   // whether or not to return the tags with their document_count attribute
   // defaults to false
-  optional bool count_docs = 1;
+  optional bool count_docs = 2;
+  // whether or not to return the tags with their value_count attribute
+  // defaults to false
+  optional bool count_values = 3;
 }
 message GetTagsResponse {
   bool success = 1;
   // Human-readable status/error message
   string message = 2;
   // the tags matching the filter 
-  repeated Tag tags;
+  repeated Tag tags = 3;
 }
 
 // Delete a tag by ID
@@ -111,7 +118,7 @@ message DeleteTagResponse {
 // Rename an existing tag
 message RenameTagRequest {
   // The tag id to update
-  string tag_id = 1;
+  string id = 1;
   // new name
   string name = 2;
 }
@@ -126,7 +133,7 @@ message RenameTagResponse {
 // Change tag colour
 message UpdateTagColourRequest {
   // The tag id to update
-  string tag_id = 1;
+  string id = 1;
   // new colour
   string colour = 2;
 }
@@ -168,7 +175,7 @@ message DeleteTagValueResponse {
 // Rename an existing tag value
 message RenameTagValueRequest {
   // The tag value id to update
-  string tag_value_id = 1;
+  string id = 1;
   // new name
   string name = 2;
 }
@@ -176,6 +183,6 @@ message RenameTagValueResponse {
   bool success = 1;
   // Human-readable status/error message
   string message = 2;
-  // The updated tag
-  Tag tag = 3;
+  // The renamed tag value
+  TagValue tag_value = 3;
 }

@@ -22,25 +22,25 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
-from bibliophage.v1alpha3 import common_pb2 as bibliophage_dot_v1alpha3_dot_common__pb2
+from bibliophage.v1alpha3 import tag_pb2 as bibliophage_dot_v1alpha3_dot_tag__pb2
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1e\x62ibliophage/v1alpha3/pdf.proto\x12\x14\x62ibliophage.v1alpha3\x1a!bibliophage/v1alpha3/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc1\x02\n\x03Pdf\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x0f\n\x07systems\x18\x03 \x03(\t\x12\x0c\n\x04type\x18\x04 \x01(\t\x12\x12\n\npage_count\x18\x05 \x01(\x05\x12.\n\ncreated_at\x18\x06 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x07 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x11\n\tfile_size\x18\x08 \x01(\x03\x12\x13\n\x0b\x62\x61tch_count\x18\t \x01(\x05\x12\x1a\n\x12vector_chunk_count\x18\n \x01(\x05\x12\'\n\x04tags\x18\x0b \x03(\x0b\x32\x19.bibliophage.v1alpha3.Tag\x12\x14\n\x07\x63ontent\x18\x0c \x01(\tH\x00\x88\x01\x01\x42\n\n\x08_content\"\xa7\x02\n\x0bPdfListItem\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x0f\n\x07systems\x18\x03 \x03(\t\x12\x0c\n\x04type\x18\x04 \x01(\t\x12\x12\n\npage_count\x18\x05 \x01(\x05\x12.\n\ncreated_at\x18\x06 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x07 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x11\n\tfile_size\x18\x08 \x01(\x03\x12\x13\n\x0b\x62\x61tch_count\x18\t \x01(\x05\x12\x1a\n\x12vector_chunk_count\x18\n \x01(\x05\x12\'\n\x04tags\x18\x0b \x03(\x0b\x32\x19.bibliophage.v1alpha3.Tag\"K\n\x0eLoadPdfRequest\x12&\n\x03pdf\x18\x01 \x01(\x0b\x32\x19.bibliophage.v1alpha3.Pdf\x12\x11\n\tfile_data\x18\x02 \x01(\x0c\"[\n\x0fLoadPdfResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12&\n\x03pdf\x18\x03 \x01(\x0b\x32\x19.bibliophage.v1alpha3.Pdf2d\n\nPdfService\x12V\n\x07LoadPdf\x12$.bibliophage.v1alpha3.LoadPdfRequest\x1a%.bibliophage.v1alpha3.LoadPdfResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1e\x62ibliophage/v1alpha3/pdf.proto\x12\x14\x62ibliophage.v1alpha3\x1a\x1e\x62ibliophage/v1alpha3/tag.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa2\x02\n\x03Pdf\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x12\n\npage_count\x18\x05 \x01(\x05\x12.\n\ncreated_at\x18\x06 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x07 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x11\n\tfile_size\x18\x08 \x01(\x03\x12\x13\n\x0b\x62\x61tch_count\x18\t \x01(\x05\x12\x1a\n\x12vector_chunk_count\x18\n \x01(\x05\x12\'\n\x04tags\x18\x0b \x03(\x0b\x32\x19.bibliophage.v1alpha3.Tag\x12\x14\n\x07\x63ontent\x18\x0c \x01(\tH\x00\x88\x01\x01\x42\n\n\x08_content\"\x88\x02\n\x0bPdfListItem\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x12\n\npage_count\x18\x05 \x01(\x05\x12.\n\ncreated_at\x18\x06 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x07 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x11\n\tfile_size\x18\x08 \x01(\x03\x12\x13\n\x0b\x62\x61tch_count\x18\t \x01(\x05\x12\x1a\n\x12vector_chunk_count\x18\n \x01(\x05\x12\'\n\x04tags\x18\x0b \x03(\x0b\x32\x19.bibliophage.v1alpha3.Tag\"K\n\x0eLoadPdfRequest\x12&\n\x03pdf\x18\x01 \x01(\x0b\x32\x19.bibliophage.v1alpha3.Pdf\x12\x11\n\tfile_data\x18\x02 \x01(\x0c\"[\n\x0fLoadPdfResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12&\n\x03pdf\x18\x03 \x01(\x0b\x32\x19.bibliophage.v1alpha3.Pdf2d\n\nPdfService\x12V\n\x07LoadPdf\x12$.bibliophage.v1alpha3.LoadPdfRequest\x1a%.bibliophage.v1alpha3.LoadPdfResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'bibliophage.v1alpha3.pdf_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_PDF']._serialized_start=125
-  _globals['_PDF']._serialized_end=446
-  _globals['_PDFLISTITEM']._serialized_start=449
-  _globals['_PDFLISTITEM']._serialized_end=744
-  _globals['_LOADPDFREQUEST']._serialized_start=746
-  _globals['_LOADPDFREQUEST']._serialized_end=821
-  _globals['_LOADPDFRESPONSE']._serialized_start=823
-  _globals['_LOADPDFRESPONSE']._serialized_end=914
-  _globals['_PDFSERVICE']._serialized_start=916
-  _globals['_PDFSERVICE']._serialized_end=1016
+  _globals['_PDF']._serialized_start=122
+  _globals['_PDF']._serialized_end=412
+  _globals['_PDFLISTITEM']._serialized_start=415
+  _globals['_PDFLISTITEM']._serialized_end=679
+  _globals['_LOADPDFREQUEST']._serialized_start=681
+  _globals['_LOADPDFREQUEST']._serialized_end=756
+  _globals['_LOADPDFRESPONSE']._serialized_start=758
+  _globals['_LOADPDFRESPONSE']._serialized_end=849
+  _globals['_PDFSERVICE']._serialized_start=851
+  _globals['_PDFSERVICE']._serialized_end=951
 # @@protoc_insertion_point(module_scope)
