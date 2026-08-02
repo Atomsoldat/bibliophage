@@ -135,7 +135,7 @@ message SearchDocumentsResponse {
   bool has_more = 6;       // Whether there are more pages
 }
 
-Delete a document by ID
+//Delete a document by ID
 message DeleteDocumentRequest {
   string id = 1;           // The unique ID of the document to delete
 }
