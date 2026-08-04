@@ -23,12 +23,14 @@ class Tag(_message.Message):
     def __init__(self, name: _Optional[str] = ..., id: _Optional[str] = ..., colour: _Optional[str] = ..., values: _Optional[_Iterable[_Union[TagValue, _Mapping]]] = ..., document_count: _Optional[int] = ..., value_count: _Optional[int] = ...) -> None: ...
 
 class TagValue(_message.Message):
-    __slots__ = ("value", "document_count")
+    __slots__ = ("id", "value", "document_count")
+    ID_FIELD_NUMBER: _ClassVar[int]
     VALUE_FIELD_NUMBER: _ClassVar[int]
     DOCUMENT_COUNT_FIELD_NUMBER: _ClassVar[int]
+    id: str
     value: str
     document_count: int
-    def __init__(self, value: _Optional[str] = ..., document_count: _Optional[int] = ...) -> None: ...
+    def __init__(self, id: _Optional[str] = ..., value: _Optional[str] = ..., document_count: _Optional[int] = ...) -> None: ...
 
 class TagFilter(_message.Message):
     __slots__ = ("name", "value")
