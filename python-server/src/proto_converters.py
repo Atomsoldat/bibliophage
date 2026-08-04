@@ -11,8 +11,8 @@ from typing import Any
 
 from google.protobuf import timestamp_pb2
 
-import bibliophage.v1alpha3.common_pb2 as common_api
 import bibliophage.v1alpha3.document_pb2 as document_api
+import bibliophage.v1alpha3.tag_pb2 as tag_api
 
 
 def datetime_to_proto_ts(dt: datetime) -> timestamp_pb2.Timestamp:
@@ -52,9 +52,13 @@ def row_to_proto_document(
         proto.metadata.CopyFrom(metadata_dict_to_proto(metadata_dict))
 
     for tag_data in row.get("tags", []):
-        tag = common_api.Tag()
+        tag = tag_api.Tag()
         tag.name = tag_data.get("name", "")
-        tag.values.extend(tag_data.get("values", []))
+        # DB read-side enrichment (_hydrate_document_tags) does not yet return
+        # tag_value_id alongside the value string, so TagValue.id is left unset here.
+        tag.values.extend(
+            tag_api.TagValue(value=v) for v in tag_data.get("values", [])
+        )
         proto.tags.append(tag)
 
     # Timestamps
@@ -67,14 +71,12 @@ def row_to_proto_document(
 def metadata_dict_to_proto(d: dict[str, Any]) -> document_api.Metadata:
     """Build a Metadata proto from a JSONB metadata dict (as returned by Postgres).
 
-    Missing keys default to the proto's zero values. The optional `publication_type`
-    and `pdf` fields are only set when present in the dict, so HasField reports
-    them accurately on the resulting proto.
+    Missing keys default to the proto's zero values. The optional `pdf` field
+    is only set when present in the dict, so HasField reports it accurately
+    on the resulting proto.
     """
     metadata = document_api.Metadata()
     metadata.file_size = d.get("file_size", 0)
-    if "publication_type" in d:
-        metadata.publication_type = d["publication_type"]
     if "pdf" in d:
         pdf = d["pdf"]
         metadata.pdf.CopyFrom(
@@ -90,12 +92,10 @@ def metadata_dict_to_proto(d: dict[str, Any]) -> document_api.Metadata:
 def metadata_proto_to_dict(m: document_api.Metadata) -> dict[str, Any]:
     """Serialize a Metadata proto into a dict suitable for JSONB storage.
 
-    Optional fields (`publication_type`, `pdf`) are only included when set on
-    the proto, matching how the read-side converter interprets them.
+    The optional `pdf` field is only included when set on the proto, matching
+    how the read-side converter interprets it.
     """
     d: dict[str, Any] = {"file_size": m.file_size}
-    if m.HasField("publication_type"):
-        d["publication_type"] = m.publication_type
     if m.HasField("pdf"):
         d["pdf"] = {
             "loading_batch_count": m.pdf.loading_batch_count,
