@@ -77,15 +77,14 @@ class LoadingServiceImplementation:
             # Convert protobuf tags to dict format for database storage
             tags = []
             for tag in request.pdf.tags:
-                tags.append({"name": tag.name, "values": list(tag.values)})
+                tags.append({"name": tag.name, "values": [v.value for v in tag.values]})
 
             # TODO: Track vector_chunk_count when vector embedding is implemented
             vector_chunk_count = 0
 
             # Create metadata for PDF-sourced document
             metadata = {
-                "file_sise": len(pdf_bytes),
-                "publication_type": request.pdf.type,
+                "file_size": len(pdf_bytes),
                 "pdf": {
                     "loading_batch_count": len(processing_result["processed_batches"]),
                     "vector_chunk_count": vector_chunk_count,
