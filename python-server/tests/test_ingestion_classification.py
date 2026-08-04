@@ -3,9 +3,11 @@
 The docling pipeline, settings, and database are all faked so these run
 without a real model, database connection, or environment configuration.
 Ingestion no longer classifies PDFs at all (neither document_type nor
-source_type is inferred from the PDF's declared type string) — these tests
-confirm store_document is called with no source_type argument and that
-document_type only ever comes from the caller's own tags.
+source_type is inferred from the PDF's declared type string, both of which
+were removed from pdf.proto) — these tests confirm store_document is called
+with no source_type argument, no publication_type in metadata, and that tags
+(including document_type) only ever come straight from the caller's own
+request.pdf.tags.
 """
 
 from dataclasses import dataclass, field
@@ -54,35 +56,18 @@ def ingestion_service(monkeypatch):
     return service, fake_db
 
 
-def _make_request(pdf_type: str) -> pdf_api.LoadPdfRequest:
+def _make_request() -> pdf_api.LoadPdfRequest:
     request = pdf_api.LoadPdfRequest()
     request.pdf.name = "Test PDF"
-    request.pdf.systems.append("Test System")
-    request.pdf.type = pdf_type
     request.file_data = b"%PDF-1.4 fake"
     return request
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize(
-    "pdf_type",
-    [
-        "Core Rulebook",
-        "Rulebook",
-        "Supplement",
-        "Expansion",
-        "Adventure",
-        "Bestiary",
-        "Monster Manual",
-        "Something Else Entirely",
-    ],
-)
-async def test_load_pdf_sets_no_source_type_regardless_of_pdf_type(
-    ingestion_service, pdf_type,
-):
+async def test_load_pdf_sets_no_source_type(ingestion_service):
     service, fake_db = ingestion_service
 
-    response = await service.load_pdf(_make_request(pdf_type), ctx=None)
+    response = await service.load_pdf(_make_request(), ctx=None)
 
     assert response.success
     assert len(fake_db.calls) == 1
@@ -90,10 +75,21 @@ async def test_load_pdf_sets_no_source_type_regardless_of_pdf_type(
 
 
 @pytest.mark.unit
+async def test_load_pdf_metadata_has_no_publication_type(ingestion_service):
+    service, fake_db = ingestion_service
+
+    await service.load_pdf(_make_request(), ctx=None)
+
+    metadata = fake_db.calls[0]["metadata"]
+    assert "publication_type" not in metadata
+    assert metadata["file_size"] == len(b"%PDF-1.4 fake")
+
+
+@pytest.mark.unit
 async def test_load_pdf_does_not_set_document_type_when_caller_omits_it(ingestion_service):
     service, fake_db = ingestion_service
 
-    await service.load_pdf(_make_request("Rulebook"), ctx=None)
+    await service.load_pdf(_make_request(), ctx=None)
 
     assert fake_db.calls[0]["tags"] == []
     assert "doc_type" not in fake_db.calls[0]
@@ -103,11 +99,31 @@ async def test_load_pdf_does_not_set_document_type_when_caller_omits_it(ingestio
 async def test_load_pdf_preserves_caller_supplied_document_type_tag(ingestion_service):
     service, fake_db = ingestion_service
 
-    request = _make_request("Rulebook")
+    request = _make_request()
     tag = request.pdf.tags.add()
     tag.name = "document_type"
-    tag.values.append("rulebook")
+    tag.values.add(value="rulebook")
 
     await service.load_pdf(request, ctx=None)
 
     assert fake_db.calls[0]["tags"] == [{"name": "document_type", "values": ["rulebook"]}]
+
+
+@pytest.mark.unit
+async def test_load_pdf_preserves_multiple_caller_supplied_tags(ingestion_service):
+    service, fake_db = ingestion_service
+
+    request = _make_request()
+    doc_type_tag = request.pdf.tags.add()
+    doc_type_tag.name = "document_type"
+    doc_type_tag.values.add(value="rulebook")
+    canon_tag = request.pdf.tags.add()
+    canon_tag.name = "canon"
+    canon_tag.values.add(value="official")
+
+    await service.load_pdf(request, ctx=None)
+
+    assert fake_db.calls[0]["tags"] == [
+        {"name": "document_type", "values": ["rulebook"]},
+        {"name": "canon", "values": ["official"]},
+    ]

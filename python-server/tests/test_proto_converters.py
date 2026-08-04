@@ -8,8 +8,8 @@ from datetime import UTC, datetime
 import pytest
 from google.protobuf import timestamp_pb2
 
-import bibliophage.v1alpha3.common_pb2 as common_api
 import bibliophage.v1alpha3.document_pb2 as document_api
+import bibliophage.v1alpha3.tag_pb2 as tag_api
 from proto_converters import (
     datetime_to_proto_ts,
     metadata_dict_to_proto,
@@ -40,7 +40,6 @@ def test_dict_to_proto_empty_dict_yields_default_metadata():
     proto = metadata_dict_to_proto({})
 
     assert proto.file_size == 0
-    assert not proto.HasField("publication_type")
     assert not proto.HasField("pdf")
 
 
@@ -49,16 +48,6 @@ def test_dict_to_proto_file_size_only():
     proto = metadata_dict_to_proto({"file_size": 12345})
 
     assert proto.file_size == 12345
-    assert not proto.HasField("publication_type")
-    assert not proto.HasField("pdf")
-
-
-@pytest.mark.unit
-def test_dict_to_proto_publication_type_only():
-    proto = metadata_dict_to_proto({"publication_type": "rulebook"})
-
-    assert proto.HasField("publication_type")
-    assert proto.publication_type == "rulebook"
     assert not proto.HasField("pdf")
 
 
@@ -102,15 +91,6 @@ def test_proto_to_dict_default_metadata():
 
 
 @pytest.mark.unit
-def test_proto_to_dict_with_publication_type():
-    proto = document_api.Metadata(file_size=100, publication_type="adventure")
-
-    d = metadata_proto_to_dict(proto)
-
-    assert d == {"file_size": 100, "publication_type": "adventure"}
-
-
-@pytest.mark.unit
 def test_proto_to_dict_with_pdf():
     proto = document_api.Metadata(file_size=500)
     proto.pdf.CopyFrom(document_api.PdfData(
@@ -138,7 +118,6 @@ def test_proto_to_dict_with_pdf():
 def test_roundtrip_full_metadata():
     original_dict = {
         "file_size": 9876,
-        "publication_type": "supplement",
         "pdf": {
             "loading_batch_count": 8,
             "vector_chunk_count": 1000,
@@ -160,7 +139,6 @@ def test_roundtrip_proto_with_file_size_only():
     rebuilt = metadata_dict_to_proto(d)
 
     assert rebuilt.file_size == 42
-    assert not rebuilt.HasField("publication_type")
     assert not rebuilt.HasField("pdf")
 
 
@@ -233,7 +211,6 @@ def test_row_to_proto_document_list_item_uses_content_snippet():
 def test_row_to_proto_document_with_metadata_populates_proto_metadata():
     row = _make_row(metadata={
         "file_size": 1024,
-        "publication_type": "supplement",
         "pdf": {"loading_batch_count": 2, "vector_chunk_count": 50, "page_count": 100},
     })
 
@@ -241,8 +218,6 @@ def test_row_to_proto_document_with_metadata_populates_proto_metadata():
 
     assert proto.HasField("metadata")
     assert proto.metadata.file_size == 1024
-    assert proto.metadata.HasField("publication_type")
-    assert proto.metadata.publication_type == "supplement"
     assert proto.metadata.HasField("pdf")
     assert proto.metadata.pdf.page_count == 100
 
@@ -277,11 +252,11 @@ def test_row_to_proto_document_tags_populated():
     proto = row_to_proto_document(row)
 
     assert len(proto.tags) == 2
-    assert isinstance(proto.tags[0], common_api.Tag)
+    assert isinstance(proto.tags[0], tag_api.Tag)
     assert proto.tags[0].name == "edition"
-    assert list(proto.tags[0].values) == ["5e", "2024"]
+    assert [v.value for v in proto.tags[0].values] == ["5e", "2024"]
     assert proto.tags[1].name == "genre"
-    assert list(proto.tags[1].values) == ["fantasy"]
+    assert [v.value for v in proto.tags[1].values] == ["fantasy"]
 
 
 @pytest.mark.unit

@@ -25,8 +25,6 @@ async def test_load_pdf_integration(sample_pdf, pdf_client):
 
     request = pdf_api.LoadPdfRequest()
     request.pdf.name = "Test Bestiary"
-    request.pdf.systems.append("Fantasy RPG")
-    request.pdf.type = "BESTIARY"
     request.file_data = pdf_bytes
 
     # Call service
