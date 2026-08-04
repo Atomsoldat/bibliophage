@@ -1,3 +1,6 @@
+# Keep all __pycache__ dirs out of the source tree, mirrored under one root.
+export PYTHONPYCACHEPREFIX := justfile_directory() + "/.pycache"
+
 # GPU variant: cpu (default), gpu (NVIDIA), rocm (AMD)
 extra := env("GPU_VENDOR", "cpu")
 

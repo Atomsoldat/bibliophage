@@ -2,6 +2,9 @@
 
 # This script is meant for debugging and quick one-off executions of python code
 
+# Keep all __pycache__ dirs out of the source tree, mirrored under one root.
+export PYTHONPYCACHEPREFIX="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.pycache"
+
 # Source environment variables from .env.example
 if [ -f .env.example ]; then
     set -a  # Automatically export all variables
