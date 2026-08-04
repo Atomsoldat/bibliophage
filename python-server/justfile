@@ -12,27 +12,27 @@ dev:
     uv run {{extra_flag}} python -m uvicorn --reload server:api_server
 
 tests *args:
-    uv run {{extra_flag}} pytest tests {{args}}
+    uv run {{extra_flag}} --extra dev pytest tests {{args}}
 
 lint: linter types deps ded
 
 linter:
-    uv run ruff check
+    uv run --extra dev ruff check
 
 types:
-    uv run ty check
+    uv run --extra dev ty check
 
 deps:
-    uv run deptry .
+    uv run --extra dev deptry .
 
 ded:
-    uv run vulture . --exclude bibliophage,.venv,__pycache__,__pytest_cache,.ruff_cache
+    uv run --extra dev vulture . --exclude bibliophage,.venv,__pycache__,__pytest_cache,.ruff_cache
 
 coverage:
-    uv run coverage run -m pytest
+    uv run {{extra_flag}} --extra dev coverage run -m pytest
 
 coverage-report:
-    uv run coverage report
+    uv run --extra dev coverage report
 
 api:
     uv run python -m grpc_tools.protoc \
