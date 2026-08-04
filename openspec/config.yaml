@@ -1,0 +1,52 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to LLMS when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+context: |
+  Development workflow: new feature work and bug fixes follow red/green TDD.
+  Write a failing test first, then the minimum implementation to make it
+  pass, then refactor with tests green throughout. This applies going
+  forward only - existing untested code is not retroactively required to
+  gain tests as a side effect of unrelated changes.
+
+  Project stage: this project is in rapid prototyping. Data is considered
+  replaceable and the database is purged regularly. Changes SHOULD NOT
+  include backfills, data migrations, or other logic aimed at preserving
+  existing data - design as if the store starts empty. Revisit this once
+  the project is far enough along that stored data needs to survive
+  changes.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+rules:
+  tasks:
+    - Pair each implementation task with a preceding task to write its failing test first (red/green TDD).
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
+operations:
+  apply:
+    guidance:
+      - "For each task: write a failing test first, run it to confirm it fails (red), implement the minimum code to make it pass (green), then refactor with tests green throughout."
