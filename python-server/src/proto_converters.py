@@ -15,6 +15,34 @@ import bibliophage.v1alpha3.document_pb2 as document_api
 import bibliophage.v1alpha3.tag_pb2 as tag_api
 
 
+def row_to_proto_tag(row: dict[str, Any]) -> tag_api.Tag:
+    """Convert a DB row from the tags table to a proto Tag.
+
+    `colour`, `document_count`, and `value_count` are optional proto fields
+    and are left unset (rather than zero-valued) when absent from the row.
+    """
+    proto = tag_api.Tag()
+    proto.id = str(row["id"])
+    proto.name = row["name"]
+
+    if row.get("colour") is not None:
+        proto.colour = row["colour"]
+    if row.get("document_count") is not None:
+        proto.document_count = row["document_count"]
+    if row.get("value_count") is not None:
+        proto.value_count = row["value_count"]
+
+    for value_row in row.get("values", []):
+        tag_value = tag_api.TagValue()
+        tag_value.id = str(value_row["id"])
+        tag_value.value = value_row["value"]
+        if value_row.get("document_count") is not None:
+            tag_value.document_count = value_row["document_count"]
+        proto.values.append(tag_value)
+
+    return proto
+
+
 def datetime_to_proto_ts(dt: datetime) -> timestamp_pb2.Timestamp:
     """Build a google.protobuf.Timestamp from a Python datetime.
 
