@@ -127,7 +127,6 @@ async def test_document(document_client):
     # Setup: Create test document
     doc_request = doc_api.StoreDocumentRequest()
     doc_request.document.name = "Test Document (auto-cleanup)"
-    doc_request.document.systems.append("Test System")
     doc_request.document.content = (
         "# Test Content\n"
         "This is a test document created by pytest fixtures.\n\n"
@@ -170,7 +169,6 @@ async def two_test_documents(document_client):
     for idx in range(2):
         request = doc_api.StoreDocumentRequest()
         request.document.name = f"Graph Test Document {idx} (auto-cleanup)"
-        request.document.systems.append("Test System")
         request.document.content = f"Graph test document {idx}."
         response = await document_client.store_document(request)
         docs.append(response.document)

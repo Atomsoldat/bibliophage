@@ -30,7 +30,6 @@ async def _make_document(db: BibliophageDatabase, name: str) -> str:
     """Insert a minimal document and return its id as a string."""
     result = await db.store_document(
         name=name,
-        systems=["TestSystem"],
         content="placeholder",
         tags=[],
         metadata=None,

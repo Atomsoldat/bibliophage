@@ -19,7 +19,6 @@ async def test_store_document_integration(document_client):
     # Create request
     request = doc_api.StoreDocumentRequest()
     request.document.name = "Test Bestiary Note"
-    request.document.systems.append("Fantasy RPG")
     request.document.content = markdown_content
 
     # Call service
