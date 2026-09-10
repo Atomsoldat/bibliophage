@@ -27,12 +27,9 @@ GPU_VENDOR=amd tilt up
 
 This starts:
 - **PostgreSQL with pgvector** (localhost:5432) - vector embeddings storage
-- **PostgreSQL with DocumentDB** (localhost:5433) - FerretDB backend
-- **FerretDB** (localhost:27017) - MongoDB-compatible document storage
-- **Python backend** - Connect RPC API server (depends on all databases)
+- **Python backend** - Connect RPC API server
 - **Web UI** - Vue frontend (http://localhost:5173)
-
-The Python backend requires all three databases to start successfully. Tilt manages these dependencies automatically.
+- **Ollama** - LLM inference server
 
 Press `space` in the terminal to open the Tilt UI in your browser.
 
