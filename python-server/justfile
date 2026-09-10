@@ -11,7 +11,7 @@ extra_flag := if extra == "" { "" } else { "--extra " + extra }
 dev:
     uv run {{extra_flag}} python -m uvicorn --reload server:api_server
 
-tests *args:
+test *args:
     uv run {{extra_flag}} --extra dev pytest tests {{args}}
 
 lint: linter types deps ded
