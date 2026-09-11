@@ -31,12 +31,6 @@ class DocumentService(Protocol):
     async def delete_document(self, request: bibliophage_dot_v1alpha3_dot_document__pb2.DeleteDocumentRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_document__pb2.DeleteDocumentResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
-    async def assign_tag_values(self, request: bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesResponse:
-        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-
-    async def delete_tag_values(self, request: bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesResponse:
-        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-
 
 class DocumentServiceASGIApplication(ConnectASGIApplication[DocumentService]):
     def __init__(self, service: DocumentService | AsyncGenerator[DocumentService], *, interceptors: Iterable[Interceptor]=(), read_max_bytes: int | None = None) -> None:
@@ -92,26 +86,6 @@ class DocumentServiceASGIApplication(ConnectASGIApplication[DocumentService]):
                         idempotency_level=IdempotencyLevel.UNKNOWN,
                     ),
                     function=svc.delete_document,
-                ),
-                "/bibliophage.v1alpha3.DocumentService/AssignTagValues": Endpoint.unary(
-                    method=MethodInfo(
-                        name="AssignTagValues",
-                        service_name="bibliophage.v1alpha3.DocumentService",
-                        input=bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesRequest,
-                        output=bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesResponse,
-                        idempotency_level=IdempotencyLevel.UNKNOWN,
-                    ),
-                    function=svc.assign_tag_values,
-                ),
-                "/bibliophage.v1alpha3.DocumentService/DeleteTagValues": Endpoint.unary(
-                    method=MethodInfo(
-                        name="DeleteTagValues",
-                        service_name="bibliophage.v1alpha3.DocumentService",
-                        input=bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesRequest,
-                        output=bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesResponse,
-                        idempotency_level=IdempotencyLevel.UNKNOWN,
-                    ),
-                    function=svc.delete_tag_values,
                 ),
             },
             interceptors=interceptors,
@@ -225,46 +199,6 @@ class DocumentServiceClient(ConnectClient):
             timeout_ms=timeout_ms,
         )
 
-    async def assign_tag_values(
-        self,
-        request: bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesRequest,
-        *,
-        headers: Headers | Mapping[str, str] | None = None,
-        timeout_ms: int | None = None,
-    ) -> bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesResponse:
-        return await self.execute_unary(
-            request=request,
-            method=MethodInfo(
-                name="AssignTagValues",
-                service_name="bibliophage.v1alpha3.DocumentService",
-                input=bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesRequest,
-                output=bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesResponse,
-                idempotency_level=IdempotencyLevel.UNKNOWN,
-            ),
-            headers=headers,
-            timeout_ms=timeout_ms,
-        )
-
-    async def delete_tag_values(
-        self,
-        request: bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesRequest,
-        *,
-        headers: Headers | Mapping[str, str] | None = None,
-        timeout_ms: int | None = None,
-    ) -> bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesResponse:
-        return await self.execute_unary(
-            request=request,
-            method=MethodInfo(
-                name="DeleteTagValues",
-                service_name="bibliophage.v1alpha3.DocumentService",
-                input=bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesRequest,
-                output=bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesResponse,
-                idempotency_level=IdempotencyLevel.UNKNOWN,
-            ),
-            headers=headers,
-            timeout_ms=timeout_ms,
-        )
-
 
 class DocumentServiceSync(Protocol):
     def store_document(self, request: bibliophage_dot_v1alpha3_dot_document__pb2.StoreDocumentRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_document__pb2.StoreDocumentResponse:
@@ -276,10 +210,6 @@ class DocumentServiceSync(Protocol):
     def search_documents(self, request: bibliophage_dot_v1alpha3_dot_document__pb2.SearchDocumentsRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_document__pb2.SearchDocumentsResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
     def delete_document(self, request: bibliophage_dot_v1alpha3_dot_document__pb2.DeleteDocumentRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_document__pb2.DeleteDocumentResponse:
-        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def assign_tag_values(self, request: bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesResponse:
-        raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
-    def delete_tag_values(self, request: bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesRequest, ctx: RequestContext) -> bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesResponse:
         raise ConnectError(Code.UNIMPLEMENTED, "Not implemented")
 
 
@@ -336,26 +266,6 @@ class DocumentServiceWSGIApplication(ConnectWSGIApplication):
                         idempotency_level=IdempotencyLevel.UNKNOWN,
                     ),
                     function=service.delete_document,
-                ),
-                "/bibliophage.v1alpha3.DocumentService/AssignTagValues": EndpointSync.unary(
-                    method=MethodInfo(
-                        name="AssignTagValues",
-                        service_name="bibliophage.v1alpha3.DocumentService",
-                        input=bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesRequest,
-                        output=bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesResponse,
-                        idempotency_level=IdempotencyLevel.UNKNOWN,
-                    ),
-                    function=service.assign_tag_values,
-                ),
-                "/bibliophage.v1alpha3.DocumentService/DeleteTagValues": EndpointSync.unary(
-                    method=MethodInfo(
-                        name="DeleteTagValues",
-                        service_name="bibliophage.v1alpha3.DocumentService",
-                        input=bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesRequest,
-                        output=bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesResponse,
-                        idempotency_level=IdempotencyLevel.UNKNOWN,
-                    ),
-                    function=service.delete_tag_values,
                 ),
             },
             interceptors=interceptors,
@@ -463,46 +373,6 @@ class DocumentServiceClientSync(ConnectClientSync):
                 service_name="bibliophage.v1alpha3.DocumentService",
                 input=bibliophage_dot_v1alpha3_dot_document__pb2.DeleteDocumentRequest,
                 output=bibliophage_dot_v1alpha3_dot_document__pb2.DeleteDocumentResponse,
-                idempotency_level=IdempotencyLevel.UNKNOWN,
-            ),
-            headers=headers,
-            timeout_ms=timeout_ms,
-        )
-
-    def assign_tag_values(
-        self,
-        request: bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesRequest,
-        *,
-        headers: Headers | Mapping[str, str] | None = None,
-        timeout_ms: int | None = None,
-    ) -> bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesResponse:
-        return self.execute_unary(
-            request=request,
-            method=MethodInfo(
-                name="AssignTagValues",
-                service_name="bibliophage.v1alpha3.DocumentService",
-                input=bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesRequest,
-                output=bibliophage_dot_v1alpha3_dot_document__pb2.AssignTagValuesResponse,
-                idempotency_level=IdempotencyLevel.UNKNOWN,
-            ),
-            headers=headers,
-            timeout_ms=timeout_ms,
-        )
-
-    def delete_tag_values(
-        self,
-        request: bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesRequest,
-        *,
-        headers: Headers | Mapping[str, str] | None = None,
-        timeout_ms: int | None = None,
-    ) -> bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesResponse:
-        return self.execute_unary(
-            request=request,
-            method=MethodInfo(
-                name="DeleteTagValues",
-                service_name="bibliophage.v1alpha3.DocumentService",
-                input=bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesRequest,
-                output=bibliophage_dot_v1alpha3_dot_document__pb2.DeleteTagValuesResponse,
                 idempotency_level=IdempotencyLevel.UNKNOWN,
             ),
             headers=headers,

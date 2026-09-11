@@ -171,39 +171,3 @@ class DeleteDocumentResponse(_message.Message):
     success: bool
     message: str
     def __init__(self, success: bool = ..., message: _Optional[str] = ...) -> None: ...
-
-class AssignTagValuesRequest(_message.Message):
-    __slots__ = ("document_ids", "tag_id", "tag_values")
-    DOCUMENT_IDS_FIELD_NUMBER: _ClassVar[int]
-    TAG_ID_FIELD_NUMBER: _ClassVar[int]
-    TAG_VALUES_FIELD_NUMBER: _ClassVar[int]
-    document_ids: _containers.RepeatedScalarFieldContainer[str]
-    tag_id: str
-    tag_values: _containers.RepeatedCompositeFieldContainer[_tag_pb2.TagValue]
-    def __init__(self, document_ids: _Optional[_Iterable[str]] = ..., tag_id: _Optional[str] = ..., tag_values: _Optional[_Iterable[_Union[_tag_pb2.TagValue, _Mapping]]] = ...) -> None: ...
-
-class AssignTagValuesResponse(_message.Message):
-    __slots__ = ("success", "message")
-    SUCCESS_FIELD_NUMBER: _ClassVar[int]
-    MESSAGE_FIELD_NUMBER: _ClassVar[int]
-    success: bool
-    message: str
-    def __init__(self, success: bool = ..., message: _Optional[str] = ...) -> None: ...
-
-class DeleteTagValuesRequest(_message.Message):
-    __slots__ = ("document_ids", "tag_id", "tag_values")
-    DOCUMENT_IDS_FIELD_NUMBER: _ClassVar[int]
-    TAG_ID_FIELD_NUMBER: _ClassVar[int]
-    TAG_VALUES_FIELD_NUMBER: _ClassVar[int]
-    document_ids: _containers.RepeatedScalarFieldContainer[str]
-    tag_id: str
-    tag_values: _containers.RepeatedCompositeFieldContainer[_tag_pb2.TagValue]
-    def __init__(self, document_ids: _Optional[_Iterable[str]] = ..., tag_id: _Optional[str] = ..., tag_values: _Optional[_Iterable[_Union[_tag_pb2.TagValue, _Mapping]]] = ...) -> None: ...
-
-class DeleteTagValuesResponse(_message.Message):
-    __slots__ = ("success", "message")
-    SUCCESS_FIELD_NUMBER: _ClassVar[int]
-    MESSAGE_FIELD_NUMBER: _ClassVar[int]
-    success: bool
-    message: str
-    def __init__(self, success: bool = ..., message: _Optional[str] = ...) -> None: ...
