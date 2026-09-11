@@ -22,6 +22,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
+import psycopg
 from pgvector.psycopg import register_vector_async
 from psycopg import AsyncConnection, sql
 from psycopg.rows import dict_row
@@ -163,6 +164,156 @@ class BibliophageDatabase:
         """
         async with self._pool.connection() as conn, conn.transaction():
             yield conn
+
+    #### tag CRUD ###############################
+    async def store_tag(self, name: str, colour: str):
+        insert_sql = sql.SQL("""
+            INSERT INTO tags
+                (title, colour)
+            VALUES
+                (%(name)s, %(colour)s)
+            RETURNING tag_id, title, colour
+        """)
+        tag_params = {
+            "name": name,
+            "colour": colour,
+        }
+
+        try:
+            async with self.transaction() as conn:
+                cursor = await conn.execute(insert_sql, tag_params)
+                cursor.row_factory = dict_row
+                row = await cursor.fetchone()
+        except psycopg.errors.UniqueViolation as e:
+            raise ValueError(str(e.diag.message_detail)) from None
+
+        result = {
+            "tag_id": str(row["tag_id"]),
+            "name": name,
+            "colour": colour,
+        }
+        logger.info(f"Tag stored: {result['tag_id']}")
+        return result
+    async def delete_tag(self, tag_id: str):
+        delete_sql = sql.SQL("DELETE FROM tags WHERE tag_id = %(tag_id)s")
+        count = await self.execute(delete_sql, {"tag_id": tag_id})
+        return count == 1
+    async def rename_tag(self, tag_id: str, name: str):
+        update_sql = sql.SQL("""
+            UPDATE tags
+            SET title = %(name)s
+            WHERE tag_id = %(tag_id)s
+            RETURNING tag_id, title
+        """)
+
+        try:
+            async with self.transaction() as conn:
+                cursor = await conn.execute(update_sql, {
+                    "name": name,
+                    "tag_id": tag_id,
+                })
+                cursor.row_factory = dict_row
+                row = await cursor.fetchone()
+        except psycopg.errors.UniqueViolation as e:
+            raise ValueError(str(e.diag.message_detail)) from None
+
+        if row is None:
+            return None
+        return {"id": str(row["tag_id"]), "name": row["title"]}
+    async def recolour_tag(self, tag_id: str, colour: str):
+        update_sql = sql.SQL("""
+            UPDATE tags
+            SET colour = %(colour)s
+            WHERE tag_id = %(tag_id)s
+        """)
+        async with self.transaction() as conn:
+            cursor = await conn.execute(update_sql, {
+                "colour": colour,
+                "tag_id": tag_id,
+            })
+            cursor.row_factory = dict_row
+            row = await cursor.fetchone()
+            return row
+    async def get_tag_by_id(self, tag_id: str, count_docs: bool, count_values: bool):
+        
+        async with self.transaction() as conn:
+            fetch_sql = sql.SQL("SELECT * FROM tags WHERE tag_id = %(tag_id)s")
+            cursor = await conn.execute(fetch_sql, {"tag_id": tag_id})
+            cursor.row_factory = dict_row
+            row = await cursor.fetchone()
+            if count_docs:
+                count_docs_sql = sql.SQL("SELECT COUNT(*) FROM map_documents_to_tags WHERE tag_id = %(tag_id)s")
+                docs_count_cursor = await conn.execute(count_docs_sql, {"tag_id": tag_id})
+                number_of_docs = docs_count_cursor.fetchone()
+                row["doc_count"] = number_of_docs
+            if count_values:
+                count_values_sql = sql.SQL("SELECT COUNT(*) FROM tag_values WHERE tag_id = %(tag_id)s")
+                values_count_cursor = await conn.execute(count_values_sql, {"tag_id": tag_id})
+                number_of_values = values_count_cursor.fetchone()
+                row["value_count"] = number_of_docs
+        return row
+
+    async def get_tags_by_name(self, name: str):
+        fetch_sql = sql.SQL("SELECT * FROM tags WHERE title LIKE %(query)s")
+        query = f"%{name}%"
+        # returns a list of dicts
+        rows = await self.fetchall(fetch_sql, {"query": query})
+        # The code calling this has to check whether None was returned
+        return rows
+    async def store_tag_value(self, tag_id: str, value: str):
+        insert_sql = sql.SQL("""
+            INSERT INTO tag_values
+                (tag_id, tag_value)
+            VALUES
+                (%(tag_id)s, %(value)s)
+            RETURNING tag_value_id
+        """)
+        insert_params = {
+            "tag_id": tag_id,
+            "value": value,
+        }
+
+        try:
+            async with self.transaction() as conn:
+                cursor = await conn.execute(insert_sql, insert_params)
+                cursor.row_factory = dict_row
+                row = await cursor.fetchone()
+        except psycopg.errors.UniqueViolation as e:
+            raise ValueError(str(e.diag.message_detail)) from None
+
+        result = {
+            "tag_value_id": str(row["tag_value_id"]),
+            "tag_id": tag_id,
+            "name": value,
+        }
+        logger.info(f"Tag value stored: {result['tag_value_id']}")
+        return result
+    async def delete_tag_value(self, tag_value_id: str):
+        delete_sql = sql.SQL("DELETE FROM tag_values WHERE tag_value_id = %(tag_value_id)s")
+        count = await self.execute(delete_sql, {"tag_value_id": tag_value_id})
+        return count == 1
+    async def rename_tag_value(self, tag_value_id: str, value: str):
+        update_sql = sql.SQL("""
+            UPDATE tag_values
+            SET tag_value = %(value)s
+            WHERE tag_value_id = %(tag_value_id)s
+            RETURNING tag_value_id, tag_value
+        """)
+        try:
+            async with self.transaction() as conn:
+                cursor = await conn.execute(update_sql, {
+                    "value": value,
+                    "tag_value_id": tag_value_id,
+                })
+                cursor.row_factory = dict_row
+                row = await cursor.fetchone()
+        except psycopg.errors.UniqueViolation as e:
+            raise ValueError(str(e.diag.message_detail)) from None
+
+        if row is None:
+            return None
+        return {"id": str(row["tag_value_id"]), "name": row["tag_value"]}
+    
 
     #### document CRUD ##########################
 
@@ -334,7 +485,7 @@ class BibliophageDatabase:
         character_count = len(content)
 
         async with self.transaction() as conn:
-            # Check existence and lock the row; detect content change (D-04)
+            # Check existence and lock the row; detect content change
             cursor = await conn.execute(
                 "SELECT content FROM documents WHERE document_id = %(document_id)s FOR UPDATE",
                 {"document_id": document_id},
@@ -344,10 +495,10 @@ class BibliophageDatabase:
             if existing is None:
                 return None
 
-            # Determine if content changed — stale embeddings when it does (D-02)
+            # Determine if content changed — stale embeddings when it does
             embeddings_current = existing["content"] == content
 
-            # Full replace of all document fields (D-01)
+            # Full replace of all document fields
             update_sql = sql.SQL("""
                 UPDATE documents
                 SET title = %(name)s,
@@ -367,7 +518,7 @@ class BibliophageDatabase:
                 "document_id": document_id,
             })
 
-            # Delete-reinsert junction rows for tags (D-08)
+            # Delete-reinsert junction rows for tags
             await conn.execute(
                 "DELETE FROM map_documents_to_tags WHERE document_id = %(document_id)s",
                 {"document_id": document_id},

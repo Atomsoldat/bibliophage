@@ -81,7 +81,13 @@ class TagServiceImplementation:
     ) -> tag_api.RenameTagResponse:
         logger.info(f"Received RenameTagRequest for ID: {request.id}")
 
-        renamed = await self.db.rename_tag(request.id, request.name)
+        try:
+            renamed = await self.db.rename_tag(request.id, request.name)
+        except ValueError as e:
+            return tag_api.RenameTagResponse(
+                success=False,
+                message=str(e),
+            )
 
         if not renamed:
             # TODO: I think returning proper SQL error codes / messages as part of the message
@@ -189,7 +195,13 @@ class TagServiceImplementation:
     ) -> tag_api.RenameTagValueResponse:
         logger.info(f"Received RenameTagValueRequest for ID: {request.id}")
 
-        renamed = await self.db.rename_tag_value(request.id, request.name)
+        try:
+            renamed = await self.db.rename_tag_value(request.id, request.name)
+        except ValueError as e:
+            return tag_api.RenameTagValueResponse(
+                success=False,
+                message=str(e),
+            )
 
         if not renamed:
             # TODO: I think returning proper SQL error codes / messages as part of the message
