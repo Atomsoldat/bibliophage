@@ -472,15 +472,13 @@ class BibliophageDatabase:
         document_id: str,
         name: str,
         content: str,
-        tags: list[dict[str, Any]],
         metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
         """Update a document by ID using full replace semantics
 
         All fields are overwritten. If content changed, sets embeddings_current=false
-        Junction tables are delete-reinserted within the transaction
+        Tags are not touched here — they're managed via AssignTagValues/DeleteTagValues.
         Returns {"document_id": document_id} on success, or None if not found
-        Raises ValueError for unknown tag names
         """
         character_count = len(content)
 
@@ -517,14 +515,6 @@ class BibliophageDatabase:
                 "embeddings_current": embeddings_current,
                 "document_id": document_id,
             })
-
-            # Delete-reinsert junction rows for tags
-            await conn.execute(
-                "DELETE FROM map_documents_to_tags WHERE document_id = %(document_id)s",
-                {"document_id": document_id},
-            )
-            if tags:
-                await self._apply_document_tags(conn, document_id, tags)
 
         logger.info("Document updated: %s (embeddings_current=%s)", document_id, embeddings_current)
         return {"document_id": document_id}

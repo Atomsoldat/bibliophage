@@ -107,12 +107,6 @@ class DocumentServiceImplementation:
                 message="Document ID is required",
             )
 
-        # Convert protobuf tags to dict format for database storage
-        tags = [
-            {"name": tag.name, "values": list(tag.values)}
-            for tag in request.document.tags
-        ]
-
         # Convert metadata if provided
         metadata = None
         if request.document.HasField("metadata"):
@@ -123,7 +117,6 @@ class DocumentServiceImplementation:
                 document_id=request.document.id,
                 name=request.document.name,
                 content=request.document.content,
-                tags=tags,
                 metadata=metadata,
             )
         except ValueError as e:
