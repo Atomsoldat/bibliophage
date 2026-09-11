@@ -21,9 +21,9 @@
 ## 2. Backend (Leon) — Schema & data layer
 
 - [x] 2.1 Add a `colour` column to `tags` in `documents.sql` (edit the `CREATE TABLE IF NOT EXISTS` in place, per existing project convention).
-- [ ] 2.2 Implement the tag governance surface (1.1) against `tags`/`tag_values`: cascading delete, usage-count queries for list responses, and rename/create collisions surfaced as clean errors rather than raw DB exceptions.
-- [ ] 2.3 Implement `AssignTagValue`/`RemoveTagValue` (1.2), reusing/adapting the existing value-upsert logic in `_apply_document_tags`; wrap multi-document requests in a single transaction for all-or-nothing semantics.
-- [ ] 2.4 Remove tag handling from `update_document`'s write path; keep it in `store_document` and in the read-side enrichment (`get_document_by_id`, `search_documents`).
+- [x] 2.2 Implement the tag governance surface (1.1) against `tags`/`tag_values`: cascading delete, usage-count queries for list responses, and rename/create collisions surfaced as clean errors rather than raw DB exceptions.
+- [x] 2.3 Implement `AssignTagValue`/`RemoveTagValue` (1.2), reusing/adapting the existing value-upsert logic in `_apply_document_tags`; wrap multi-document requests in a single transaction for all-or-nothing semantics.
+- [x] 2.4 Remove tag handling from `update_document`'s write path; keep it in `store_document` and in the read-side enrichment (`get_document_by_id`, `search_documents`).
 
 ## 3. Backend (Leon) — Ingestion fix
 
