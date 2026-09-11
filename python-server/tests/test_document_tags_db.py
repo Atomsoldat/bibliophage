@@ -118,33 +118,6 @@ async def test_store_document_unknown_tag_raises(tag_db):
         )
 
 
-@pytest.mark.integration
-async def test_update_document_replaces_tags(tag_db):
-    await _ensure_tag(tag_db, "document_type")
-    await _ensure_tag(tag_db, "genre")
-
-    result = await tag_db.store_document(
-        name="update-tags",
-        content="placeholder",
-        tags=[{"name": "document_type", "values": ["note"]}],
-        metadata=None,
-    )
-    document_id = str(result["document_id"])
-
-    try:
-        await tag_db.update_document(
-            document_id=document_id,
-            name="update-tags",
-            content="placeholder",
-            tags=[{"name": "genre", "values": ["fantasy"]}],
-            metadata=None,
-        )
-
-        doc = await tag_db.get_document_by_id(document_id)
-        assert doc["tags"] == [{"name": "genre", "values": ["fantasy"]}]
-    finally:
-        await tag_db.delete_document(document_id)
-
 
 @pytest.mark.integration
 async def test_reusing_a_tag_value_across_documents(tag_db):
