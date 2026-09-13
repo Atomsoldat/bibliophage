@@ -11,11 +11,13 @@ from bibliophage.v1alpha3.document_connect import DocumentServiceASGIApplication
 from bibliophage.v1alpha3.embedding_connect import EmbeddingServiceASGIApplication
 from bibliophage.v1alpha3.graph_connect import GraphServiceASGIApplication
 from bibliophage.v1alpha3.pdf_connect import PdfServiceASGIApplication
+from bibliophage.v1alpha3.tag_connect import TagServiceASGIApplication
 from chat.service import ChatServiceImplementation
 from documents.service import DocumentServiceImplementation
 from embeddings.service import EmbeddingServiceImplementation
 from graph.service import GraphServiceImplementation
 from ingestion.service import LoadingServiceImplementation
+from tags.service import TagServiceImplementation
 
 
 def configure_logging():
@@ -87,6 +89,7 @@ api_server.add_middleware(
 # how all the communication works
 service_endpoints = [
     PdfServiceASGIApplication(service=LoadingServiceImplementation()),
+    TagServiceASGIApplication(service=TagServiceImplementation()),
     DocumentServiceASGIApplication(service=DocumentServiceImplementation()),
     ChatServiceASGIApplication(service=ChatServiceImplementation()),
     EmbeddingServiceASGIApplication(service=EmbeddingServiceImplementation()),

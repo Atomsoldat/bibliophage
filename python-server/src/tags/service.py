@@ -258,7 +258,7 @@ class TagServiceImplementation:
         count_values = bool(request.count_values)
 
         # Retrieve tags from database
-        tags_data = await self.db.get_tags_by_name(request.name_filter, count_docs, count_values)
+        tags_data = await self.db.get_tags_by_name(request.name_filter)
 
         if tags_data is None:
             return tag_api.GetTagsResponse(

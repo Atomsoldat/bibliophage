@@ -235,23 +235,33 @@ class BibliophageDatabase:
             row = await cursor.fetchone()
             return row
     async def get_tag_by_id(self, tag_id: str, count_docs: bool, count_values: bool):
-        
+
         async with self.transaction() as conn:
             fetch_sql = sql.SQL("SELECT * FROM tags WHERE tag_id = %(tag_id)s")
             cursor = await conn.execute(fetch_sql, {"tag_id": tag_id})
             cursor.row_factory = dict_row
             row = await cursor.fetchone()
+            if row is None:
+                return None
             if count_docs:
                 count_docs_sql = sql.SQL("SELECT COUNT(*) FROM map_documents_to_tags WHERE tag_id = %(tag_id)s")
                 docs_count_cursor = await conn.execute(count_docs_sql, {"tag_id": tag_id})
-                number_of_docs = docs_count_cursor.fetchone()
-                row["doc_count"] = number_of_docs
+                docs_count_cursor.row_factory = dict_row
+                number_of_docs = await docs_count_cursor.fetchone()
+                row["document_count"] = number_of_docs["count"]
             if count_values:
                 count_values_sql = sql.SQL("SELECT COUNT(*) FROM tag_values WHERE tag_id = %(tag_id)s")
                 values_count_cursor = await conn.execute(count_values_sql, {"tag_id": tag_id})
-                number_of_values = values_count_cursor.fetchone()
-                row["value_count"] = number_of_docs
-        return row
+                values_count_cursor.row_factory = dict_row
+                number_of_values = await values_count_cursor.fetchone()
+                row["value_count"] = number_of_values["count"]
+        return {
+            "id": str(row["tag_id"]),
+            "name": row["title"],
+            "colour": row["colour"],
+            "document_count": row.get("document_count"),
+            "value_count": row.get("value_count"),
+        }
 
     async def get_tags_by_name(self, name: str):
         fetch_sql = sql.SQL("SELECT * FROM tags WHERE title LIKE %(query)s")
@@ -259,7 +269,10 @@ class BibliophageDatabase:
         # returns a list of dicts
         rows = await self.fetchall(fetch_sql, {"query": query})
         # The code calling this has to check whether None was returned
-        return rows
+        return [
+            {"id": str(row["tag_id"]), "name": row["title"], "colour": row["colour"]}
+            for row in rows
+        ]
     async def store_tag_value(self, tag_id: str, value: str):
         insert_sql = sql.SQL("""
             INSERT INTO tag_values
