@@ -17,6 +17,7 @@ from documents.service import DocumentServiceImplementation
 from embeddings.service import EmbeddingServiceImplementation
 from graph.service import GraphServiceImplementation
 from ingestion.service import LoadingServiceImplementation
+from logging_interceptor import LoggingInterceptor
 from tags.service import TagServiceImplementation
 
 
@@ -87,13 +88,18 @@ api_server.add_middleware(
 # instantiate each of our Service Implementations of the Service Interfaces generated for us
 # toss our instantiated implementation into the generated wrapper so we don't need to think about
 # how all the communication works
+## interceptors are shared across endpoints below, so exceptions from every
+## service get logged with a traceback before connect-python converts them
+## into a generic 500 (see logging_interceptor.py for why this is needed)
+_interceptors = [LoggingInterceptor()]
+
 service_endpoints = [
-    PdfServiceASGIApplication(service=LoadingServiceImplementation()),
-    TagServiceASGIApplication(service=TagServiceImplementation()),
-    DocumentServiceASGIApplication(service=DocumentServiceImplementation()),
-    ChatServiceASGIApplication(service=ChatServiceImplementation()),
-    EmbeddingServiceASGIApplication(service=EmbeddingServiceImplementation()),
-    GraphServiceASGIApplication(service=GraphServiceImplementation()),
+    PdfServiceASGIApplication(service=LoadingServiceImplementation(), interceptors=_interceptors),
+    TagServiceASGIApplication(service=TagServiceImplementation(), interceptors=_interceptors),
+    DocumentServiceASGIApplication(service=DocumentServiceImplementation(), interceptors=_interceptors),
+    ChatServiceASGIApplication(service=ChatServiceImplementation(), interceptors=_interceptors),
+    EmbeddingServiceASGIApplication(service=EmbeddingServiceImplementation(), interceptors=_interceptors),
+    GraphServiceASGIApplication(service=GraphServiceImplementation(), interceptors=_interceptors),
 ]
 
 # ASGI (Asynchronous Server Gateway Interface) is a python concept for
