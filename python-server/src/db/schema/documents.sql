@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS tags (
     -- only allow lower case
     CHECK (title = lower(title)),
     -- require hex colour codes
-    CHECK (colour is null or colour ~* '^#[a-f0-9]{6}$')
+    CHECK (colour ~* '^#[a-f0-9]{6}$')
 );
 
 CREATE TABLE IF NOT EXISTS tag_values (

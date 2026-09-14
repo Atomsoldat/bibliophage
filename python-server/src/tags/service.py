@@ -24,14 +24,19 @@ class TagServiceImplementation:
         request: tag_api.StoreTagRequest,
         ctx,
     ) -> tag_api.StoreTagResponse:
-        logger.info(
-            f"Received StoreTagRequest for tag: {request.tag.name}",
-        )
 
         try:
+            # if the frontend has not set the colour for the tag, we need to set a default colour so that
+            # the database constraint requiring a is fulfilled
+            if request.tag.colour == "":
+                selected_colour = "#4a4343"
+                logger.info(f"Received StoreTagRequest for tag: {request.tag.name}; no colour choice stated; using default colour : {selected_colour}")
+            else:
+                selected_colour = request.tag.colour
+                logger.info(f"Received StoreTagRequest for tag: {request.tag.name} desired colour is: {selected_colour}")
             response = await self.db.store_tag(
                 name=request.tag.name,
-                colour=request.tag.colour,
+                colour=selected_colour,
             )
         except ValueError as e:
             return tag_api.StoreTagResponse(
