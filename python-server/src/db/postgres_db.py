@@ -225,6 +225,7 @@ class BibliophageDatabase:
             UPDATE tags
             SET colour = %(colour)s
             WHERE tag_id = %(tag_id)s
+            RETURNING *
         """)
         async with self.transaction() as conn:
             cursor = await conn.execute(update_sql, {

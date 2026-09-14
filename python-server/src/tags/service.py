@@ -130,8 +130,8 @@ class TagServiceImplementation:
         # TODO: we must make the SQL return the tag with its name, so that this does not have to
         # go fetch it
         tag=tag_api.Tag()
-        tag.name=upd00t["name"]
-        tag.id=upd00t["id"]
+        tag.name=upd00t["title"]
+        tag.id=str(upd00t["tag_id"])
         tag.colour=upd00t["colour"]
 
         return tag_api.UpdateTagColourResponse(
