@@ -2,6 +2,449 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.1.0 - 2026-09-15
+#### Features
+- (**api**) extend graph api - (0824334) - Leon Welchert
+- (**api**)  add protobuf definition for graph-db operations - (abaae9d) - Leon Welchert
+- (**flansch**) Add Graph API endppoint as a proxy to arcadeDB to flansch - (730c73b) - Leon Welchert
+- (**flansch**) allow configuration of flansch using env vars / parameters/ config file - (7f071c9) - Leon Welchert
+- (**flansch**) Generate graph connect RPC api code for flansch - (5e58bcb) - Leon Welchert
+- (**flansch**) add basic go project for proxying arcadedb to the frontend - (4506e39) - Leon Welchert
+- (**python-server**) add graph service - (a69ef9c) - Leon Welchert
+- (**python-server**) create new table for graph relations via DDL script - (289c8e0) - Leon Welchert
+- (**python-server**) support for non cuda inference during embedding and docling pipeline - (1328b05) - Leon Welchert
+- (**python-server**) Improve efficiency during repeated embedding requests by only embedding diffs - (a7800fc) - Leon Welchert
+- (**python-server**) Use database to calculate content snippets - (98f00ba) - Leon Welchert
+- (**python-server**) store chunk bounds in document_chunks table - (6cc4364) - Leon Welchert
+- (**python-server**) define postgresql database schema that will replace the document database - (f53affd) - Leon Welchert
+- (**web-ui**) add delete  button to library view - (38411e6) - Leon Welchert
+- (**web-ui**) add show all button to  graph view to display unconnected nodes - (4e02a34) - Leon Welchert
+- (**web-ui**) add graph view to sidebar - (7b6fbe0) - Leon Welchert
+- (**web-ui**) add document search panel to graph view - (a3d6e1c) - Leon Welchert
+- (**web-ui**) add Graph View UI for documents - (f5a36eb) - Leon Welchert
+- (**web-ui**) add graph api composable - (843fbbc) - Leon Welchert
+- improve error logging of uncaught exceptions ending up in connect rpc code, preventing masking - (fce01eb) - Leon Welchert
+- bang together tag handling in postgres layer of python server - (d6e662b) - Leon Welchert
+- write up tag service module - (672fc37) - Leon Welchert
+- wire up tags on the web-ui side - (6bd69cf) - Leon Welchert
+- write up tag protobuf api definition - (46e4b3c) - Leon Welchert
+- add colour column to tag table - (d6eba4b) - Leon Welchert
+- write canon service implementation for python server - (ff9d219) - Leon Welchert
+- implement update_document in postgres_db.py and DocumentServiceImplementation - (069b736) - Leon Welchert
+- wire up junction tables for documents - (a5c263e) - Leon Welchert
+- Add apache age postgres container to development environment - (8034a7f) - Leon Welchert
+#### Bug Fixes
+- (**python-server**) wrangle torchvision dependency - (e41f954) - Leon Welchert
+- (**python-server**) add necessary dependency - (0fe33bc) - Leon Welchert
+- (**python-server**) correctly invoke executemany for chunk embedding on psycopg cursor - (49e92db) - Leon Welchert
+- (**python-server**) use correct column names in chat service - (c4e2b1a) - Leon Welchert
+- (**python-server**) fix ducplicate column in vector DDL - (7bb152f) - Leon Welchert
+- (**python-server**) fix missing comma in vectors DDL - (3cdb681) - Leon Welchert
+- (**python-server**) Correctly specify document db DDL filename - (a7285f8) - Leon Welchert
+- (**python-server**) Run pixi tasks as python modules where applicable - (1fcf9a5) - Leon Welchert
+- (**python-server**) Execute uvicorn dev webserver as a python module - (8940dac) - Leon Welchert
+- (**web-ui**) correctly use pinia with refs - (a59a03f) - Leon Welchert
+- (**web-ui**) Always show metadata edit button in library view - (8667645) - Leon Welchert
+- (**web-ui**) increase chunk highlight colour opacity in chunk view - (6ace226) - Leon Welchert
+- properly handle recolourTagRequests - (f6bd5c5) - Leon Welchert
+- pick a default colour for tags in the backend if the client does not make a choice - (f1b52a5) - Leon Welchert
+- properly handle tag data in backend when receiving requests for it - (e64a474) - Leon Welchert
+- add dev extra to justfile invocations to make sure we have those dependencies available - (d306be0) - Leon Welchert
+- rebuild api code for python server - (2a8522f) - Leon Welchert
+- remove breakage in proto converter functions due to recent API changes - (291ca26) - Leon Welchert
+- remove typo in ingestion service, properly unwrap tag values - (8752fc3) - Leon Welchert
+- correct protobuf api inconsistencies, add missing messages and - (24a0b32) - Leon Welchert
+- typos in documents.sql removed - (d9802ee) - Leon Welchert
+- spelling - (f9d03ed) - Leon Welchert
+- add missing import to canon protobu document - (e011793) - Leon Welchert
+- Use correct path for dev environment in nuke command in Tiltfile - (5f3e7b2) - Leon Welchert
+#### Documentation
+- (**api**) document future removal intent for match count when searching for documents - (1d538df) - Leon Welchert
+- (**python-server**) document OpenCV path issue resolution - (a588627) - Leon Welchert
+- (**python-server**) document env var dependency for running our server - (aff895e) - Leon Welchert
+- document completion of tag related tasks - (e0c4e8a) - Leon Welchert
+- clean up README.md - (aa4cb69) - Leon Welchert
+- add openspec files - (34816e8) - Leon Welchert
+- rearrange documentation in document proto api definition - (db6481d) - Leon Welchert
+- rearrange documentation in document proto api definition - (843d553) - Leon Welchert
+- Document starting with or without gpu support - (af44ca3) - Leon Welchert
+- document running specific python tests based on decorators - (386744f) - Leon Welchert
+- document running individual pytest tests - (d551a81) - Leon Welchert
+- Add flansch component as package to be tracked in changelog - (12223ab) - Leon Welchert
+- Adjust README.md to reflect current state of development - (c744a82) - Leon Welchert
+- track api subdirectory as a package for cocogitto - (5d744fd) - Leon Welchert
+- document conventional commit based versioning - (13e4190) - Leon Welchert
+#### Tests
+- (**flansch**) Add tests for configuration to flansch, rework config loading to support easier testing - (e9afb95) - Leon Welchert
+- (**python-server**) document usage of coverage - (1e85de3) - Leon Welchert
+- (**python-server**) add unit tests for embedding  diffs - (d4ae259) - Leon Welchert
+- (**python-server**) add integration tests for embedding  diffs - (7d01620) - Leon Welchert
+- (**python-server**) Add Coverage tool for determining test coverage - (9ae4538) - Leon Welchert
+- remove old test - (1d11c62) - Leon Welchert
+- adjust python tests for recent api changes - (da7aebb) - Leon Welchert
+- adjust postgresql container mounts for version 18 - (51564e9) - Leon Welchert
+- add arcade-db development container - (17116a2) - Leon Welchert
+#### Build system
+- (**python-server**) Add editable self-reference as dependency to the python-server so that we can find the API code when running the server via "pixi run dev" - (4431d88) - Leon Welchert
+- move pycache to dedicated directory - (773f1b2) - Leon Welchert
+- rename api protobuf generation task for python-server to match web-ui - (f579b6e) - Leon Welchert
+- Restart dev environment containers only on failure - (8bb60f8) - Leon Welchert
+#### Refactoring
+- (**api**) merge document embeddign an chunk update functionality - (8e2a07a) - Leon Welchert
+- (**python**) move embedding for vector search to embeddings.py - (209c793) - Leon Welchert
+- (**python-server**) move db row to proto conversion helper to dedicated file - (baec2bf) - Leon Welchert
+- (**python-server**) add timestamp conversion - (5265a45) - Leon Welchert
+- (**python-server**) factor out protobuf to db dict conversion - (7df69fd) - Leon Welchert
+- (**python-server**) deduplicated CORS setup for service endpoints - (b5218b0) - Leon Welchert
+- (**python-server**) move embedding functionality to separate file - (686a962) - Leon Welchert
+- (**python-server**) use typed return value for embedding diffs - (9a2ecac) - Leon Welchert
+- (**python-server**) stop calculating chunk id and date while inserting document chunks - (203caf4) - Leon Welchert
+- (**python-server**) clean up some old code - (7f6e034) - Leon Welchert
+- (**python-server**) use helper function to create protobuf API messages in document service - (558a832) - Leon Welchert
+- (**python-server**) stop calculating fields managed by the database - (ecb534f) - Leon Welchert
+- (**python-server**) toss out embedding related functionality for now - (97e96e5) - Leon Welchert
+- (**python-server**) merge postgres_db and postgres_repository modules - (5b351d7) - Leon Welchert
+- (**python-server**) merge document and vector database module into one, toss out old implementations - (9a04325) - Leon Welchert
+- (**python-server**) remove old ferretdb connection info from config - (75d4122) - Leon Welchert
+- (**python-server**) use UUIDv7 for chunk IDs, stop trying to determine it in Python Code - (010ebde) - Leon Welchert
+- (**python-server**) use now() function for timestamp in vector DDL - (48cb9f0) - Leon Welchert
+- (**python-server**) remove superfluous schema execution from embedding service implementation - (5875059) - Leon Welchert
+- (**python-server**) rename postgres document db module - (9515442) - Leon Welchert
+- (**python-server**) rename postgres document db module - (dc1e1cd) - Leon Welchert
+- (**python-server**) move DDL schema execution to postgres repository class - (f85b18a) - Leon Welchert
+- (**python-server**) rig up vector db to be initialised during server startup - (6bd881b) - Leon Welchert
+- (**python-server**) assimilate documents and vectors db schema files - (8c9c89a) - Leon Welchert
+- (**python-server**) draft document search function for postgreSQL - (c972bc4) - Leon Welchert
+- (**python-server**) add get_document_by_id function to DocumentDatabase implementation using postgresql - (2d49e1c) - Leon Welchert
+- (**python-server**) rename delete_document parameter id to not collide with python keyword - (d0eca39) - Leon Welchert
+- (**python-server**) initialise connection pools once during server startup - (952a6cf) - Leon Welchert
+- (**python-server**) write delete_document function for postgresql - (577059b) - Leon Welchert
+- (**python-server**) adjust log output while deleting documents - (9afc168) - Leon Welchert
+- (**python-server**) rig up store_document function in document service to work with postgres DB - (2de8ab5) - Leon Welchert
+- (**web-ui**) wrangle old pinia branch to work with current master branch - (172de66) - Leon Welchert
+- (**web-ui**) use pinia to store global information - (f9f33ac) - Leon Welchert
+- (**web-ui**) throw out unneded update functionality for chunks - (1c3d8ae) - Leon Welchert
+- (**web-ui**) Move API related functionality from Library view to dedicated helper code - (5036aa7) - Leon Welchert
+- (**web-ui**) "Move Bulk Metadata Editing functionality to separate composable and Button component" - (bf5f086) - Leon Welchert
+- (**web-ui**) Use DocumentApi composable in Library view - (813c1aa) - Leon Welchert
+- (**web-ui**) Extract component for document creation button - (babf130) - Leon Welchert
+- (**web-ui**) Remove WIP message in Library view - (375dd62) - Leon Welchert
+- (**web-ui**) Extract Metadata Editing Component from library view - (e759563) - Leon Welchert
+- remove old API functionality - (abe3ae0) - Leon Welchert
+- remove old, unneded tag related code - (9ed4eca) - Leon Welchert
+- adjust test justfile command name - (622837d) - Leon Welchert
+- remove old protobuf code - (ba1ba1a) - Leon Welchert
+- remove document system related logic from ingestion service - (10698d1) - Leon Welchert
+- decomission system and type api fields - (264916b) - Leon Welchert
+- make source_type field not a thing from proto to DB - (f4cf8f7) - Leon Welchert
+- replace document_type field with a tag from frontend to DB - (5dc0978) - Leon Welchert
+- make document systems and canons not a thing - (f091a93) - Leon Welchert
+- robustify document db schema - (7ead569) - Leon Welchert
+- switch all timestamps in sql schema to TIMESTAMPTZ - (aedf506) - Leon Welchert
+- drop the canon concept from the database schema - (4cc64de) - Leon Welchert
+- rearrange DB schema and make tag and canon titles unique - (8a45c61) - Leon Welchert
+- rename `system` to `canon` in our db schema for broader scope - (347fefb) - Leon Welchert
+- shelve flansch component for the time being - (e1d4c22) - Leon Welchert
+- rearrange python code into thematic subdirs - (54ca5b5) - Leon Welchert
+- Tidy up dev environment - (1dd3b9d) - Leon Welchert
+- minor cleanups and comments - (64aa541) - Leon Welchert
+- Wire up skeleton of postgres rewrite for document database - (be05aae) - Leon Welchert
+- Clean up removed dev containers from Tiltfile - (4c6246b) - Leon Welchert
+- consolidate dev-environment containers - (bf779be) - Leon Welchert
+- minor cleanup - (9225ced) - Leon Welchert
+#### Miscellaneous Chores
+- (**ptyhon-server**) commit generated graph api code - (04c155b) - Leon Welchert
+- (**python-server**) run linter - (904d25d) - Leon Welchert
+- (**python-server**) wrangle python dependencies - (7b5a195) - Leon Welchert
+- (**python-server**) define dev tasks in justfile - (5aac924) - Leon Welchert
+- (**python-server**) move dependency management over to uv - (2de31c6) - Leon Welchert
+- (**python-server**) add todo about inefficient query - (1d78b1a) - Leon Welchert
+- (**python-server**) wrangle ML dependencies - (ee227c8) - Leon Welchert
+- (**python-server**) upgrade docling to 2.91.0 - (5bc254d) - Leon Welchert
+- (**python-server**) adjust test to work with postgres vector db - (28d4388) - Leon Welchert
+- (**python-server**) tidy up tests - (1d52fe5) - Leon Welchert
+- (**python-server**) add some unit tests for the document extraction batch size calculator - (ff98767) - Leon Welchert
+- (**python-server**) ignore some linter warnings - (65b12a2) - Leon Welchert
+- (**python-server**) run ruff format - (c4528b9) - Leon Welchert
+- (**python-server**) Update python dependences - (bb7957b) - Leon Welchert
+- (**web-ui**) run linter - (e5e2604) - Leon Welchert
+- (**web-ui**) add new dependencies for graph UI - (149a3de) - Leon Welchert
+- comment out subpackages in cog.toml to track everything together - (ccce435) - Leon Welchert
+- replace weird character in comments - (fa30f20) - Leon Welchert
+- document issue in python-server config module - (ab5b3fe) - Leon Welchert
+- ignore some linter warnings - (8088764) - Leon Welchert
+- generate canon api code for python-server - (3b39253) - Leon Welchert
+- write canon api contract as replacement for the system api type - (4e690b3) - Leon Welchert
+- remove outdated references to removed services in Tiltfile - (43a63d7) - Leon Welchert
+- make dev containers use gpu when available - (bd752e3) - Leon Welchert
+
+- - -
+
+## 0.0.0 - 2026-01-18
+#### Features
+- automatically retrieve chunks from the vector database for chat context based on  similarity - (f1b405f) - Leon Welchert
+- add RAG related fields to chat related proto3 messages - (d91c0f5) - Leon Welchert
+- allow displaying all types of documents in library view - (10ca8f1) - Leon Welchert
+- add Button for creating Documents to library - (752bf78) - Leon Welchert
+- allow filtering documents by system using ANY matching on the server side - (d4ed985) - Leon Welchert
+- remove unnecessary resource reservation for gpus in docker compose file - (6186a73) - Leon Welchert
+- add cpu only environment for python server - (36c1516) - Leon Welchert
+- highlight chunks in embed modal view using varying colours - (1ef2cbb) - Leon Welchert
+- Add Document Embedding Modal to Library view - (ab47dc6) - Leon Welchert
+- add rudimentary chunk editor for handling a documents chunking strategy - (dcf48b4) - Leon Welchert
+- allow SQL with parameters passed or without - (ba1e4ac) - Leon Welchert
+- add implementation for embedding service - (b728683) - Leon Welchert
+- generalise postgresql repository and use it for vector operations - (7096eb5) - Leon Welchert
+- add vector DB repository module - (cf15676) - Leon Welchert
+- add Python module for pickign a chunking strategy based on the configuration passed in the request - (27f8b03) - Leon Welchert
+- add game system column to journal view - (10c2b31) - Leon Welchert
+- allow filtering journal entries by type - (046eb6a) - Leon Welchert
+- add rudimentary metadata editing to library - (0398fde) - Leon Welchert
+- allow filtering by name or system in library view - (5c16a0f) - Leon Welchert
+- use global logger that logs to both browser console and ui console by default - (76ea29c) - Leon Welchert
+- add LLM chat POC in web-ui sandbox - (12dbe01) - Leon Welchert
+- implement chat service in python server - (753fd57) - Leon Welchert
+- add new chat rpc api for llm integration - (00280f8) - Leon Welchert
+- assimilate tables in journal and Document List - (c906b9d) - Leon Welchert
+- allow parent component of DataTable to decide what should happen when a row is clicked by selecting a behaviour - (712451a) - Leon Welchert
+- extend document API to also handle PDFs in v1alpha3 - (7cb689b) - Leon Welchert
+- define new api version v1alpha3, adressing accumulated TODOs - (9f20bd7) - Leon Welchert
+- add LLM access module that other elements of the python server can use - (25318cb) - Leon Welchert
+- allow python server runscript to execute any python code for testing and debugging - (edd4712) - Leon Welchert
+- extend document api to use and provide document source information - (a879447) - Leon Welchert
+- add ollama container managed by Tilt - (5a72626) - Leon Welchert
+- allow hiding table columns in DataTable - (b98fa76) - Leon Welchert
+- Throw error when API returns document without content when trying to edit a document - (e3f708c) - Leon Welchert
+- switch to rendered HTML view when saving a document - (4d36f08) - Leon Welchert
+- allow deleting journal entries - (00d0b97) - Leon Welchert
+- allow editing documents in Journal View - (1c28ffe) - Leon Welchert
+- refresh  journal when document is created - (a0e6718) - Leon Welchert
+- create document snippets when storing documents - (66d554d) - Leon Welchert
+- use text editor windows in Journal view - (35718c7) - Leon Welchert
+- allow editing / viewing of loaded PDFs - (23d3c2b) - Leon Welchert
+- add optional content field to PDF api messages for transporting the entirety of a loaded document - (eb8c5f5) - Leon Welchert
+- manage text editor instances globally across views - (5fb9585) - Leon Welchert
+- WIP text editor fun stuff - (6833186) - Leon Welchert
+- add singleton for handling document API interactions - (1fa4abd) - Leon Welchert
+- wire up open and close button for floating text editor - (7ae614e) - Leon Welchert
+- add sandbox view for testing experimental functionality - (758559b) - Leon Welchert
+- WIP - (1e6f14a) - Leon Welchert
+- add edit button to document list - (5b83624) - Leon Welchert
+- allow editing document name via editor card - (0cc70a7) - Leon Welchert
+- make journal use in application console - (405f4ba) - Leon Welchert
+- add name property to markdown editor text field to  make browser happy - (10b7691) - Leon Welchert
+- ensure text editor has identical width in both modes - (5782456) - Leon Welchert
+- turn runic editor text into watermark - (ac5e93f) - Leon Welchert
+- add separate wysiwig and markdown mode for text editor - (50b2449) - Leon Welchert
+- Display PDF Search Results as Table in Document List View - (dad291a) - Leon Welchert
+- Build rudimentary document search - (a39c317) - Leon Welchert
+- mostly get PDF search working - (93aa9aa) - Leon Welchert
+- use database via singleton - (72ab2ff) - Leon Welchert
+- loading service now transforms PDFs into Markdown and stores them in FerretDB - (c7649ad) - Leon Welchert
+- add docling and friends for PDF processing - (a6292b1) - Leon Welchert
+- Set up basic database services for development - (35a407e) - Leon Welchert
+- define v1alpha2 API schema - (d8d4817) - Leon Welchert
+- properly send journal document content and name in store request - (4e8748f) - Leon Welchert
+- have the journal view use the bogus document service - (9df81e9) - Leon Welchert
+- add Document Service Skeleton - (7d01032) - Leon Welchert
+- add Tiltfile - (aba888f) - Leon Welchert
+- add save and abort button to text editor in journal - (9f5a699) - Leon Welchert
+- Build working text editor - (c853160) - Leon Welchert
+- POC text editor using Tiptap - (7dc2855) - Leon Welchert
+- Configure Tailwind using Typescript - (f9f1c22) - Leon Welchert
+- correctly handle pdf load requests - (3ad03c8) - Leon Welchert
+- enable hot reloading for python code - (c518cba) - Leon Welchert
+- correctly configure logging - (782dd95) - Leon Welchert
+- properly connect web-ui and python-server (reading file still fails) - (d233a8b) - Leon Welchert
+- connect web ui client to server and return dummy response - (5c97bd1) - Leon Welchert
+- replace django web ui with vue based web ui - (658aa27) - Leon Welchert
+- mock up python server RPC Connect usage - (2240991) - Leon Welchert
+- add vue dev tools and document how to use it with vite and without - (e7d903f) - Leon Welchert
+- continue vue -> python-server api usage implementation - (5d01ad1) - Leon Welchert
+- start working on API usage for PDF uploading - (164746c) - Leon Welchert
+- add connect-web library - (2442806) - Leon Welchert
+- add knip for finding redundant dependencies, remove redundant dependencies - (e81f188) - Leon Welchert
+- add Makefile command for generating rpc api in vue-ui - (ec86518) - Leon Welchert
+- add basic Makefile for project scope tasks - (f063209) - Leon Welchert
+- POC II vue web ui - (531a003) - Leon Welchert
+- POC vue web  ui - (0f77b2d) - Leon Welchert
+- rename web-ui and data-server applications - (6344b99) - Leon Welchert
+- use centrally generated grpc stubs in data-server application - (51afe8c) - Leon Welchert
+- extend API for document storage- Add new API objects for document storage- update web-ui side of api code - (7bc803e) - Leon Welchert
+- add django server for accessing  langchain server api - (d90937f) - Leon Welchert
+- make the server actually load pdfs and store them as vectors - (2125ff2) - Leon Welchert
+- Throw together a grpc server that pretends to load PDFs - (3c40cde) - Leon Welchert
+- come up with draft for pdf loading server API - (3bc6f07) - Leon Welchert
+- Jedem Anfang wohnt ein Zauber inne - (ce27d8b) - Leon Welchert
+#### Bug Fixes
+- fix pgvector init script permissions - (266d2dc) - Leon Welchert
+- Fix old sql-alchemy related connection strings to work with psycopg and consolidate python server env in Tiltfile - (4f42bef) - Leon Welchert
+- fix ollama health check - (9479695) - Leon Welchert
+- fix document creation in editor windows by filling out rquired fields with default values - (ede84a6) - Leon Welchert
+- manage dropdown state in datatable via JS to fix the dropdown  obscuring the action buttons - (6ecd449) - Leon Welchert
+- use fixed positioning for table column selection dialog to prevent clipping in small tables - (865dc5b) - Leon Welchert
+- fix journal date format - (d45a9dd) - Leon Welchert
+- properly resize floating text editor dialog based on overall window size - (4575750) - Leon Welchert
+- properly return a list of matching pdfs when using search_pdfs function in loading service - (b46323d) - Leon Welchert
+- remove stray character - (dc80475) - Leon Welchert
+- Adjust sidebar icon sizes and add new link to document list - (16ee50c) - Leon Welchert
+- correctly configure ferretdb connection parameters - (46f9991) - Leon Welchert
+- do not provide full document content in search responses - (112237f) - Leon Welchert
+- work around recent NodeJS 25.2 breakage https://github.com/nodejs/node/issues/60704 - (0beaca5) - Leon Welchert
+- prefix http:// protocol to URL for connect transport instantiation - (b0f5643) - Leon Welchert
+- handle undefined PDF file and file name during PDF upload - (4857d81) - Leon Welchert
+- downgrade grpc libraries in webui - (158265e) - Leon Welchert
+- rename core django application to not collide with the overall project name - (7975ee9) - Leon Welchert
+#### Documentation
+- add cocogitto configuration file - (ab4f7eb) - Leon Welchert
+- document docker-compose requirement - (94b578e) - Leon Welchert
+- remove references to old API versions from documentation - (a9aadd2) - Leon Welchert
+- fix dumb formulation - (b96b492) - Leon Welchert
+- document manual api code regeneration - (3a8d6e6) - Leon Welchert
+- remove unnecessary comment - (9cda442) - Leon Welchert
+- document future api adjustment for PDF deletion - (ff6e8ff) - Leon Welchert
+- Make text editor return markdown to parent - (ed4a742) - Leon Welchert
+- document potential for future API consolidation - (a04662e) - Leon Welchert
+- document future necessity for PDF API adjustment for multi-system or system agnostic PDFs - (a9b24fb) - Leon Welchert
+- reference actual technical installation instructions for build tools rather than the flashy landing pages - (b4cab4a) - Leon Welchert
+- document PDF API usage - (6c8693c) - Leon Welchert
+- Update README.md to explain new tilt based development environment - (4f5d687) - Leon Welchert
+- document anecdote about fitz/pymupdf name - (aff0c8e) - Leon Welchert
+- document some thoughts about pdf processing - (e39fd6c) - Leon Welchert
+- document local container db access - (3cb3b69) - Leon Welchert
+- document some reading material on writing protobuf based APIs - (17630ce) - Leon Welchert
+- document API structure - (abbc300) - Leon Welchert
+- document text editor implementation - (268b006) - Leon Welchert
+- document more styling classes - (e7e4d9b) - Leon Welchert
+- add more comments about daisy-ui colours and card grid stuff - (55758ef) - Leon Welchert
+- add comments about pdf upload view width - (268786b) - Leon Welchert
+- remove old grpc documentation - (8ed34d0) - Leon Welchert
+- add info about Connect api to README.md - (725d3dd) - Leon Welchert
+- update README.md - (3d6d4f1) - Leon Welchert
+- replace default README.md with some basic information on the new web-ui - (86c56a1) - Leon Welchert
+- document application structure and typescript - Vue interaction - (11856d8) - Leon Welchert
+- add documentation for common dev procedures - (2f74f5d) - Leon Welchert
+- document connect rpc generation for typescript - (28106f6) - Leon Welchert
+- document usage of databases and the grpc API - (e3716ff) - Leon Welchert
+#### Tests
+- rewrite integration tests to properly make use of fixtures - (23fd252) - Leon Welchert
+- add pytest configuration to pyproject.toml - (60d6f4e) - Leon Welchert
+- add simple document api integration test for StoreDocumentRequest - (4c6637f) - Leon Welchert
+- add simple integration test for pdf service - (c046d95) - Leon Welchert
+- add test for creating sample pdf from markdown - (ac85c03) - Leon Welchert
+- create tests for docling batch pipeline from old script - (c8c9ceb) - Leon Welchert
+- add rough draft for python server tests - (9e58820) - Leon Welchert
+#### Build system
+- adjust package manager config files to generate v1alpha3 api code using protoc - (2b824b1) - Leon Welchert
+- use old fashioned node-modules and copy modules directly to support cross-filesystem usage in yarn - (8659bf8) - Leon Welchert
+- add eslint and use antfus preset - (48b0d80) - Leon Welchert
+- add ty and ruff for python linting and reformat existing python code - (c3ddc8a) - Leon Welchert
+#### Refactoring
+- Remove citation requirement from system prompts - (e680651) - Leon Welchert
+- remove redundant Journal view - (c342835) - Leon Welchert
+- genericise Document Table refresh composable - (0bfbc4f) - Leon Welchert
+- extract DocumentTable component - (f11f8cf) - Leon Welchert
+- define component for filtering documents by name and system - (674f95e) - Leon Welchert
+- define reusable document type filtering component - (183da1e) - Leon Welchert
+- improve structure of llm related code - (b8b53d0) - Leon Welchert
+- replace Tiptap with CodeMirror to properly handle markdown - (467076d) - Leon Welchert
+- remove embedding related configuration from PDF upload view - (a8b5c24) - Leon Welchert
+- remove unnecessary format conversion of chunks during embedding, rewrite vector_db.execute() to accept SQL and parameters - (8be0e76) - Leon Welchert
+- remove unnecessary chunking configuration from PDF API and add embedding API - (82633d1) - Leon Welchert
+- move dev container files to more appropriately named directory - (4bff289) - Leon Welchert
+- turn application console into a regular view component  that respects the sidebar - (9158282) - Leon Welchert
+- remove old PDF functionality in loading service - (19cc82b) - Leon Welchert
+- remove old api code from python-server - (5dc53da) - Leon Welchert
+- remove redundant pdf api messages that were replaced by the document API - (7f4e0b4) - Leon Welchert
+- move llm chat to separate view and clear sandbox - (1a23285) - Leon Welchert
+- remove old v1alpha1 api code in web-ui - (1055476) - Leon Welchert
+- blast from the past: bring back tiptap - (95357fe) - Leon Welchert
+- Rename "Document List" view to "Library" - (119c7ee) - Leon Welchert
+- separate docling pipeline out into separate file again, remove redundant previous pipeline - (379fc30) - Leon Welchert
+- tidy up sandbox - (7a5cb04) - Leon Welchert
+- remove references to old API version v1alpha2 - (2a753e3) - Leon Welchert
+- migrate web-ui to v1alpha3 - (66ea544) - Leon Welchert
+- reference v1alpha3 services in server.py - (6b3ce4c) - Leon Welchert
+- migrate loading service to v1alpha3 - (ce174b8) - Leon Welchert
+- migrate document service to v1alpha3 - (559ef1d) - Leon Welchert
+- migrate database.py to v1alpha3 - (1410cfd) - Leon Welchert
+- tidy up v1alpha3 API - (aa09826) - Leon Welchert
+- make units in DocumentList table human readable - (7347119) - Leon Welchert
+- resize search button in Document list to mortal size - (0f04b6a) - Leon Welchert
+- use DataTable component in DocumentList view - (f5be078) - Leon Welchert
+- Extract table in Journal to separate component - (8cef730) - Leon Welchert
+- harmonise sidebar icons - (6436ec3) - Leon Welchert
+- resize refresh button in journal to more normal dimensions - (1d2d254) - Leon Welchert
+- rename property for matches returned by document search to more clearly represent their meaning - (39c8314) - Leon Welchert
+- modify API to allow reusing document filter messages - (3861c18) - Leon Welchert
+- move fillable forms into reusable component - (df6af83) - Leon Welchert
+- move save and abort buttons to texteditorwindow - (4e2555f) - Leon Welchert
+- simplify text editor by getting rid of tiptap dependency and WYSIWYG functionality - (a73628b) - Leon Welchert
+- remove unneeded debugging bits from editor window code - (7cd1dd9) - Leon Welchert
+- shelve python-server tests for now - (b594ee5) - Leon Welchert
+- (respectfully) remove ??? reference used for testing - (875cd27) - Leon Welchert
+- remove unused dependencies - (e5aaaf7) - Leon Welchert
+- remove unused file - (22445d6) - Leon Welchert
+- remove unnecessary UI elements for configuring backend connection parameters - (364a118) - Leon Welchert
+- rewrite log messages in output windows to use a global quake  style console instead - (bb7a5f6) - Leon Welchert
+- Centralise Configuration in web-ui - (4eaabd4) - Leon Welchert
+- migrate document db library to pymongo - (27a4532) - Leon Welchert
+- rearrange config.py again - (b880b00) - Leon Welchert
+- move python code in python-server to src - (df297fd) - Leon Welchert
+- rearrange code in python-server/config.py for readability - (88b2689) - Leon Welchert
+- rearrange pyproject.toml - (7ebc218) - Leon Welchert
+- migrate pixi.toml to pyproject.toml - (84505df) - Leon Welchert
+- refactor python server configuration to be read from environment and store in class - (82b23e6) - Leon Welchert
+- use v1alpha2 API in application components - (00d9720) - Leon Welchert
+- refactor text editor card into separate component that supports resetting the editor text - (7676df3) - Leon Welchert
+- use modern v-model approach for tracking editor-content between parent and child component - (d9da897) - Leon Welchert
+- Refactor Text editor into separate component - (5743ff2) - Leon Welchert
+- remove postcss remnants - (73ca94e) - Leon Welchert
+- refactor web-ui to use common base class for card elements - (6525454) - Leon Welchert
+- split out pdf load request creation into a separate function - (abfcaa1) - Leon Welchert
+- ignore Vite related build files - (3106436) - Leon Welchert
+- restructure api directory structure for schema versioning - (0e299ef) - Leon Welchert
+- move api generation scripts to service directories - (6af1a95) - Leon Welchert
+- rename pixi action for executing the server to dev - (0357a27) - Leon Welchert
+#### Miscellaneous Chores
+- (**version**) 0.0.0 - (7512e92) - Leon Welchert
+- regenerate protobuf API with newer protobu version - (bb8d78c) - Leon Welchert
+- commit  .tiltignore - (dfc6c95) - Leon Welchert
+- update various dependencies - (37a2050) - Leon Welchert
+- Update to tailwindcss 4.1.17 and daisyui 5.5.5 - (8864deb) - Leon Welchert
+- regenerate grpc api for historical purposes - (f741979) - Leon Welchert
+- add directories to .gitignore - (973389a) - Leon Welchert
+- update vector DB password name in python server runscript - (ec9b777) - Leon Welchert
+- add some documentation for using handling the documents database - (3c9dd5e) - Leon Welchert
+- Make README.md actually informative - (988544d) - Leon Welchert
+- add some illuminating comments - (38d8173) - Leon Welchert
+- move pdf loading server to separate directory - (0e0c5b5) - Leon Welchert
+- move grpc stuff to subdir for improved tidiness - (f3aeac3) - Leon Welchert
+- Add python cache to gitignore - (2925c36) - Leon Welchert
+#### Style
+- eslint - (e318bc2) - Leon Welchert
+- add missing type descriptor - (c84dddb) - Leon Welchert
+- fix eslint errors - (aafccd6) - Leon Welchert
+- refine ruff configuration - (85d7fe6) - Leon Welchert
+- fix linter errors - (2bae126) - Leon Welchert
+- reformat API protobuf code - (5d008ec) - Leon Welchert
+- reformat python code using  ruff - (1accb37) - Leon Welchert
+- reformat web-ui code - (ece8acc) - Leon Welchert
+- reformat python-server code using ruff - (b684f69) - Leon Welchert
+- reformat web-ui code using eslint - (e793265) - Leon Welchert
+- move api code formatting over to tilt - (6251f15) - Leon Welchert
+- reformat code - (8fc2522) - Leon Welchert
+- configure eslint to ignore  generated API code we have no influence on - (b5ec533) - Leon Welchert
+- override v-bind rule for vue to prefer long form at all times - (b10ff24) - Leon Welchert
+- lint all remaining source code - (882df17) - Leon Welchert
+- lint web-ui components and composables - (0e32d01) - Leon Welchert
+- run ruff check --fix - (40a0bc2) - Leon Welchert
+- run ruff --fix - (08c4fbd) - Leon Welchert
+- darken all cards in vue views - (87efdfe) - Leon Welchert
+- reformat protobuf specification using buf format - (9ef4332) - Leon Welchert
+
+- - -
+
 ## 0.0.0 - 2026-01-18
 ### Packages
 - web-ui locked to 0.0.0
