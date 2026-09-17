@@ -9,7 +9,7 @@ Currently, there's a rudimentary web-ui which is hooked up to a backend service,
 - [Tilt](https://docs.tilt.dev/) - orchestration
 - [Docker](https://docs.docker.com/engine/install/) - containerised services
 - [Docker Compose](https://docs.docker.com/compose/install/) - container management
-- [pixi](https://pixi.sh/latest/installation/) - Python dependency management
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) - Python dependency management
 - [Yarn](https://yarnpkg.com/getting-started/install) - JavaScript dependency management
 
 ## Quick Start
